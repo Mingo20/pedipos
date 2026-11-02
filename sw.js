@@ -1,5 +1,5 @@
 /* PediPOS: service worker. Subir la version en CADA publicacion. */
-const V = "pedipos-v5";
+const V = "pedipos-v6";
 const ASSETS = ["./", "index.html", "manifest.json", "icon.svg", "css/app.css", "js/store.js", "js/sync.js", "js/voice.js", "js/extra.js", "js/app.js"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x !== V).map((x) => caches.delete(x)))).then(() => self.clients.claim())); });
