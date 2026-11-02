@@ -195,3 +195,8 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .receipt .r{display:flex;justify-content:space-between;margin:6px 0}
 .receipt .r.t{font-weight:800;font-size:19px;border-top:2px dashed var(--line);padding-top:10px;margin-top:10px}
 @media print{body *{visibility:hidden}.receipt,.receipt *{visibility:visible}.receipt{position:absolute;left:0;top:0;width:100%;border:0}}
+
+/* orden de la barra inferior: Nueva · microfono · Cobrar */
+.act .n{order:1}
+.act .mic{order:2}
+.act .c{order:3}
