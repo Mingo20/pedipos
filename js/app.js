@@ -722,16 +722,18 @@
     /* --- boton Descargar --- */
     $("#instbtn").onclick = async () => {
       const p = window.__ppInstallPrompt;
-      if (p) {
-        try {
-          p.prompt();
-          const r = await p.userChoice;
-          window.__ppInstallPrompt = null;
-          if (r && r.outcome === "accepted") { localStorage.setItem(INS_DONE, "1"); cerrar(); toast("Instalando PediPOS..."); }
-          else toast("Puedes instalarla despues desde este aviso");
-        } catch (_) { guiaInstalar(); }
-        return;
+      if (!p) return guiaInstalar();
+      let r = null;
+      try {
+        p.prompt();
+        /* si el navegador no responde (o cancela en silencio), a los 2.5 s se muestran los pasos */
+        r = await Promise.race([p.userChoice, new Promise((ok) => setTimeout(() => ok(null), 2500))]);
+      } catch (_) { r = null; }
+      if (r && r.outcome === "accepted") {
+        window.__ppInstallPrompt = null; localStorage.setItem(INS_DONE, "1");
+        cerrar(); toast("Instalando PediPOS..."); return;
       }
+      if (r && r.outcome === "dismissed") { toast("Toca Descargar cuando quieras instalarla"); return; }
       guiaInstalar();
     };
 
