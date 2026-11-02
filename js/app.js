@@ -111,7 +111,8 @@
     const key = window.PPVoice.norm(nom);
     let prod = db().products.find((x) => window.PPVoice.norm(x.nombre) === key);
     if (!prod) {
-      prod = { pid: S.uid("P"), nombre: nom, precio: p, unidad: "unidad", categoria: "General", stock: 0, itbis: true, activo: true, manual: true };
+      /* sin stock declarado: no se descuenta inventario en la venta */
+      prod = { pid: S.uid("P"), nombre: nom, precio: p, unidad: "unidad", categoria: "General", itbis: true, activo: true, manual: true };
       db().products.push(prod); window.PPSync.saveProduct(prod);
     } else if (prod.activo === false) { prod.activo = true; window.PPSync.saveProduct(prod); }
     /* el precio escrito manda en esta venta, sin alterar el precio guardado del catalogo */
