@@ -49,6 +49,14 @@
     print: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2"/><rect x="6" y="14" width="12" height="7"/></svg>',
     clock: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     ok: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
+    truck2: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h12v9H2zM14 10h4l3 3v3h-7"/><circle cx="6.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/></svg>',
+    group: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.2A5 5 0 0 1 21.5 20"/></svg>',
+    bagnav: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
+    userplus: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="3.5"/><path d="M3 20a7 7 0 0 1 14 0M19 8v6M16 11h6"/></svg>',
+    home: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>',
+    order: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>',
+    wallet: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13v4"/><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="16.5" cy="13.5" r="1.2"/></svg>',
     tag: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.500" cy="8.500" r="1.200"/></svg>',
   };
 
@@ -65,19 +73,68 @@
   const tot = () => S.totals(cart(), rate());
 
   /* ---------- Dock ---------- */
-  const TABS = [["panel", "PANEL", I.ticket], ["catalogo", "CATALOGO", I.bike], ["soporte", "SOPORTE", I.book], ["analitica", "ANALITICA", I.chart]];
+  const TABS = [["proveedores", "Proveedores", "truck2"], ["clientes", "Clientes", "group"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"], ["analitica", "Analitica", "chart"]];
   function drawDock() {
-    $("#dock").classList.toggle("hide", tab === "panel");
-    $("#dock").innerHTML = TABS.map(([k, , ic]) => `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${k}">${ic}</button>`).join("");
+    const d = $("#dock");
+    d.classList.remove("hide");
+    document.body.classList.add("has-dock");
+    d.innerHTML = TABS.map(([k, lb, ic]) => k === "historial"
+      ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
+      : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("");
     $$("#dock button").forEach((b) => (b.onclick = () => go(b.dataset.t)));
   }
+  const TITULOS = { panel: "PANEL", catalogo: "CATALOGO", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
   function go(t) {
+    const cambio = t !== tab;
     tab = t;
-    $("#title").textContent = { panel: "PANEL", catalogo: "CATALOGO", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION" }[t] || t.toUpperCase();
+    $("#title").textContent = TITULOS[t] || t.toUpperCase();
     drawDock(); render(); $("#view").scrollTop = 0;
+    if (cambio) {
+      const v = $("#view"); v.classList.remove("vin"); void v.offsetWidth; v.classList.add("vin");
+    }
   }
 
   /* ---------- Panel ---------- */
+  let manual = false;
+  function manualRow() {
+    return `<div class="row man" id="mrow"><input class="nm" id="mnm" placeholder="Producto" autocomplete="off" enterkeyhint="next"><input id="mq" inputmode="decimal" placeholder="Cant." value="1" enterkeyhint="next"><input id="mp" inputmode="decimal" placeholder="Precio" enterkeyhint="done"><span class="t" id="mt">RD$0</span></div>`;
+  }
+  /* Guarda el producto escrito a mano: entra al talonario y, si no existe, al catalogo como disponible. */
+  function commitManual() {
+    const nom = ($("#mnm").value || "").trim();
+    const q = parseFloat(String($("#mq").value).replace(",", ".")) || 0;
+    const p = parseFloat(String($("#mp").value).replace(",", ".")) || 0;
+    if (!nom && !($("#mp").value || "").trim()) { manual = false; render(); return; }
+    if (!nom) { toast("Escribe el nombre del producto"); $("#mnm").focus(); return; }
+    if (!(q > 0)) { toast("Pon la cantidad"); $("#mq").focus(); return; }
+    if (!(p >= 0) || !(($("#mp").value || "").trim())) { toast("Pon el precio"); $("#mp").focus(); return; }
+    const key = window.PPVoice.norm(nom);
+    let prod = db().products.find((x) => window.PPVoice.norm(x.nombre) === key);
+    if (!prod) {
+      prod = { pid: S.uid("P"), nombre: nom, precio: p, unidad: "unidad", categoria: "General", stock: 0, itbis: true, activo: true, manual: true };
+      db().products.push(prod); window.PPSync.saveProduct(prod);
+    } else if (prod.activo === false) { prod.activo = true; window.PPSync.saveProduct(prod); }
+    /* el precio escrito manda en esta venta, sin alterar el precio guardado del catalogo */
+    const ex = cart().lines.find((l) => l.pid === prod.pid && l.precio === p);
+    if (ex) ex.cant = S.round2(ex.cant + q);
+    else cart().lines.push({ pid: prod.pid, nombre: prod.nombre, precio: p, unidad: prod.unidad, cant: q });
+    manual = false; S.save(); render();
+    toast(prod.manual && !ex ? nom + " agregado al catalogo" : nom + " agregado");
+  }
+  function bindManual() {
+    const f = ["#mnm", "#mq", "#mp"].map((s) => $(s));
+    const upd = () => { const q = parseFloat(String(f[1].value).replace(",", ".")) || 0, p = parseFloat(String(f[2].value).replace(",", ".")) || 0; $("#mt").textContent = money(q * p); };
+    f.forEach((el, i) => {
+      el.oninput = upd;
+      el.onkeydown = (e) => { if (e.key !== "Enter") return; e.preventDefault(); if (i < 2) f[i + 1].focus(); else commitManual(); };
+    });
+    /* al salir de toda la fila se guarda solo (si hay datos) */
+    $("#mrow").addEventListener("focusout", () => setTimeout(() => {
+      if (!manual || !$("#mrow") || $("#mrow").contains(document.activeElement)) return;
+      if (($("#mnm").value || "").trim() && ($("#mp").value || "").trim()) commitManual();
+    }, 180));
+    upd();
+  }
   function lineRow(l, i) {
     return `<div class="row"><b>${esc(l.nombre)}</b><input class="q" data-i="${i}" inputmode="decimal" value="${num(l.cant)}" aria-label="Cantidad"><span class="p">${num(l.precio)}</span><span class="t">${money(l.cant * l.precio)}</span></div>`;
   }
@@ -90,7 +147,7 @@
       </div>
       <section class="tick">
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
-        <div class="tick-b">${n ? c.lines.map(lineRow).join("") : '<div class="tick-empty">Toca + para agregar productos</div>'}</div>
+        <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar productos</div>')}${manual ? manualRow() : ""}</div>
         <div class="tick-f">
           <div class="itbis-r"><span>ITBIS ${Math.round(rate() * 100)}%</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
           <div class="line"><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
@@ -106,9 +163,11 @@
         <div class="mic ${voice.phase === "listening" || voice.phase === "recording" ? "on" : voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${I.mic}</i></div>
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
-    $("#bPlus").onclick = openSearch; $("#bCart").onclick = openSearch;
+    $("#bPlus").onclick = () => { manual = true; render(); const f = $("#mnm"); f && f.focus(); };
+    $("#bCart").onclick = openSearch;
+    if (manual) bindManual();
     $("#swItbis").onclick = () => { cart().itbis = !cart().itbis; S.save(); render(); };
-    $("#bNew").onclick = () => { if (cart().lines.length && !confirm("Descartar la venta actual?")) return; cart().lines = []; S.save(); render(); };
+    $("#bNew").onclick = () => { if (cart().lines.length && !confirm("Descartar la venta actual?")) return; cart().lines = []; manual = false; S.save(); render(); };
     $("#bPay").onclick = openPay;
     $("#bMic").onclick = () => { if (voice.phase === "recording") { voice.phase = "wait"; render(); showProc(); finishWhisper(); } else toggleVoice(); };
     $$(".row .q").forEach((inp) => (inp.onchange = () => {
@@ -129,18 +188,46 @@
   }
 
   /* ---------- Hojas ---------- */
+  /* Icono segun el titulo de cada ventana (tambien aplica a las hojas de extra.js). */
+  const ICONO_HOJA = [
+    [/^agregar producto|^buscar/i, "search"], [/lista de pedido/i, "spark"], [/confirmar pedido/i, "check"],
+    [/^cobrar/i, "wallet"], [/venta registrada/i, "ok"], [/detalle del pedido/i, "order"],
+    [/nuevo cliente|editar cliente/i, "userplus"], [/abono/i, "wallet"], [/proveedor/i, "truck2"],
+    [/crear producto|editar producto/i, "box"], [/entrar a la caja/i, "users"],
+  ];
+  function iconoDe(t) { for (const [re, k] of ICONO_HOJA) if (re.test(t)) return k; return null; }
+  function decorar(s) {
+    $$(".sh-h h2", s).forEach((h) => {
+      if (h.querySelector(".hi")) return;
+      const k = iconoDe(h.textContent.trim()) || (/^[A-Za-z]/.test(h.textContent) ? "home" : null);
+      if (k && I[k]) h.insertAdjacentHTML("afterbegin", `<span class="hi">${I[k]}</span>`);
+    });
+    /* el boton cerrar de cualquier hoja usa el cierre animado */
+    $$(".sh-x", s).forEach((b) => {
+      if (/✕/.test(b.textContent) || b.id === "x") b.addEventListener("click", (e) => { e.stopImmediatePropagation(); closeSheet(); }, true);
+    });
+  }
   function sheet(html, onClose) {
-    closeSheet();
+    closeSheet(true);
     const m = document.createElement("div"); m.className = "mask"; m.id = "mask";
     const s = document.createElement("section"); s.className = "sheet"; s.id = "sheet";
     s.innerHTML = '<div class="grip"></div>' + html;
     $("#layer").append(m, s);
+    decorar(s);
     const t0 = Date.now();
     /* el mismo toque que abre la hoja no debe cerrarla */
     m.onclick = () => { if (Date.now() - t0 < 320) return; closeSheet(); onClose && onClose(); };
     return s;
   }
-  function closeSheet() { $("#layer").innerHTML = ""; }
+  /* Cierre con desvanecimiento. closeSheet(true) cierra de golpe (cuando se reemplaza por otra hoja). */
+  function closeSheet(ya) {
+    const layer = $("#layer");
+    if (ya === true || !layer.firstChild) { layer.innerHTML = ""; return; }
+    const sh = $("#sheet"), mk = $("#mask");
+    if (!sh || sh.classList.contains("out")) return;
+    sh.classList.add("out"); mk && mk.classList.add("out");
+    setTimeout(() => { if (sh.classList.contains("out")) layer.innerHTML = ""; }, 230);
+  }
 
   /* ----- Buscar producto ----- */
   function openSearch() {
@@ -242,35 +329,79 @@
   function renderListen() {
     let el = $("#listen");
     if (voice.phase !== "listening" && voice.phase !== "recording") { el && el.remove(); return; }
-    if (!el) { el = document.createElement("div"); el.id = "listen"; el.className = "listen"; document.body.append(el); }
-    el.innerHTML = `<i class="rd"></i><div class="tx"><b>ESCUCHANDO</b><span>${esc(voice.text || 'Dicta tu pedido: "dos leches, media libra..."')}</span></div><button class="stop" id="stp" aria-label="Detener"><i></i></button>`;
-    $("#stp").onclick = () => { if (voice.phase === "recording") { voice.phase = "wait"; finishWhisper(); } else window.PPVoice.stopDictation(); };
-    const lab = el.querySelector(".tx b"), sp = el.querySelector(".tx span");
-    if (lab) lab.textContent = voice.phase === "recording" ? "GRABANDO" : "ESCUCHANDO";
-    if (sp && voice.phase === "recording") sp.textContent = "Habla y toca el cuadro negro al terminar. Se transcribe con Whisper.";
+    const rec = voice.phase === "recording";
+    const lab = rec ? "GRABANDO" : "ESCUCHANDO";
+    const txt = voice.text || (rec ? "Habla y toca detener al terminar" : "Dicta: \"dos leches, media libra de arroz\"");
+    if (!el) {
+      el = document.createElement("div"); el.id = "listen"; el.className = "listen";
+      el.innerHTML = '<div class="wave"><i></i><i></i><i></i><i></i><i></i></div><div class="tx"><b></b><span></span></div><button class="stop" id="stp" aria-label="Detener"><i></i></button>';
+      document.body.append(el);
+      $("#stp").onclick = () => { if (voice.phase === "recording") { voice.phase = "wait"; finishWhisper(); } else window.PPVoice.stopDictation(); };
+    }
+    /* se actualiza solo el texto: la tarjeta no parpadea mientras se dicta */
+    el.querySelector(".tx b").textContent = lab;
+    const sp = el.querySelector(".tx span"); sp.textContent = txt; sp.style.color = voice.text ? "#14171c" : "";
   }
   function showProc() {
-    const d = document.createElement("div"); d.id = "proc"; d.className = "proc"; d.innerHTML = '<span class="spin"></span> Procesando audio...'; document.body.append(d);
+    const d = document.createElement("div"); d.id = "proc"; d.className = "proc"; d.innerHTML = '<span class="spin"></span> Procesando...'; document.body.append(d);
   }
 
   /* ----- Cobro ----- */
+  function clientOpts(sel) {
+    return (db().clients || []).filter((c) => c.activo !== false).map((c) => `<option value="${esc(c.cid)}" ${c.cid === sel ? "selected" : ""}>${esc(c.nombre)}${window.PPExtra && window.PPExtra.deudaDe(c.cid) > 0 ? " · debe " + money(window.PPExtra.deudaDe(c.cid)) : ""}</option>`).join("");
+  }
   function openPay() {
     const t = tot();
     const s = sheet(`<div class="sh-h"><h2>Cobrar</h2><button class="sh-x" id="x">${I.x}</button></div>
       <div class="receipt"><div class="r"><span>Subtotal</span><span>${money2(t.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(t.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(t.total)}</span></div></div>
-      <label class="field"><span>Metodo de pago</span><select id="met"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="credito">Credito (fiado)</option><option value="credito">A credito</option></select></label>
+      <label class="field"><span>Metodo de pago</span><select id="met"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="credito">A credito (fiado)</option></select></label>
       <label class="field" id="recw"><span>Efectivo recibido</span><input id="rec" inputmode="decimal" placeholder="${num(t.total)}"></label>
-      <label class="field"><span>Cliente (opcional)</span><select id="cli2"><option value="">Sin cliente</option>${(db().clients || []).map((c) => `<option value="${esc(c.cid)}">${esc(c.nombre)}${window.PPExtra && window.PPExtra.deudaDe(c.cid) > 0 ? " · debe " + money(window.PPExtra.deudaDe(c.cid)) : ""}</option>`).join("")}</select></label>
+      <div class="field"><span id="clilbl">Cliente (opcional)</span>
+        <div class="cliwrap"><select id="cli2"><option value="">Sin cliente</option>${clientOpts("")}</select>
+        <button type="button" class="cliplus" id="cliplus" aria-label="Nuevo cliente">${I.userplus}</button></div>
+        <div id="newcli" hidden style="margin-top:10px;display:none">
+          <input id="ncn" placeholder="Nombre del cliente" autocomplete="off" style="width:100%;height:46px;border:1.5px solid var(--g-line);border-radius:14px;padding:0 14px;font-size:15px;margin-bottom:8px;outline:none">
+          <input id="nct" inputmode="tel" placeholder="Telefono (opcional)" style="width:100%;height:46px;border:1.5px solid var(--g-line);border-radius:14px;padding:0 14px;font-size:15px;margin-bottom:8px;outline:none">
+          <div style="display:flex;gap:10px"><button type="button" class="btn sec" id="ncx" style="flex:1">Cancelar</button><button type="button" class="btn" id="ncs" style="flex:1">Guardar y vincular</button></div>
+        </div></div>
       <div id="chg" class="cnt"></div>
       <button class="big" id="done" style="width:100%">${I.check} Confirmar cobro</button>`);
-    $("#x", s).onclick = closeSheet;
-    const met = $("#met", s), rec = $("#rec", s), chg = $("#chg", s);
+    $("#x", s).onclick = () => closeSheet();
+    const met = $("#met", s), rec = $("#rec", s), chg = $("#chg", s), cli = $("#cli2", s), done = $("#done", s);
+    /* A credito exige cliente: sin cliente el boton queda inhabilitado. */
     const upd = () => {
+      const cred = met.value === "credito";
       $("#recw", s).style.display = met.value === "efectivo" ? "block" : "none";
       const r = parseFloat(String(rec.value).replace(",", "."));
       chg.textContent = met.value === "efectivo" && r >= t.total ? "Devuelta: " + money2(r - t.total) : "";
+      $("#clilbl", s).textContent = cred ? "Cliente (obligatorio para fiar)" : "Cliente (opcional)";
+      const falta = cred && !cli.value;
+      done.disabled = falta;
+      let h = $("#credhint", s);
+      if (falta) {
+        if (!h) { h = document.createElement("div"); h.id = "credhint"; h.className = "hint"; h.textContent = "Para vender a credito, elige o crea un cliente con el (+)."; done.before(h); }
+      } else if (h) h.remove();
     };
-    met.onchange = upd; rec.oninput = upd; upd();
+    met.onchange = upd; rec.oninput = upd; cli.onchange = upd;
+    /* (+) crea un cliente nuevo y lo vincula a esta venta sin salir del cobro */
+    const nb = $("#newcli", s);
+    const showNew = (v) => { nb.style.display = v ? "block" : "none"; if (v) setTimeout(() => $("#ncn", s).focus(), 60); };
+    $("#cliplus", s).onclick = () => showNew(nb.style.display === "none");
+    $("#ncx", s).onclick = () => showNew(false);
+    $("#ncs", s).onclick = () => {
+      const nom = $("#ncn", s).value.trim();
+      if (!nom) { toast("Escribe el nombre del cliente"); $("#ncn", s).focus(); return; }
+      const dup = (db().clients || []).find((c) => window.PPVoice.norm(c.nombre) === window.PPVoice.norm(nom));
+      let c = dup;
+      if (!c) {
+        c = { cid: S.uid("C"), nombre: nom, telefono: $("#nct", s).value.trim(), direccion: "", nota: "", limite_credito: 0, activo: true };
+        (db().clients = db().clients || []).push(c); S.save(); window.PPSync.saveCliente(c);
+      }
+      cli.innerHTML = '<option value="">Sin cliente</option>' + clientOpts(c.cid);
+      cli.value = c.cid; showNew(false); $("#ncn", s).value = ""; $("#nct", s).value = "";
+      toast(dup ? "Cliente existente vinculado" : "Cliente creado y vinculado"); upd();
+    };
+    upd();
     $("#done", s).onclick = () => {
       if (met.value === "credito" && !$("#cli2", s).value) return toast("Elige el cliente para fiar");
       const sale = {
@@ -424,10 +555,12 @@
 
   /* ---------- Menu lateral ---------- */
   function openMenu() {
+    const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes y creditos", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
+      ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>${esc(db().settings.negocio)}</h2><button class="sh-x" id="x">${I.x}</button></div>
-      ${[["panel", "Panel de venta"], ["clientes", "Clientes y creditos"], ["catalogo", "Catalogo"], ["proveedores", "Proveedores"], ["historial", "Pedidos"], ["analitica", "Analitica"], ["soporte", "Soporte"], ["config", "Configuracion"]].map(([k, t]) => `<button class="quick" data-g="${k}"><div style="flex:1"><b>${t}</b></div>${I.chev}</button>`).join("")}`);
-    $("#x", s).onclick = closeSheet;
-    $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(); go(b.dataset.g); }));
+      ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`);
+    $("#x", s).onclick = () => closeSheet();
+    $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(true); go(b.dataset.g); }));
   }
   /* ---------- Pedidos: listado con filtros ---------- */
   let pedFiltro = 8;
@@ -538,6 +671,91 @@
     s.querySelector("#lp").oninput = (e) => { if (e.target.value.length >= 4) go2(); };
   }
 
+  /* ---------- Tarjeta de instalacion (fija arriba hasta deslizarla o descargar) ---------- */
+  const INS_OFF = "pedipos.install.off", INS_DONE = "pedipos.install.done";
+  const esStandalone = () => matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+  function esIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
+  function esAndroid() { return /android/i.test(navigator.userAgent); }
+
+  function initInstall() {
+    const bar = $("#instbar");
+    if (!bar) return;
+    /* ya instalada, o descartada hace poco: no se muestra */
+    if (esStandalone() || localStorage.getItem(INS_DONE)) return;
+    if (Number(localStorage.getItem(INS_OFF) || 0) > Date.now() - 7 * 864e5) return;
+
+    const sub = $("#instsub");
+    if (sub && esIOS() && !window.__ppInstallPrompt) sub.textContent = "Toca Descargar y sigue 2 pasos";
+
+    const cerrar = (anim) => {
+      if (anim === false) { bar.hidden = true; return; }
+      bar.classList.add("out");
+      setTimeout(() => { bar.hidden = true; bar.classList.remove("out"); }, 230);
+    };
+    const descartar = () => { localStorage.setItem(INS_OFF, String(Date.now())); cerrar(); };
+
+    /* --- deslizar a los lados para ocultarla --- */
+    let x0 = 0, y0 = 0, dx = 0, arrastrando = false;
+    bar.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; arrastrando = true;
+      bar.classList.add("drag");
+    }, { passive: true });
+    bar.addEventListener("touchmove", (e) => {
+      if (!arrastrando) return;
+      const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+      if (Math.abs(my) > Math.abs(mx) && Math.abs(my) > 12) { arrastrando = false; bar.classList.remove("drag"); bar.style.transform = ""; return; }
+      dx = mx;
+      bar.style.transform = "translateX(" + dx + "px)";
+      bar.style.opacity = String(Math.max(.25, 1 - Math.abs(dx) / 260));
+    }, { passive: true });
+    const soltar = () => {
+      if (!arrastrando) return;
+      arrastrando = false; bar.classList.remove("drag");
+      if (Math.abs(dx) > 70) { bar.style.transform = ""; bar.style.opacity = ""; descartar(); }
+      else { bar.style.transform = ""; bar.style.opacity = ""; }
+      dx = 0;
+    };
+    bar.addEventListener("touchend", soltar);
+    bar.addEventListener("touchcancel", soltar);
+
+    /* --- boton Descargar --- */
+    $("#instbtn").onclick = async () => {
+      const p = window.__ppInstallPrompt;
+      if (p) {
+        try {
+          p.prompt();
+          const r = await p.userChoice;
+          window.__ppInstallPrompt = null;
+          if (r && r.outcome === "accepted") { localStorage.setItem(INS_DONE, "1"); cerrar(); toast("Instalando PediPOS..."); }
+          else toast("Puedes instalarla despues desde este aviso");
+        } catch (_) { guiaInstalar(); }
+        return;
+      }
+      guiaInstalar();
+    };
+
+    /* aparece sola, sin empujar el contenido de golpe */
+    bar.hidden = false;
+    bar.classList.add("vin");
+    setTimeout(() => bar.classList.remove("vin"), 400);
+  }
+
+  /* Instrucciones cuando el telefono no ofrece el aviso automatico (iPhone, o Chrome sin aviso). */
+  function guiaInstalar() {
+    const pasos = esIOS()
+      ? ["Abre esta pagina en Safari.", "Toca el boton Compartir (el cuadro con la flecha hacia arriba).", "Elige Anadir a pantalla de inicio y confirma con Anadir."]
+      : esAndroid()
+        ? ["Abre el menu del navegador (los tres puntos arriba a la derecha).", "Toca Instalar aplicacion o Anadir a pantalla principal.", "Confirma con Instalar."]
+        : ["Abre el menu del navegador.", "Busca Instalar aplicacion o Anadir a pantalla principal.", "Confirma con Instalar."];
+    const s = sheet(`<div class="sh-h"><h2>Instalar PediPOS</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <p class="cnt" style="margin:0 0 12px">Queda como una app en tu telefono y abre sin internet.</p>
+      <div class="iguide">${pasos.map((t, i) => `<div class="st"><span class="n">${i + 1}</span><p>${esc(t)}</p></div>`).join("")}</div>
+      <button class="big" id="iok" style="width:100%;margin-top:16px">${I.check} Entendido</button>`);
+    $("#x", s).onclick = () => closeSheet();
+    $("#iok", s).onclick = () => { closeSheet(); localStorage.setItem(INS_OFF, String(Date.now())); const b = $("#instbar"); if (b) { b.classList.add("out"); setTimeout(() => (b.hidden = true), 230); } };
+  }
+
   /* ---------- Conexion y arranque ---------- */
   function netbar() {
     const b = $("#netbar"), st = window.PPSync.state;
@@ -548,10 +766,11 @@
   window.addEventListener("pp:sync", netbar);
   window.addEventListener("pp:data", () => { if (!document.getElementById("sheet") && voice.phase === "idle" && tab !== "panel") render(); });
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
-  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db };
+  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar };
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => toast(window.PPSync.state.pending ? window.PPSync.state.pending + " envio(s) pendiente(s)" : "Todo al dia");
-  $("#btnAvatar").onclick = () => go("config");
-  go("panel"); netbar(); window.PPSync.start();
+  go("panel"); netbar(); window.PPSync.start(); initInstall();
+  addEventListener("pp:installable", () => { const b = $("#instbar"); if (b && b.hidden && !localStorage.getItem(INS_DONE)) { localStorage.removeItem(INS_OFF); b.hidden = false; } });
+  addEventListener("pp:installed", () => { localStorage.setItem(INS_DONE, "1"); const b = $("#instbar"); if (b) { b.hidden = true; } toast("PediPOS instalada"); });
   if (db().settings.pinReq && !db().session) setTimeout(loginScreen, 260);
 })();

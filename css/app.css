@@ -233,3 +233,122 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .dsum .r.chg span{color:#0B7A52;font-weight:700}
 .comp{width:100%;border-radius:14px;margin-top:10px;border:1px solid var(--line)}
 .big.dark{background:#111;color:#fff}
+
+/* =====================================================================
+   v14: ajustes de panel, encabezado, navegacion, animaciones y dictado
+   ===================================================================== */
+
+/* ---------- Encabezado: logo | titulo | campana | menu ---------- */
+.top{gap:10px}
+.top .logo{width:40px;height:40px;border-radius:50%;flex:none;display:block;box-shadow:0 2px 8px #0b8f5f33}
+.top h1{font-size:17px;padding-left:2px}
+.avatar[hidden]{display:none!important}
+#btnMenu{margin-right:-6px}
+
+/* ---------- Talonario: subtitulo y ITBIS mas discretos ---------- */
+.tick-h{font-size:13px;letter-spacing:.06em;padding:13px 14px 9px}
+.itbis-r span{font-size:13px}
+.sw{width:56px;height:30px;flex:none;overflow:hidden}
+.sw::after{top:3px;left:3px;width:24px;height:24px;transition:left .22s cubic-bezier(.3,.8,.3,1),background .2s}
+.sw.on::after{left:29px}
+
+/* fila manual para escribir un producto a mano */
+.row.man{background:#fff;border-bottom:2px dashed var(--line);padding:9px 10px}
+.row.man input{width:100%;min-width:0;height:40px;border:1.5px solid var(--g-line);border-radius:12px;background:#fff;padding:0 9px;font-size:15px;font-weight:600;outline:none;text-align:center}
+.row.man input.nm{text-align:left}
+.row.man input:focus{border-color:var(--g);box-shadow:0 0 0 3px #1f9d5c22}
+.row.man .t{font-weight:700;text-align:right}
+
+/* ---------- Burbuja del carrito: pequena, en la esquina del icono ---------- */
+.cartfab b{top:-3px;right:-3px;min-width:21px;height:21px;padding:0 5px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;border-width:2px}
+
+/* ---------- Barra inferior: el verde llega hasta la esquina ---------- */
+.act{padding:0 0 env(safe-area-inset-bottom) 0;gap:0;overflow:hidden;border-radius:22px 22px 0 0;justify-content:stretch}
+.act button.n{flex:1;padding-left:42px}
+.act button.c{flex:1;border-radius:0;padding-right:42px;text-align:right}
+.act button.c.go{background:var(--g);color:#fff}
+.act .mic{flex:none;margin:0 2px;z-index:2}
+
+/* ---------- Dock de 5 iconos ---------- */
+.dock{grid-template-columns:repeat(5,1fr);height:62px}
+.dock button{gap:2px;font-size:10.5px;font-weight:600;color:#59616b;align-content:center}
+.dock button svg{width:23px;height:23px}
+.dock button.mid{position:relative}
+.dock button.mid .orb{width:50px;height:50px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;margin-top:-22px;box-shadow:0 8px 18px #1f9d5c55;border:4px solid #fff;transition:transform .15s}
+.dock button.mid:active .orb{transform:scale(.93)}
+.dock button.mid.on::after,.dock button.mid span{display:none}
+.dock button.on{color:var(--g)}
+.dock.hide{display:none}
+body.has-dock main#view{padding-bottom:calc(var(--dock-h) + 20px)}
+
+/* ---------- Transiciones entre pantallas ---------- */
+@keyframes vin{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+main#view.vin{animation:vin .34s cubic-bezier(.22,.9,.3,1) both}
+
+/* ---------- Hojas: entrada y salida suaves ---------- */
+.mask{animation:fadein .24s ease both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes fadeout{from{opacity:1}to{opacity:0}}
+@keyframes down{from{transform:translate(-50%,0);opacity:1}to{transform:translate(-50%,40px);opacity:0}}
+.mask.out{animation:fadeout .24s ease both}
+.sheet.out{animation:down .24s cubic-bezier(.4,0,.8,.4) both}
+
+/* ---------- Titulos de hojas con icono ---------- */
+.sh-h h2{display:flex;align-items:center;gap:10px}
+.sh-h h2 .hi{width:34px;height:34px;border-radius:11px;background:var(--g-soft);color:var(--g);display:grid;place-items:center;flex:none}
+.sh-h h2 .hi svg{width:19px;height:19px}
+
+/* ---------- Menu de navegacion con iconos ---------- */
+.mnu{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:13px 6px;border-bottom:1px solid #eef1f3;font-size:16px;font-weight:600}
+.mnu .mi{width:38px;height:38px;border-radius:12px;background:var(--g-soft);color:var(--g);display:grid;place-items:center;flex:none}
+.mnu .mi svg{width:20px;height:20px}
+.mnu:active{background:#f6f8fa}
+.mnu span{flex:1}
+.mnu .chev{color:#b4bcc4}
+
+/* ---------- Texto IA de Lista de pedido ---------- */
+.ia{line-height:1.35;font-size:13.5px;align-items:center;padding:11px 13px}
+.ia svg{margin-top:0}
+
+/* ---------- Tarjeta de dictado: compacta y profesional ---------- */
+.listen{left:50%;right:auto;transform:translateX(-50%);width:min(calc(100% - 32px),360px);bottom:96px;border-radius:20px;padding:10px 12px;gap:12px;border:1px solid var(--line);box-shadow:0 12px 30px #0b141c26;animation:cardin .26s cubic-bezier(.22,.9,.3,1) both}
+@keyframes cardin{from{opacity:0;transform:translate(-50%,12px) scale(.96)}to{opacity:1;transform:translate(-50%,0)}}
+.listen .wave{display:flex;align-items:center;gap:3px;height:28px;flex:none}
+.listen .wave i{display:block;width:3.5px;border-radius:3px;background:var(--red);height:8px;animation:wv 1s ease-in-out infinite}
+.listen .wave i:nth-child(2){animation-delay:.12s}.listen .wave i:nth-child(3){animation-delay:.24s}
+.listen .wave i:nth-child(4){animation-delay:.36s}.listen .wave i:nth-child(5){animation-delay:.48s}
+@keyframes wv{0%,100%{height:7px}50%{height:24px}}
+.listen .rd{display:none}
+.listen .tx b{font-size:11px;letter-spacing:.1em;margin-bottom:1px}
+.listen .tx span{font-size:13.5px;color:#3a424b;font-weight:500}
+.listen .stop{width:38px;height:38px;flex:none}
+.listen .stop i{width:13px;height:13px;border-radius:3px}
+.proc{bottom:96px;padding:9px 16px;font-size:13.5px;gap:10px;box-shadow:0 10px 26px #0b141c26}
+.spin{width:18px;height:18px}
+
+/* ---------- Cobrar: cliente con (+) ---------- */
+.cliwrap{display:flex;gap:10px;align-items:center}
+.cliwrap select{flex:1;min-width:0}
+.cliplus{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--g-soft);color:var(--g);border:1.5px solid var(--g-line)}
+.cliplus:active{transform:scale(.94)}
+.big:disabled{background:#b9ddc9;color:#fff;cursor:not-allowed}
+.hint{font-size:12.5px;color:#92400E;background:var(--amber-soft);border-radius:12px;padding:8px 12px;margin:8px 0 0}
+
+/* ---------- Tarjeta fija de instalacion ---------- */
+.instbar{position:relative;z-index:18;display:flex;align-items:center;gap:11px;padding:10px 12px;background:linear-gradient(135deg,#E9F7F0,#F6FCF9);border-bottom:1px solid var(--g-line);touch-action:pan-y;will-change:transform;transition:transform .22s cubic-bezier(.3,.8,.3,1),opacity .22s,height .22s,padding .22s}
+.instbar[hidden]{display:none}
+.instbar.drag{transition:none}
+.instbar .ii{width:38px;height:38px;border-radius:11px;flex:none;box-shadow:0 2px 8px #0b8f5f2e;pointer-events:none}
+.instbar .it{flex:1;min-width:0;pointer-events:none}
+.instbar .it b{display:block;font-size:13.5px;font-weight:700;line-height:1.2}
+.instbar .it span{display:block;font-size:11.5px;color:#4b5563;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.instbar .dl{height:36px;padding:0 13px;border-radius:999px;background:var(--g);color:#fff;font-size:13px;font-weight:700;flex:none;display:flex;align-items:center;gap:6px;box-shadow:0 3px 10px #1f9d5c3d}
+.instbar .dl:active{transform:scale(.96)}
+.instbar .dl svg{width:15px;height:15px}
+.instbar.out{transform:translateX(-115%);opacity:0}
+.instbar.gone{display:none}
+.iguide{display:flex;flex-direction:column;gap:10px}
+.iguide .st{display:flex;gap:11px;align-items:flex-start}
+.iguide .n{width:26px;height:26px;border-radius:50%;background:var(--g-soft);color:#0B7A52;font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
+.iguide p{margin:0;font-size:14.5px;line-height:1.35}
+.instbar.vin{animation:vin .34s cubic-bezier(.22,.9,.3,1) both}

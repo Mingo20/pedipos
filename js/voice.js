@@ -10,28 +10,69 @@
   let rec = null, listening = false;
   function supportsDictation() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
 
+  /* Limpia repeticiones que el reconocedor de Android suele producir
+     ("dos leches dos leches", o una frase que reaparece al final de la siguiente). */
+  function dedupe(txt) {
+    let w = String(txt || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+    if (w.length < 2) return w.join(" ");
+    const k = (x) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    /* 1) palabra repetida seguida: "leches leches" -> "leches" (no toca numeros: "2 2" puede ser real) */
+    w = w.filter((x, i) => i === 0 || k(x) !== k(w[i - 1]) || /^\d+$/.test(k(x)));
+    /* 2) bloque repetido seguido de n palabras: "a b c a b c" -> "a b c" */
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let n = Math.floor(w.length / 2); n >= 2; n--) {
+        for (let i = 0; i + 2 * n <= w.length; i++) {
+          let same = true;
+          for (let j = 0; j < n; j++) if (k(w[i + j]) !== k(w[i + n + j])) { same = false; break; }
+          if (same) { w.splice(i + n, n); changed = true; break; }
+        }
+        if (changed) break;
+      }
+    }
+    return w.join(" ");
+  }
+
   function startDictation(onText, onEnd, onError) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { onError && onError("no-soportado"); return false; }
     rec = new SR();
     rec.lang = "es-DO";
     rec.interimResults = true;
-    rec.continuous = true;
-    let finalText = "";
+    rec.continuous = false;          /* una frase por vez: evita que Android re-emita resultados acumulados */
+    rec.maxAlternatives = 1;
+    let committed = "";               /* frases ya cerradas en tandas anteriores */
+    let current = "";                 /* lo que lleva la tanda actual */
+    let wantStop = false, errored = false;
+
     rec.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) finalText += t + " "; else interim += t;
-      }
-      onText && onText((finalText + interim).trim());
+      /* se reconstruye SIEMPRE desde e.results completo (no se suma a lo anterior) */
+      let t = "";
+      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + " ";
+      current = t.replace(/\s+/g, " ").trim();
+      onText && onText(dedupe((committed + " " + current).trim()));
     };
-    rec.onerror = (e) => { listening = false; onError && onError(e.error || "error"); };
-    rec.onend = () => { listening = false; onEnd && onEnd(finalText.trim()); };
+    rec.onerror = (e) => {
+      const code = e.error || "error";
+      if (code === "no-speech" || code === "aborted") return;   /* no es fatal: onend decide */
+      errored = true; listening = false; onError && onError(code);
+    };
+    rec.onend = () => {
+      if (current) { committed = (committed + " " + current).trim(); current = ""; }
+      /* si el usuario no pidio parar, reabre para seguir escuchando sin duplicar lo ya cerrado */
+      if (!wantStop && !errored && listening) {
+        try { rec.start(); return; } catch (_) { /* cae a cierre */ }
+      }
+      wantStop = true;
+      listening = false;
+      if (!errored) onEnd && onEnd(dedupe(committed));
+    };
+    rec._stop = () => { wantStop = true; };
     try { rec.start(); listening = true; return true; }
     catch (e) { onError && onError("no-iniciado"); return false; }
   }
-  function stopDictation() { try { rec && rec.stop(); } catch (_) {} listening = false; }
+  function stopDictation() { try { rec && rec._stop && rec._stop(); rec && rec.stop(); } catch (_) {} listening = false; }
 
   /* ---------- Grabacion + Whisper (respaldo cuando el navegador no dicta) ----------
      Se graba con MediaRecorder y se transcribe con puter.ai.speech2txt (Whisper).
@@ -193,5 +234,5 @@
     return out;
   }
 
-  window.PPVoice = { supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, recordAndTranscribe, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
+  window.PPVoice = { dedupe, supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, recordAndTranscribe, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
 })();

@@ -200,7 +200,7 @@
     m.onclick = () => { layer.innerHTML = ""; };
     return s;
   }
-  function closeSheet() { document.getElementById("layer").innerHTML = ""; }
+  function closeSheet() { if (window.PPUI && window.PPUI.closeSheet) window.PPUI.closeSheet(); else document.getElementById("layer").innerHTML = ""; }
 
   /* ---------- Impresion termica ---------- */
   const PRINTER = { service: null, char: null, name: "" };
