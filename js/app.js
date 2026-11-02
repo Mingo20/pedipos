@@ -66,7 +66,7 @@
   }
   function go(t) {
     tab = t;
-    $("#title").textContent = { panel: "PANEL", catalogo: "CATALOGO", soporte: "SOPORTE", analitica: "ANALITICA", historial: "HISTORIAL", config: "CONFIGURACION" }[t] || t.toUpperCase();
+    $("#title").textContent = { panel: "PANEL", catalogo: "CATALOGO", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION" }[t] || t.toUpperCase();
     drawDock(); render(); $("#view").scrollTop = 0;
   }
 
@@ -128,7 +128,9 @@
     const s = document.createElement("section"); s.className = "sheet"; s.id = "sheet";
     s.innerHTML = '<div class="grip"></div>' + html;
     $("#layer").append(m, s);
-    m.onclick = () => { closeSheet(); onClose && onClose(); };
+    const t0 = Date.now();
+    /* el mismo toque que abre la hoja no debe cerrarla */
+    m.onclick = () => { if (Date.now() - t0 < 320) return; closeSheet(); onClose && onClose(); };
     return s;
   }
   function closeSheet() { $("#layer").innerHTML = ""; }
