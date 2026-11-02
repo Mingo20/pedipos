@@ -9,6 +9,13 @@
   const money2 = (n) => "RD$" + (Number(n) || 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const num = (n) => (Math.round(n * 100) / 100).toString();
 
+  /* Las ventas pueden venir con las lineas como lista o como texto JSON (al bajar de la nube). */
+  function lineasDe(s) {
+    let L = s && s.lineas;
+    if (typeof L === "string") { try { L = JSON.parse(L); } catch (_) { L = []; } }
+    return Array.isArray(L) ? L : [];
+  }
+
   const I = {
     menu: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h11M4 17h16"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
@@ -276,14 +283,14 @@
         cliente_id: $("#cli2", s).value || "", cliente: (() => { const c = (db().clients || []).find((x) => x.cid === $("#cli2", s).value); return c ? c.nombre : ""; })(),
       };
       db().sales.push(sale);
-      for (const l of sale.lineas) { const p = db().products.find((x) => x.pid === l.pid); if (p && typeof p.stock === "number") { p.stock = S.round2(p.stock - l.cant); window.PPSync.saveProduct(p); } }
+      for (const l of lineasDe(sale)) { const p = db().products.find((x) => x.pid === l.pid); if (p && typeof p.stock === "number") { p.stock = S.round2(p.stock - l.cant); window.PPSync.saveProduct(p); } }
       cart().lines = []; S.save(); window.PPSync.saveSale(sale);
       receipt(sale);
     };
   }
   function receipt(sale) {
     const s = sheet(`<div class="ok-big"><div class="tk">${I.ok}</div><h2>Venta registrada</h2><div class="cnt">${new Date(sale.fecha).toLocaleString("es-DO")}</div></div>
-      <div class="receipt">${sale.lineas.map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
+      <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
       <div class="sh-f"><button class="m" id="pr" aria-label="Imprimir">${I.print}</button><button class="big" id="wa">${I.wa} Enviar por WhatsApp</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
@@ -294,7 +301,7 @@
       } catch (e) { toast(String(e.message || e)); }
     };
     $("#wa", s).onclick = () => {
-      const txt = ["*" + db().settings.negocio + "*", ...sale.lineas.map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)), "Subtotal: " + money2(sale.subtotal), "ITBIS: " + money2(sale.itbis), "*TOTAL: " + money2(sale.total) + "*"].join("\n");
+      const txt = ["*" + db().settings.negocio + "*", ...lineasDe(sale).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)), "Subtotal: " + money2(sale.subtotal), "ITBIS: " + money2(sale.itbis), "*TOTAL: " + money2(sale.total) + "*"].join("\n");
       window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
     };
     $("#nw", s).onclick = () => { closeSheet(); render(); };
@@ -442,10 +449,9 @@
 
   /* ---------- Detalle del pedido ---------- */
   function openDetalle(s) {
-    if (!s) { toast("No encontre ese pedido"); return; }
-    toast("Abriendo detalle");
+    if (!s) return;
     const st = db().settings;
-    const lineas = (s.lineas || []).map((l) => `<div class="dl"><div><b>${esc(l.nombre)}</b><span>${num(l.cant)} ${esc(l.unidad || "unid.")} &middot; ${money(l.precio)} c/u</span></div><b>${money(l.cant * l.precio)}</b></div>`).join("");
+    const lineas = lineasDe(s).map((l) => `<div class="dl"><div><b>${esc(l.nombre)}</b><span>${num(l.cant)} ${esc(l.unidad || "unid.")} &middot; ${money(l.precio)} c/u</span></div><b>${money(l.cant * l.precio)}</b></div>`).join("");
     const pagado = s.metodo !== "credito";
     const sh = sheet(`<div class="sh-h"><h2>Detalle del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
       <div class="mch"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
@@ -464,7 +470,7 @@
         <button class="big dark" id="prt">${I.print} Imprimir</button></div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => {
-      const txt = ["*" + (db().settings.negocio || "Mi negocio") + "*", ...(s.lineas || []).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)),
+      const txt = ["*" + (db().settings.negocio || "Mi negocio") + "*", ...lineasDe(s).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)),
         "Subtotal: " + money2(s.subtotal), "ITBIS: " + money2(s.itbis), "TOTAL: " + money2(s.total)].join("\n");
       window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
     };
