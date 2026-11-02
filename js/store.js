@@ -22,9 +22,14 @@
       session: null,
       products: SEED_PRODUCTS.map((p) => ({ pid: uid("P"), itbis: true, activo: true, ...p })),
       sales: [],
-      users: [],
+      clients: [],
+      providers: [],
+      users: [
+        { uid: "U-ADMIN", nombre: "Domingo", rol: "administrador", pin: "1234", activo: true },
+        { uid: "U-CAJA", nombre: "Caja", rol: "cajero", pin: "0000", activo: true },
+      ],
       cart: { lines: [], itbis: true },
-      settings: { itbisRate: 0.18, negocio: "Mi negocio", moneda: "RD$" },
+      settings: { itbisRate: 0.18, negocio: "Mi negocio", moneda: "RD$", pinReq: false },
       lastPull: 0,
     };
   }

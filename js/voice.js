@@ -33,6 +33,46 @@
   }
   function stopDictation() { try { rec && rec.stop(); } catch (_) {} listening = false; }
 
+  /* ---------- Grabacion + Whisper (respaldo cuando el navegador no dicta) ----------
+     Se graba con MediaRecorder y se transcribe con puter.ai.speech2txt (Whisper).
+     El costo corre en la cuenta Puter del usuario. */
+  let mediaRec = null, chunks = [], stopping = false;
+
+  function canRecord() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  }
+
+  async function startRecording() {
+    if (!canRecord()) throw new Error("grabadora no disponible");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    chunks = []; stopping = false;
+    mediaRec = new MediaRecorder(stream);
+    mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    mediaRec.start();
+    listening = true;
+    return stream;
+  }
+
+  function stopRecording() {
+    stopping = true; listening = false;
+    return new Promise((resolve) => {
+      if (!mediaRec) return resolve(null);
+      mediaRec.onstop = () => {
+        try { mediaRec.stream.getTracks().forEach((t) => t.stop()); } catch (_) {}
+        const blob = new Blob(chunks, { type: (chunks[0] && chunks[0].type) || "audio/webm" });
+        mediaRec = null;
+        resolve(blob.size > 1200 ? blob : null);
+      };
+      try { mediaRec.stop(); } catch (_) { resolve(null); }
+    });
+  }
+
+  async function recordAndTranscribe() {
+    const blob = await stopRecording();
+    if (!blob) return "";
+    return await transcribeBlob(blob);
+  }
+
   /* Whisper por Puter: transcribe un audio grabado cuando el navegador no tiene dictado. */
   async function transcribeBlob(blob) {
     if (!window.puter || !puter.ai || !puter.ai.speech2txt) throw new Error("Puter no disponible");
@@ -153,5 +193,5 @@
     return out;
   }
 
-  window.PPVoice = { supportsDictation, startDictation, stopDictation, transcribeBlob, interpret, localParse, parseQty, norm, get listening() { return listening; } };
+  window.PPVoice = { supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, recordAndTranscribe, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
 })();

@@ -102,6 +102,19 @@
     for (const s of db.sales) if (pendSale.has(s.vid) || !sales.has(s.vid)) sales.set(s.vid, s);
     db.sales = [...sales.values()].filter((s) => !gone.has(s.vid)).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
 
+    /* clientes y proveedores: mismo criterio que productos */
+    const mergeList = (arr, pendSet, key) => {
+      const loc = new Map((arr.local || []).map((x) => [x[key], x]));
+      const out = [];
+      for (const x of arr.cloud || []) out.push(pendSet.has(x[key]) && loc.has(x[key]) ? loc.get(x[key]) : x);
+      for (const x of arr.local || []) if (pendSet.has(x[key]) && !out.some((o) => o[key] === x[key])) out.push(x);
+      return out.filter((x) => !gone.has(x[key]));
+    };
+    const pendCli = new Set(pend.filter((x) => x.action === "saveCliente").map((x) => x.payload.cliente.cid));
+    const pendProv = new Set(pend.filter((x) => x.action === "saveProveedor").map((x) => x.payload.proveedor.prid));
+    db.clients = mergeList({ cloud: j.clientes || [], local: db.clients || [] }, pendCli, "cid");
+    db.providers = mergeList({ cloud: j.proveedores || [], local: db.providers || [] }, pendProv, "prid");
+
     db.users = j.users || db.users;
     db.lastPull = j.t;
     S().save();
@@ -126,5 +139,9 @@
     deleteProduct: (pid) => enqueue("deleteProduct", { pid }),
     saveSale: (s) => enqueue("saveSale", { sale: s }),
     voidSale: (vid) => enqueue("voidSale", { vid }),
+    saveCliente: (c) => enqueue("saveCliente", { cliente: c }),
+    deleteCliente: (cid) => enqueue("deleteCliente", { cid }),
+    saveProveedor: (p) => enqueue("saveProveedor", { proveedor: p }),
+    deleteProveedor: (prid) => enqueue("deleteProveedor", { prid }),
   };
 })();
