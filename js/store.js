@@ -29,7 +29,7 @@
         { uid: "U-CAJA", nombre: "Caja", rol: "cajero", pin: "0000", activo: true },
       ],
       cart: { lines: [], itbis: true },
-      settings: { itbisRate: 0.18, negocio: "Mi negocio", moneda: "RD$", pinReq: false },
+      settings: { itbisRate: 0.18, negocio: "Mi negocio", direccion: "", telefono: "", moneda: "RD$", pinReq: false },
       lastPull: 0,
     };
   }

@@ -35,6 +35,7 @@
     bolt: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/></svg>',
     cart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.500"/><circle cx="18" cy="20" r="1.500"/><path d="M2 3h3l2.500 12h11l2-8H6"/></svg>',
     users: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.500"/><path d="M2.500 20a6.500 6.500 0 0 1 13 0M16 4.500a3.500 3.500 0 0 1 0 7M18 14.500a6.500 6.500 0 0 1 3.500 5.500"/></svg>',
+    cam: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h3l2-2h8l2 2h3v11H3z"/><circle cx="12" cy="13" r="3.2"/></svg>',
     card: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2.500"/><path d="M3 10h18"/></svg>',
     truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h11v10H2zM13 9h4l3 3v4h-7"/><circle cx="6.500" cy="18" r="1.800"/><circle cx="16.500" cy="18" r="1.800"/></svg>',
     gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.400 15a1.700 1.700 0 0 0 .3 1.800l.1.1a2 2 0 1 1-2.800 2.800l-.1-.1a1.700 1.700 0 0 0-1.800-.3 1.700 1.700 0 0 0-1 1.500V21a2 2 0 1 1-4 0v-.1a1.700 1.700 0 0 0-1.100-1.500 1.700 1.700 0 0 0-1.800.3l-.1.1a2 2 0 1 1-2.800-2.800l.1-.1a1.700 1.700 0 0 0 .3-1.800 1.700 1.700 0 0 0-1.500-1H3a2 2 0 1 1 0-4h.1a1.700 1.700 0 0 0 1.500-1.100 1.700 1.700 0 0 0-.3-1.800l-.1-.1a2 2 0 1 1 2.800-2.800l.1.1a1.700 1.700 0 0 0 1.800.3H9a1.700 1.700 0 0 0 1-1.500V3a2 2 0 1 1 4 0v.1a1.700 1.700 0 0 0 1 1.500 1.700 1.700 0 0 0 1.800-.3l.1-.1a2 2 0 1 1 2.800 2.800l-.1.1a1.700 1.700 0 0 0-.3 1.800V9a1.700 1.700 0 0 0 1.500 1H21a2 2 0 1 1 0 4h-.1a1.700 1.700 0 0 0-1.500 1z"/></svg>',
@@ -268,6 +269,8 @@
         lineas: cart().lines.map((l) => ({ ...l })),
         subtotal: t.subtotal, itbis: t.itbis, total: t.total, aplica_itbis: cart().itbis,
         metodo: met.value, cajero: (db().session && db().session.nombre) || "Caja",
+        recibido: (() => { const r = parseFloat(String(rec.value || "").replace(",", ".")); return isFinite(r) ? r : 0; })(),
+        cambio: (() => { const r = parseFloat(String(rec.value || "").replace(",", ".")); return isFinite(r) && r >= t.total ? S.round2(r - t.total) : 0; })(),
         cliente_id: $("#cli2", s).value || "", cliente: (() => { const c = (db().clients || []).find((x) => x.cid === $("#cli2", s).value); return c ? c.nombre : ""; })(),
       };
       db().sales.push(sale);
@@ -413,17 +416,66 @@
   /* ---------- Menu lateral ---------- */
   function openMenu() {
     const s = sheet(`<div class="sh-h"><h2>${esc(db().settings.negocio)}</h2><button class="sh-x" id="x">${I.x}</button></div>
-      ${[["panel", "Panel de venta"], ["clientes", "Clientes y creditos"], ["catalogo", "Catalogo"], ["proveedores", "Proveedores"], ["historial", "Historial de ventas"], ["analitica", "Analitica"], ["soporte", "Soporte"], ["config", "Configuracion"]].map(([k, t]) => `<button class="quick" data-g="${k}"><div style="flex:1"><b>${t}</b></div>${I.chev}</button>`).join("")}`);
+      ${[["panel", "Panel de venta"], ["clientes", "Clientes y creditos"], ["catalogo", "Catalogo"], ["proveedores", "Proveedores"], ["historial", "Pedidos"], ["analitica", "Analitica"], ["soporte", "Soporte"], ["config", "Configuracion"]].map(([k, t]) => `<button class="quick" data-g="${k}"><div style="flex:1"><b>${t}</b></div>${I.chev}</button>`).join("")}`);
     $("#x", s).onclick = closeSheet;
     $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(); go(b.dataset.g); }));
   }
+  /* ---------- Pedidos: listado con filtros ---------- */
+  let pedFiltro = 8;
   function renderHistorial() {
-    const L = db().sales.slice().reverse();
-    $("#view").innerHTML = L.length ? L.map((s) => `<div class="card"><div class="line" style="margin:0"><span>${new Date(s.fecha).toLocaleString("es-DO", { dateStyle: "medium", timeStyle: "short" })}</span><b style="color:var(--ink)">${money2(s.total)}</b></div><div class="cnt" style="margin:6px 0 0">${esc(s.metodo)}${s.cliente ? " &middot; " + esc(s.cliente) : ""}</div></div>`).join("") : '<div class="empty">Aun no hay ventas.</div>';
+    const all = db().sales.slice().reverse();
+    const L = all.slice(0, pedFiltro);
+    const chip = (n, t) => `<button class="chip ${pedFiltro === n ? "on" : ""}" data-f="${n}">${t}</button>`;
+    $("#view").innerHTML = `<div class="filt">${chip(4, "Ultimos 4")}${chip(8, "Ultimos 8")}${chip(9999, "Por fecha")}</div>` +
+      (L.length ? L.map((s) => {
+        const est = s.metodo === "credito" ? "A credito" : "Pagado";
+        return `<button class="ord" data-v="${esc(s.vid)}">
+          <div class="ord-t"><b>${esc(s.cliente || "Sin cliente")}</b><span class="badge ${s.metodo === "credito" ? "cred" : ""}">${est}</span></div>
+          <div class="ord-b"><span>${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span><b>${money(s.total)}</b></div>
+        </button>`;
+      }).join("") : '<div class="card"><div class="cnt">Todavia no hay pedidos. Registra el primero desde el panel.</div></div>');
+    $$(".filt .chip", $("#view")).forEach((c) => (c.onclick = () => { pedFiltro = parseInt(c.dataset.f, 10); renderHistorial(); }));
+    $$(".ord", $("#view")).forEach((b) => (b.onclick = () => openDetalle(db().sales.find((x) => x.vid === b.dataset.v))));
+  }
+
+  /* ---------- Detalle del pedido ---------- */
+  function openDetalle(s) {
+    if (!s) return;
+    const st = db().settings;
+    const lineas = (s.lineas || []).map((l) => `<div class="dl"><div><b>${esc(l.nombre)}</b><span>${num(l.cant)} ${esc(l.unidad || "unid.")} &middot; ${money(l.precio)} c/u</span></div><b>${money(l.cant * l.precio)}</b></div>`).join("");
+    const pagado = s.metodo !== "credito";
+    const sh = sheet(`<div class="sh-h"><h2>Detalle del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <div class="mch"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
+      <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span></div>
+      <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
+      <div class="dls">${lineas}</div>
+      <div class="dsum">
+        <div class="r"><span>Subtotal</span><span>${money2(s.subtotal)}</span></div>
+        <div class="r it"><span>ITBIS (${Math.round((s.aplica_itbis ? rate() : 0) * 100)}%)</span><span>${money2(s.itbis)}</span></div>
+        <div class="r tot"><span>TOTAL</span><span>${money2(s.total)}</span></div>
+        ${s.recibido ? `<div class="r"><span>Recibido</span><span>${money2(s.recibido)}</span></div><div class="r chg"><span>Cambio</span><span>${money2(s.cambio || 0)}</span></div>` : ""}
+      </div>
+      ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}
+      <div class="sh-f"><button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button>
+        <button class="big" id="send">${I.wa} Enviar</button>
+        <button class="big dark" id="prt">${I.print} Imprimir</button></div>`);
+    $("#x", sh).onclick = closeSheet;
+    $("#send", sh).onclick = () => {
+      const txt = ["*" + (db().settings.negocio || "Mi negocio") + "*", ...(s.lineas || []).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)),
+        "Subtotal: " + money2(s.subtotal), "ITBIS: " + money2(s.itbis), "TOTAL: " + money2(s.total)].join("\n");
+      window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
+    };
+    $("#prt", sh).onclick = async () => {
+      try { const via = await window.PPExtra.imprimir(s); toast(via === "bt" ? "Enviado a la impresora" : "Abriendo impresion"); }
+      catch (e) { toast(String(e.message || e)); }
+    };
+    $("#cam", sh).onclick = () => window.PPExtra.adjuntarComprobante(s, openDetalle);
   }
   function renderConfig() {
     const st = db().settings;
     $("#view").innerHTML = `<div class="card"><label class="field"><span>Nombre del negocio</span><input id="cn" value="${esc(st.negocio)}"></label>
+      <label class="field"><span>Direccion del negocio</span><input id="cd" value="${esc(st.direccion || "")}" placeholder="Calle, numero, sector"></label>
+      <label class="field"><span>Telefono del negocio</span><input id="ct2" value="${esc(st.telefono || "")}" placeholder="8090000000"></label>
       <label class="field"><span>ITBIS (%)</span><input id="ci" inputmode="decimal" value="${Math.round(st.itbisRate * 100)}"></label>
       <button class="btn" id="cs">Guardar</button></div>
       <div class="card"><h3>Caja y acceso</h3>
@@ -440,7 +492,7 @@
       try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); render(); }
       catch (e) { toast(String(e.message || e)); }
     };
-    $("#cs").onclick = () => { st.negocio = $("#cn").value.trim() || "Mi negocio"; const r = parseFloat($("#ci").value); if (r >= 0 && r <= 100) st.itbisRate = r / 100; S.save(); toast("Guardado"); };
+    $("#cs").onclick = () => { st.negocio = $("#cn").value.trim() || "Mi negocio"; st.direccion = ($("#cd") ? $("#cd").value.trim() : ""); st.telefono = ($("#ct2") ? $("#ct2").value.trim() : ""); const r = parseFloat($("#ci").value); if (r >= 0 && r <= 100) st.itbisRate = r / 100; S.save(); toast("Guardado"); };
     const paint = () => ($("#syn") && ($("#syn").textContent = (window.PPSync.state.online ? "Conectado" : "Sin conexion") + " · " + window.PPSync.state.pending + " pendiente(s)"));
     paint(); $("#sy").onclick = async () => { await window.PPSync.flush(); await window.PPSync.pull(); paint(); toast("Sincronizado"); };
   }

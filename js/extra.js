@@ -268,7 +268,35 @@
     return "sistema";
   }
 
-  window.PPExtra = { renderClientes, renderProveedores, editarCliente, editarProveedor, deudaDe, imprimir, btConectar, PRINTER };
+  /* Adjuntar la foto del comprobante a una venta (sin internet: queda en el telefono) */
+  async function adjuntarComprobante(sale, listo) {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "image/*"; inp.capture = "environment";
+    inp.onchange = () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      const fr = new FileReader();
+      fr.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 700, esc = Math.min(1, max / Math.max(img.width, img.height));
+          const cv = document.createElement("canvas");
+          cv.width = Math.round(img.width * esc); cv.height = Math.round(img.height * esc);
+          cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+          sale.foto = cv.toDataURL("image/jpeg", 0.6);
+          S.save(); sync.saveSale(sale);
+          toast("Comprobante guardado");
+          listo(sale);
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(f);
+    };
+    inp.click();
+  }
+
+  window.PPExtra = {
+    adjuntarComprobante, renderClientes, renderProveedores, editarCliente, editarProveedor, deudaDe, imprimir, btConectar, PRINTER };
   window.renderClientes = renderClientes;
   window.renderProveedores = renderProveedores;
 })();
