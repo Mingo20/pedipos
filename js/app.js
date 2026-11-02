@@ -756,7 +756,8 @@
       <div class="iguide">${pasos.map((t, i) => `<div class="st"><span class="n">${i + 1}</span><p>${esc(t)}</p></div>`).join("")}</div>
       <button class="big" id="iok" style="width:100%;margin-top:16px">${I.check} Entendido</button>`);
     $("#x", s).onclick = () => closeSheet();
-    $("#iok", s).onclick = () => { closeSheet(); localStorage.setItem(INS_OFF, String(Date.now())); const b = $("#instbar"); if (b) { b.classList.add("out"); setTimeout(() => (b.hidden = true), 230); } };
+    /* cerrar la guia no borra la tarjeta: sigue arriba hasta deslizarla o instalar */
+    $("#iok", s).onclick = () => closeSheet();
   }
 
   /* ---------- Conexion y arranque ---------- */
