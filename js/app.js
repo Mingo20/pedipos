@@ -442,7 +442,8 @@
 
   /* ---------- Detalle del pedido ---------- */
   function openDetalle(s) {
-    if (!s) return;
+    if (!s) { toast("No encontre ese pedido"); return; }
+    toast("Abriendo detalle");
     const st = db().settings;
     const lineas = (s.lineas || []).map((l) => `<div class="dl"><div><b>${esc(l.nombre)}</b><span>${num(l.cant)} ${esc(l.unidad || "unid.")} &middot; ${money(l.precio)} c/u</span></div><b>${money(l.cant * l.precio)}</b></div>`).join("");
     const pagado = s.metodo !== "credito";
