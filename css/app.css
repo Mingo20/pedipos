@@ -20,7 +20,7 @@ input,textarea,select{font-family:inherit;font-size:14px;color:inherit}
 .netbar{padding:6px 14px;font-size:13.5px;font-weight:600;text-align:center;background:var(--amber-soft);color:#92400E}
 .netbar.ok{background:var(--g-soft);color:#0B6B45}
 
-main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--dock-h) + 20px)}
+main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--dock-h) + 34px)}
 
 /* ---------- Panel / talonario ---------- */
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
@@ -28,7 +28,7 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .pill svg{color:var(--g)}
 .pill:active{transform:scale(.98);background:var(--g-soft)}
 
-.tick{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);box-shadow:0 1px 2px #0000000a;margin-bottom:46px}
+.tick{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);box-shadow:0 1px 2px #0000000a;margin-bottom:40px}
 .tick-h{display:grid;grid-template-columns:1.25fr 1fr .8fr 1fr;gap:6px;padding:14px 14px 10px;font-size:15.5px;letter-spacing:.09em;font-weight:700;color:var(--mut);border-bottom:2px dashed var(--line)}
 .tick-h span:last-child{text-align:right}
 .tick-b{min-height:84px}
@@ -49,7 +49,7 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .tot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px}
 .tot span{font-size:15px;letter-spacing:.07em;font-weight:700;color:var(--mut);padding-bottom:6px}
 .tot b{font-size:32px;letter-spacing:-.01em}
-.plus{position:absolute;left:50%;bottom:-28px;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 6px 18px #0002;display:grid;place-items:center;color:var(--g);z-index:3}
+.plus{position:absolute;left:50%;bottom:-22px;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 6px 18px #0002;display:grid;place-items:center;color:var(--g);z-index:3}
 .plus:active{transform:translateX(-50%) scale(.95)}
 
 /* ---------- Dock inferior ---------- */
@@ -65,7 +65,7 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .act button.c{height:100%;border-radius:0 34px 0 0;font-size:18px;font-weight:700;text-align:right;padding-right:48px;color:var(--mut);transition:.2s}
 .act button.c.go{background:var(--g);color:#fff}
 .act button.c:disabled{opacity:.9}
-.mic{position:absolute;left:50%;top:-26px;transform:translateX(-50%);width:72px;height:72px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 -4px 16px #0001}
+.mic{position:absolute;left:50%;top:-20px;transform:translateX(-50%);width:72px;height:72px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 -4px 16px #0001}
 .mic i{width:56px;height:56px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font-style:normal;transition:.2s}
 .mic.on i{background:var(--red);box-shadow:0 0 0 10px #e5484d33}
 .mic.wait i{background:#f59e0b}
