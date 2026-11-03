@@ -464,7 +464,7 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 .act .mic.wait i{background:#f59e0b}
 .act button.c.go{background:transparent;color:var(--ink)}
 .act.hay::before{content:"";position:absolute;left:8px;right:8px;top:6px;bottom:calc(env(safe-area-inset-bottom) + 3px);border:2px solid var(--g);border-radius:20px;pointer-events:none}
-.act.hay button.c{color:var(--g)}
+.act.hay button.c{color:var(--ink)}
 /* el microfono ya ocupa el centro: se separa un poco del marco */
 .act .mic{z-index:1}
 .act .mic i{box-shadow:0 0 0 3px #fff}
