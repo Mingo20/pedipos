@@ -453,3 +453,70 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 .hx-b2{background:#334155}
 .hx-b1 svg,.hx-b2 svg{width:16px;height:16px}
 .hx-foot{margin:14px 4px 8px;font-size:11px;color:var(--mut);text-align:center;line-height:1.4}
+
+/* ========== v20 ========== */
+
+/* --- barra de venta: microfono verde, mas grande, y marco en vez de fondo verde --- */
+.act .mic{width:58px;height:58px}
+.act .mic i{width:50px;height:50px;background:var(--g);color:#fff}
+.act .mic i svg{width:26px;height:26px}
+.act .mic.on i{background:var(--red);box-shadow:0 0 0 8px #e5484d2e}
+.act .mic.wait i{background:#f59e0b}
+.act button.c.go{background:transparent;color:var(--ink)}
+.act.hay::before{content:"";position:absolute;left:8px;right:8px;top:6px;bottom:calc(env(safe-area-inset-bottom) + 3px);border:2px solid var(--g);border-radius:20px;pointer-events:none}
+.act.hay button.c{color:var(--g)}
+/* el microfono ya ocupa el centro: se separa un poco del marco */
+.act .mic{z-index:1}
+.act .mic i{box-shadow:0 0 0 3px #fff}
+
+/* --- menu lateral derecho (75% del ancho) --- */
+.sheet.side{left:auto;right:0;transform:none;top:0;bottom:0;width:75%;max-width:420px;height:100dvh;max-height:100dvh;border-radius:26px 0 0 26px;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);animation:lado .3s cubic-bezier(.22,.9,.3,1) both}
+.sheet.side .grip{display:none}
+.sheet.side .sh-h{margin-bottom:10px}
+.sheet.side .mnu{margin-bottom:2px;border-radius:14px}
+.sheet.side.out{animation:ladoOut .24s cubic-bezier(.4,0,.8,.4) both}
+@keyframes lado{from{transform:translateX(102%)}}
+@keyframes ladoOut{to{transform:translateX(102%)}}
+
+/* --- boton flotante fuera del scroll --- */
+#float{position:fixed;inset:0;pointer-events:none;z-index:31}
+#float .fab{pointer-events:auto}
+
+/* --- tarjetas de producto: precio y forma de venta en la misma linea --- */
+.pcard .prow{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pcard .un{background:#eef1f4;color:#5F6975;border-radius:8px;padding:2px 7px;font-size:11.5px;font-weight:700;text-transform:lowercase;letter-spacing:.01em}
+.pgrid .pcard .ph{height:92px}
+
+/* --- filas de clientes y proveedores --- */
+.clrow{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:11px 12px;margin-bottom:8px}
+.clrow .cli{flex:1;min-width:0}
+.clrow .cli b{display:block;font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clrow .cli span{display:block;color:var(--mut);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ico.wa{background:#E7F8EE;color:#128C4A}
+.ico.wa svg{width:20px;height:20px}
+
+/* --- historial de movimientos --- */
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:11px 13px;margin-bottom:7px}
+.hrow .hi{min-width:0}
+.hrow .hi b{display:block;font-size:14px}
+.hrow .hi span{display:block;color:var(--mut);font-size:12px;margin-top:2px}
+.hrow > b{font-size:14.5px;white-space:nowrap}
+.hrow b.red{color:#B3261E}
+.hrow b.green{color:#0B6B45}
+
+/* --- pedidos: textos un poco mas grandes --- */
+.ord{padding:14px 15px;border-radius:18px}
+.ord-t b{font-size:15.5px}
+.ord-b{font-size:13.5px;margin-top:6px}
+.ord-b b{font-size:16px}
+.ord .badge{font-size:12px}
+
+/* --- detalle del pedido: etiquetas de Enviar e Imprimir mas pequenas, iconos igual --- */
+.big.slim .bl{font-size:16px;font-weight:700}
+.big.slim svg{width:24px;height:24px;flex:none}
+
+/* --- foto del producto: texto centrado y carga desde el equipo --- */
+.upimg .btn{display:flex;align-items:center;justify-content:center;text-align:center;padding:0 14px}
+/* el dock ya no muestra la rayita verde de la pantalla activa */
+.dock button.on::after{display:none}

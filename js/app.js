@@ -89,6 +89,27 @@
   function vibrar(ms) { try { navigator.vibrate && navigator.vibrate(ms || 14); } catch (_) {} }
   function tap() { beep(); vibrar(14); }
 
+  /* ---------- Boton flotante (vive fuera del area con scroll: queda fijo) ---------- */
+  function setFab(icon, onclick, label) {
+    const f = $("#float"); if (!f) return;
+    f.innerHTML = `<button class="fab" id="fabMain" aria-label="${label || ""}">${icon}</button>`;
+    $("#fabMain").onclick = onclick;
+  }
+  function clearFab() { const f = $("#float"); if (f) f.innerHTML = ""; }
+
+  /* ---------- Contacto por WhatsApp ---------- */
+  function waLink(tel, txt) {
+    const d = String(tel || "").replace(/\D/g, "");
+    if (!d) return null;
+    const num = d.length === 10 ? "1" + d : d;   /* RD: 809... se antepone el 1 */
+    return "https://wa.me/" + num + (txt ? "?text=" + encodeURIComponent(txt) : "");
+  }
+  function chatear(tel, txt) {
+    const u = waLink(tel, txt);
+    if (!u) return toast("Ese contacto no tiene WhatsApp registrado");
+    window.open(u, "_blank");
+  }
+
   /* ---------- Tarjeta de producto (catalogo y agregar producto) ---------- */
   function fotoDe(p) {
     if (p && p.img) return `<img src="${esc(p.img)}" alt="">`;
@@ -98,13 +119,12 @@
     return `<button class="pcard" data-p="${esc(p.pid)}" ${extra || ""}>
       <span class="ph">${fotoDe(p)}</span>
       <b class="nm">${esc(p.nombre)}</b>
-      <span class="pr">${money(p.precio)}</span>
-      <span class="un">${esc(p.unidad || "unidad")}</span>
+      <span class="prow"><span class="pr">${money(p.precio)}</span><span class="un">${esc(p.unidad || "unidad")}</span></span>
     </button>`;
   }
 
   /* ---------- Dock ---------- */
-  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"]];
+  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
   function drawDock() {
     const d = $("#dock");
     /* el panel de venta tiene su propia barra inferior: ahi el dock no aparece */
@@ -120,7 +140,7 @@
   function go(t) {
     const cambio = t !== tab;
     tab = t;
-    $("#title").textContent = TITULOS[t] || t.toUpperCase();
+    $("#title").textContent = "PediPOS";   /* el encabezado ya no cambia con la pantalla */
     drawDock(); render(); $("#view").scrollTop = 0;
     if (cambio) {
       const v = $("#view"); v.classList.remove("vin"); void v.offsetWidth; v.classList.add("vin");
@@ -213,8 +233,8 @@
     const c = cart(), t = tot(), n = c.lines.length;
     $("#view").innerHTML = `
       <div class="pair">
-        <button class="pill" id="bSearch">${I.search} Buscar</button>
         <button class="pill" id="bList">${I.list} Lista</button>
+        <button class="pill" id="bSearch">${I.box} Productos</button>
       </div>
       <section class="tick">
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
@@ -227,9 +247,9 @@
         </div>
         <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}</button>
       </section>
-      <div class="act">
+      <div class="act ${n ? "hay" : ""}">
         <button class="n" id="bNew">Nueva</button>
-        <button class="c ${n ? "go" : ""}" id="bPay" ${n ? "" : "disabled"}>Cobrar</button>
+        <button class="c" id="bPay" ${n ? "" : "disabled"}>Cobrar</button>
         <div class="mic ${voice.phase === "listening" || voice.phase === "recording" ? "on" : voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${I.mic}</i></div>
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
@@ -284,10 +304,11 @@
       if (/✕/.test(b.textContent) || b.id === "x") b.addEventListener("click", (e) => { e.stopImmediatePropagation(); closeSheet(); }, true);
     });
   }
-  function sheet(html, onClose) {
+  function sheet(html, onClose, opts) {
     closeSheet(true);
+    const lado = opts && opts.lado;
     const m = document.createElement("div"); m.className = "mask"; m.id = "mask";
-    const s = document.createElement("section"); s.className = "sheet"; s.id = "sheet";
+    const s = document.createElement("section"); s.className = "sheet" + (lado ? " side" : ""); s.id = "sheet";
     s.innerHTML = '<div class="grip"></div>' + html;
     $("#layer").append(m, s);
     decorar(s);
@@ -309,7 +330,7 @@
   /* ----- Buscar producto: tarjetas en dos columnas ----- */
   function openSearch() {
     const s = sheet(`<div class="sh-h"><h2>Agregar producto</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <div class="search">${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
+      <div class="search">${I.box}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
       <div class="pgrid" id="res"></div>`);
     $("#x", s).onclick = closeSheet;
     const q = $("#q", s), res = $("#res", s);
@@ -340,7 +361,7 @@
       }));
       ponerContadores();
     };
-    q.oninput = draw; draw(); setTimeout(() => q.focus(), 120);
+    q.oninput = draw; draw();   /* sin foco automatico: el teclado ya no salta solo */
   }
 
   /* ----- Lista de pedido con IA ----- */
@@ -542,8 +563,7 @@
     const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))];
     $("#view").innerHTML = `<div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}"></div>
       <div class="chips"><button class="chip ${catCat ? "" : "on"}" data-c="">Todos</button>${cats.map((c) => `<button class="chip ${catCat === c ? "on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-      <div class="pgrid" id="cl"></div>
-      <button class="fab" id="newp" aria-label="Crear producto">${I.plus}</button>`;
+      <div class="pgrid" id="cl"></div>`;
     const draw = () => {
       const t = window.PPVoice.norm(catQ);
       const l = db().products.filter((p) => p.activo !== false && (!catCat || p.categoria === catCat) && (!t || window.PPVoice.norm(p.nombre).includes(t)));
@@ -552,7 +572,7 @@
     };
     $("#cq").oninput = (e) => { catQ = e.target.value; draw(); };
     $$(".chip").forEach((c) => (c.onclick = () => { catCat = c.dataset.c; renderCatalogo(); }));
-    $("#newp").onclick = () => editProduct(null);
+    setFab(I.plus, () => editProduct(null), "Crear producto");
     draw();
   }
   function editProduct(p) {
@@ -565,7 +585,7 @@
       <label class="field"><span>Stock</span><input id="fs" inputmode="decimal" value="${p.stock || 0}"></label>
       <div class="field"><span>Foto del producto</span>
         <div class="upimg"><span class="pv" id="pv">${fotoDe(p)}</span>
-          <label class="btn gris" style="margin:0;flex:1">Elegir foto<input type="file" accept="image/*" capture="environment" id="fi" hidden></label>
+          <label class="btn gris" style="margin:0;flex:1">Elegir foto<input type="file" accept="image/*" id="fi" hidden></label>
           <button class="btn gris" id="fq" style="margin:0" ${p.img ? "" : "hidden"}>Quitar</button>
         </div>
       </div>
@@ -730,7 +750,7 @@
     const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes y creditos", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute; de Navegaci&oacute;n</h2><button class="sh-x" id="x">${I.x}</button></div>
-      ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`);
+      ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
     $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(true); go(b.dataset.g); }));
   }
@@ -745,7 +765,7 @@
         const est = s.metodo === "credito" ? "A credito" : "Pagado";
         return `<button class="ord" data-v="${esc(s.vid)}">
           <div class="ord-t"><b>${esc(s.cliente || "Sin cliente")}</b><span class="badge ${s.metodo === "credito" ? "cred" : ""}">${est}</span></div>
-          <div class="ord-b"><span>${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span><b>${money(s.total)}</b></div>
+          <div class="ord-b"><span>${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span><b>${money(s.total)}</b></div>
         </button>`;
       }).join("") : '<div class="card"><div class="cnt">Todavia no hay pedidos. Registra el primero desde el panel.</div></div>');
     $$(".filt .chip", $("#view")).forEach((c) => (c.onclick = () => { pedFiltro = parseInt(c.dataset.f, 10); renderHistorial(); }));
@@ -760,7 +780,7 @@
     const pagado = s.metodo !== "credito";
     const sh = sheet(`<div class="sh-h"><h2>Detalle del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
       <div class="mch"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
-      <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span></div>
+      <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span></div>
       <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
       <div class="dls">${lineas}</div>
       <div class="dsum">
@@ -771,8 +791,8 @@
       </div>
       ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}
       <div class="sh-f"><button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button>
-        <button class="big" id="send">${I.wa} Enviar</button>
-        <button class="big dark" id="prt">${I.print} Imprimir</button></div>`);
+        <button class="big slim" id="send">${I.wa} <span class="bl">Enviar</span></button>
+        <button class="big slim dark" id="prt">${I.print} <span class="bl">Imprimir</span></button></div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => {
       const txt = ["*" + (db().settings.negocio || "Mi negocio") + "*", ...lineasDe(s).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)),
@@ -780,8 +800,18 @@
       window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
     };
     $("#prt", sh).onclick = async () => {
-      try { const via = await window.PPExtra.imprimir(s); toast(via === "bt" ? "Enviado a la impresora" : "Abriendo impresion"); }
-      catch (e) { toast(String(e.message || e)); }
+      const P = window.PPExtra.PRINTER;
+      try {
+        /* sin impresora vinculada se ofrece conectarla y luego imprime directo */
+        if (!P.char && navigator.bluetooth) {
+          if (confirm("No hay impresora vinculada. ¿Conectar una impresora termica por Bluetooth ahora?")) {
+            const nombre = await window.PPExtra.btConectar();
+            toast("Impresora " + nombre + " conectada");
+          }
+        }
+        const via = await window.PPExtra.imprimir(s);
+        toast(via === "bt" ? "Ticket enviado a " + (P.name || "la impresora") : "Abriendo impresion del sistema");
+      } catch (e) { toast("No se pudo imprimir: " + String(e.message || e)); }
     };
     $("#cam", sh).onclick = () => window.PPExtra.adjuntarComprobante(s, openDetalle);
   }
@@ -812,6 +842,7 @@
   }
 
   function render() {
+    clearFab();
     if (tab === "panel") renderPanel();
     else if (tab === "catalogo") renderCatalogo();
     else if (tab === "soporte") renderSoporte();
@@ -941,7 +972,7 @@
   window.addEventListener("pp:sync", netbar);
   window.addEventListener("pp:data", () => { if (!document.getElementById("sheet") && voice.phase === "idle" && tab !== "panel") render(); });
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
-  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar };
+  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab };
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => toast(window.PPSync.state.pending ? window.PPSync.state.pending + " envio(s) pendiente(s)" : "Todo al dia");
   go("panel"); netbar(); window.PPSync.start(); initInstall();
