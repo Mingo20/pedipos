@@ -45,7 +45,7 @@
         <input id="cq2" placeholder="Buscar cliente">
       </div>
       <div id="cl2"></div>
-      <button class="btn" id="newc" style="margin-top:8px">+ Nuevo cliente</button>`;
+      <button class="fab" id="newc" aria-label="Nuevo cliente">${window.PPUI.I.plus}</button>`;
 
     const draw = (f = "") => {
       const t = f.toLowerCase().trim();
@@ -150,7 +150,7 @@
     view.innerHTML = `
       <p class="lbl" style="margin:0 2px 8px">PROVEEDORES (${list.length})</p>
       <div id="pl2"></div>
-      <button class="btn" id="newpv" style="margin-top:8px">+ Nuevo proveedor</button>`;
+      <button class="fab" id="newpv" aria-label="Nuevo proveedor">${window.PPUI.I.plus}</button>`;
     const draw = () => {
       document.getElementById("pl2").innerHTML = list.length
         ? list.map((p) => `<div class="card" style="margin:0 0 8px;padding:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">

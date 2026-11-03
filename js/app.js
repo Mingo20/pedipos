@@ -72,13 +72,46 @@
   const rate = () => db().settings.itbisRate;
   const tot = () => S.totals(cart(), rate());
 
+  /* ---------- Confirmacion tactil: sonido corto + vibracion ---------- */
+  let AC = null;
+  function beep() {
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (AC.state === "suspended") AC.resume();
+      const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
+      o.type = "sine"; o.frequency.setValueAtTime(880, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.14, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+      o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.14);
+    } catch (_) {}
+  }
+  function vibrar(ms) { try { navigator.vibrate && navigator.vibrate(ms || 14); } catch (_) {} }
+  function tap() { beep(); vibrar(14); }
+
+  /* ---------- Tarjeta de producto (catalogo y agregar producto) ---------- */
+  function fotoDe(p) {
+    if (p && p.img) return `<img src="${esc(p.img)}" alt="">`;
+    return I.box;   /* sin foto: icono de caja */
+  }
+  function pcard(p, extra) {
+    return `<button class="pcard" data-p="${esc(p.pid)}" ${extra || ""}>
+      <span class="ph">${fotoDe(p)}</span>
+      <b class="nm">${esc(p.nombre)}</b>
+      <span class="pr">${money(p.precio)}</span>
+      <span class="un">${esc(p.unidad || "unidad")}</span>
+    </button>`;
+  }
+
   /* ---------- Dock ---------- */
-  const TABS = [["proveedores", "Proveedores", "truck2"], ["clientes", "Clientes", "group"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"], ["analitica", "Analitica", "chart"]];
+  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"]];
   function drawDock() {
     const d = $("#dock");
+    /* el panel de venta tiene su propia barra inferior: ahi el dock no aparece */
+    if (tab === "panel") { d.classList.add("hide"); d.innerHTML = ""; document.body.classList.remove("has-dock"); return; }
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
-    d.innerHTML = TABS.map(([k, lb, ic]) => k === "historial"
+    d.innerHTML = TABS.map(([k, lb, ic]) => k === "panel"
       ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
       : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("");
     $$("#dock button").forEach((b) => (b.onclick = () => go(b.dataset.t)));
@@ -137,7 +170,44 @@
     upd();
   }
   function lineRow(l, i) {
-    return `<div class="row"><b>${esc(l.nombre)}</b><input class="q" data-i="${i}" inputmode="decimal" value="${num(l.cant)}" aria-label="Cantidad"><span class="p">${num(l.precio)}</span><span class="t">${money(l.cant * l.precio)}</span></div>`;
+    return `<div class="row" data-i="${i}"><b>${esc(l.nombre)}</b><input class="q" data-i="${i}" inputmode="decimal" value="${num(l.cant)}" aria-label="Cantidad"><input class="p" data-i="${i}" inputmode="decimal" value="${num(l.precio)}" aria-label="Precio"><span class="t">${money(l.cant * l.precio)}</span></div>`;
+  }
+
+  /* Deslizar una fila del talonario a cualquier lado para eliminarla. */
+  function bindSwipeRows() {
+    $$("#tickb .row[data-i]").forEach((row) => {
+      let x0 = 0, y0 = 0, dx = 0, activo = false, vertical = false;
+      row.addEventListener("touchstart", (e) => {
+        if (e.touches.length !== 1) return;
+        x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; activo = true; vertical = false;
+        row.classList.add("drag");
+      }, { passive: true });
+      row.addEventListener("touchmove", (e) => {
+        if (!activo) return;
+        const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+        if (!vertical && Math.abs(my) > Math.abs(mx) && Math.abs(my) > 12) { vertical = true; activo = false; row.classList.remove("drag"); row.style.transform = ""; row.style.opacity = ""; return; }
+        if (vertical) return;
+        dx = mx;
+        row.style.transform = `translateX(${dx}px)`;
+        row.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 220));
+      }, { passive: true });
+      const soltar = () => {
+        if (!activo) return;
+        activo = false; row.classList.remove("drag");
+        if (Math.abs(dx) > 64) {
+          const i = +row.dataset.i;
+          row.classList.add("gone");
+          vibrar(18);
+          setTimeout(() => {
+            cart().lines.splice(i, 1); S.save(); render();
+            toast("Producto quitado del talonario");
+          }, 170);
+        } else { row.style.transform = ""; row.style.opacity = ""; }
+        dx = 0;
+      };
+      row.addEventListener("touchend", soltar);
+      row.addEventListener("touchcancel", soltar);
+    });
   }
   function renderPanel() {
     const c = cart(), t = tot(), n = c.lines.length;
@@ -157,7 +227,6 @@
         </div>
         <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}</button>
       </section>
-      ${n ? `<button class="cartfab" id="bCart">${I.bag}<b>${n}</b></button>` : `<button class="cartfab" id="bCart">${I.bag}</button>`}
       <div class="act">
         <button class="n" id="bNew">Nueva</button>
         <button class="c ${n ? "go" : ""}" id="bPay" ${n ? "" : "disabled"}>Cobrar</button>
@@ -165,7 +234,6 @@
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => { manual = true; render(); const f = $("#mnm"); f && f.focus(); };
-    $("#bCart").onclick = openSearch;
     if (manual) bindManual();
     $("#swItbis").onclick = () => { cart().itbis = !cart().itbis; S.save(); render(); };
     $("#bNew").onclick = () => { if (cart().lines.length && !confirm("Descartar la venta actual?")) return; cart().lines = []; manual = false; S.save(); render(); };
@@ -177,6 +245,14 @@
       if (!(v > 0)) cart().lines.splice(i, 1); else cart().lines[i].cant = v;
       S.save(); render();
     }));
+    /* el precio tambien se puede corregir en la misma fila */
+    $$(".row .p").forEach((inp) => (inp.onchange = () => {
+      const v = parseFloat(String(inp.value).replace(",", "."));
+      const i = +inp.dataset.i;
+      if (!(v >= 0)) { render(); return toast("Precio no valido"); }
+      cart().lines[i].precio = v; S.save(); render();
+    }));
+    bindSwipeRows();
     renderListen();
   }
 
@@ -191,7 +267,7 @@
   /* ---------- Hojas ---------- */
   /* Icono segun el titulo de cada ventana (tambien aplica a las hojas de extra.js). */
   const ICONO_HOJA = [
-    [/^agregar producto|^buscar/i, "search"], [/lista de pedido/i, "spark"], [/confirmar pedido/i, "check"],
+    [/^agregar producto|^buscar/i, "search"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
     [/^cobrar/i, "wallet"], [/venta registrada/i, "ok"], [/detalle del pedido/i, "order"],
     [/nuevo cliente|editar cliente/i, "userplus"], [/abono/i, "wallet"], [/proveedor/i, "truck2"],
     [/crear producto|editar producto/i, "box"], [/entrar a la caja/i, "users"],
@@ -230,18 +306,39 @@
     setTimeout(() => { if (sh.classList.contains("out")) layer.innerHTML = ""; }, 230);
   }
 
-  /* ----- Buscar producto ----- */
+  /* ----- Buscar producto: tarjetas en dos columnas ----- */
   function openSearch() {
     const s = sheet(`<div class="sh-h"><h2>Agregar producto</h2><button class="sh-x" id="x">${I.x}</button></div>
       <div class="search">${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
-      <div id="res"></div>`);
+      <div class="pgrid" id="res"></div>`);
     $("#x", s).onclick = closeSheet;
     const q = $("#q", s), res = $("#res", s);
+    const ponerContadores = () => {
+      const c = cart();
+      $$(".pcard", res).forEach((el) => {
+        const enCarrito = c.lines.filter((l) => l.pid === el.dataset.p).reduce((x, l) => x + l.cant, 0);
+        let b = el.querySelector(".cntb");
+        if (enCarrito > 0) {
+          if (!b) { b = document.createElement("i"); b.className = "cntb"; el.append(b); }
+          b.textContent = num(enCarrito); el.classList.add("in");
+        } else { b && b.remove(); el.classList.remove("in"); }
+      });
+    };
     const draw = () => {
       const t = window.PPVoice.norm(q.value);
-      const list = db().products.filter((p) => p.activo !== false && (!t || window.PPVoice.norm(p.nombre).includes(t))).slice(0, 40);
-      res.innerHTML = list.length ? list.map((p) => `<div class="prod"><div class="nm"><b>${esc(p.nombre)}</b><span>${money(p.precio)} c/u &middot; ${esc(p.unidad)}</span></div><button class="add" data-p="${p.pid}">${I.plus.replace(/width="26" height="26"/, 'width="19" height="19"')}</button></div>`).join("") : '<div class="empty">No encontramos ese producto. Puedes crearlo en Catalogo.</div>';
-      $$(".add", res).forEach((b) => (b.onclick = () => { const p = db().products.find((x) => x.pid === b.dataset.p); addLine(p, 1); toast(p.nombre + " agregado"); render(); }));
+      const list = db().products.filter((p) => p.activo !== false && (!t || window.PPVoice.norm(p.nombre).includes(t))).slice(0, 60);
+      res.innerHTML = list.length ? list.map((p) => pcard(p)).join("") : '<div class="empty">No encontramos ese producto. Puedes crearlo en Catalogo.</div>';
+      $$(".pcard", res).forEach((el) => (el.onclick = () => {
+        const p = db().products.find((x) => x.pid === el.dataset.p);
+        if (!p) return;
+        addLine(p, 1);
+        tap();                                     /* vibra y suena en cada toque */
+        el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit");
+        ponerContadores();
+        render();
+        const live = $("#res"); if (live) ponerContadores();
+      }));
+      ponerContadores();
     };
     q.oninput = draw; draw(); setTimeout(() => q.focus(), 120);
   }
@@ -250,7 +347,7 @@
   let orderRec = false;
   function openOrder(initial) {
     const s = sheet(`<div class="sh-h"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <div class="ia">${I.spark}<span>IA DeepSeek activa &mdash; procesamiento sem&aacute;ntico con tus productos</span></div>
+      <div class="ia">${I.spark}<span>DeepSeek para procesar</span></div>
       <textarea class="ta" id="ta" placeholder="Escribe o dicta: dos leches, media libra de arroz...">${esc(initial || "")}</textarea>
       <div class="sh-f"><button class="m" id="m" aria-label="Dictar">${I.mic}</button><button class="big" id="go">${I.spark} Procesar pedido</button></div>`, () => { window.PPVoice.stopDictation(); orderRec = false; });
     $("#x", s).onclick = () => { window.PPVoice.stopDictation(); closeSheet(); };
@@ -273,11 +370,11 @@
 
   function confirmOrder(r) {
     const lines = r.lines.map((l) => ({ ...l }));
-    const s = sheet(`<div class="sh-h"><button class="sh-x" id="b">${I.back}</button><h2>Confirmar pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h compacta"><button class="sh-x" id="b">${I.back}</button><h2>Confirmar pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
       <div class="cnt">${lines.length} producto${lines.length === 1 ? "" : "s"} detectado${lines.length === 1 ? "" : "s"}</div>
-      ${lines.map((l, i) => `<div class="item"><div class="ic">${I.box}</div><div class="nm"><b>${esc(l.nombre)}</b><span>${money(l.precio)} c/u &middot; ${esc(l.unidad)}</span></div><input class="qty" data-i="${i}" inputmode="decimal" value="${num(l.cant)}"></div>`).join("")}
+      ${lines.map((l, i) => `<div class="item"><div class="nm"><b>${esc(l.nombre)}</b><span>${money(l.precio)} c/u &middot; ${esc(l.unidad)}</span></div><input class="qty" data-i="${i}" inputmode="decimal" value="${num(l.cant)}"></div>`).join("")}
       ${r.missing && r.missing.length ? `<div class="miss">No encontre: ${r.missing.map(esc).join(", ")}. Agregalo desde Catalogo.</div>` : ""}
-      <button class="big" id="ok" ${lines.length ? "" : "disabled"} style="width:100%;margin-top:6px">${I.check} Agregar al talonario</button>`);
+      <button class="big" id="ok" ${lines.length ? "" : "disabled"} style="width:100%;margin-top:6px">Agregar al talonario</button>`);
     $("#x", s).onclick = closeSheet; $("#b", s).onclick = () => openOrder("");
     $$(".qty", s).forEach((i) => (i.onchange = () => { const v = parseFloat(String(i.value).replace(",", ".")); if (v > 0) lines[+i.dataset.i].cant = v; }));
     $("#ok", s).onclick = () => {
@@ -445,12 +542,13 @@
     const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))];
     $("#view").innerHTML = `<div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}"></div>
       <div class="chips"><button class="chip ${catCat ? "" : "on"}" data-c="">Todos</button>${cats.map((c) => `<button class="chip ${catCat === c ? "on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-      <div id="cl"></div><button class="btn" id="newp" style="margin-top:8px">+ Crear producto</button>`;
+      <div class="pgrid" id="cl"></div>
+      <button class="fab" id="newp" aria-label="Crear producto">${I.plus}</button>`;
     const draw = () => {
       const t = window.PPVoice.norm(catQ);
       const l = db().products.filter((p) => p.activo !== false && (!catCat || p.categoria === catCat) && (!t || window.PPVoice.norm(p.nombre).includes(t)));
-      $("#cl").innerHTML = l.length ? l.map((p) => `<div class="prod"><div class="nm"><b>${esc(p.nombre)}</b><span>${esc(p.categoria || "General")} &middot; ${esc(p.unidad)}${typeof p.stock === "number" ? " &middot; stock " + num(p.stock) : ""}</span></div><span class="pr">${money(p.precio)}</span><button class="add" data-e="${p.pid}" aria-label="Editar">${I.tag.replace(/width="20" height="20"/, 'width="18" height="18"')}</button></div>`).join("") : '<div class="empty">Sin productos. Crea el primero.</div>';
-      $$("[data-e]").forEach((b) => (b.onclick = () => editProduct(db().products.find((p) => p.pid === b.dataset.e))));
+      $("#cl").innerHTML = l.length ? l.map((p) => pcard(p, `title="${esc(p.categoria || "General")}"`)).join("") : '<div class="empty">Sin productos. Crea el primero con el boton +.</div>';
+      $$("#cl .pcard").forEach((el) => (el.onclick = () => { tap(); editProduct(db().products.find((p) => p.pid === el.dataset.p)); }));
     };
     $("#cq").oninput = (e) => { catQ = e.target.value; draw(); };
     $$(".chip").forEach((c) => (c.onclick = () => { catCat = c.dataset.c; renderCatalogo(); }));
@@ -465,12 +563,41 @@
       <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
       <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
       <label class="field"><span>Stock</span><input id="fs" inputmode="decimal" value="${p.stock || 0}"></label>
+      <div class="field"><span>Foto del producto</span>
+        <div class="upimg"><span class="pv" id="pv">${fotoDe(p)}</span>
+          <label class="btn gris" style="margin:0;flex:1">Elegir foto<input type="file" accept="image/*" capture="environment" id="fi" hidden></label>
+          <button class="btn gris" id="fq" style="margin:0" ${p.img ? "" : "hidden"}>Quitar</button>
+        </div>
+      </div>
       <button class="btn" id="sv">Guardar</button>${n ? "" : '<button class="btn red" id="dl" style="margin-top:10px">Eliminar</button>'}`);
     $("#x", s).onclick = closeSheet;
+    /* foto opcional: se guarda comprimida y se usa en las tarjetas */
+    let img = p.img || "";
+    const fi = $("#fi", s);
+    fi.onchange = () => {
+      const f = fi.files && fi.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        const im = new Image();
+        im.onload = () => {
+          const max = 420, k = Math.min(1, max / Math.max(im.width, im.height));
+          const cv = document.createElement("canvas");
+          cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+          cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+          img = cv.toDataURL("image/jpeg", 0.7);
+          $("#pv", s).innerHTML = `<img src="${img}" alt="">`;
+          $("#fq", s).hidden = false;
+        };
+        im.src = rd.result;
+      };
+      rd.readAsDataURL(f);
+    };
+    $("#fq", s).onclick = () => { img = ""; $("#pv", s).innerHTML = I.box; $("#fq", s).hidden = true; };
     $("#sv", s).onclick = () => {
       const nom = $("#fn", s).value.trim(), pr = parseFloat(String($("#fp", s).value).replace(",", "."));
       if (!nom || !(pr >= 0)) return toast("Falta el nombre o el precio");
-      Object.assign(p, { nombre: nom, precio: pr, unidad: $("#fu", s).value, categoria: $("#fc", s).value.trim(), stock: parseFloat($("#fs", s).value) || 0 });
+      Object.assign(p, { nombre: nom, precio: pr, unidad: $("#fu", s).value, categoria: $("#fc", s).value.trim(), stock: parseFloat($("#fs", s).value) || 0, img });
       if (n) db().products.push(p);
       S.save(); window.PPSync.saveProduct(p); closeSheet(); toast("Producto guardado"); render();
     };
@@ -518,47 +645,91 @@
   const FAQ = [["Como hago una venta manual?", "Toca + en el Panel, busca el producto, ajusta la cantidad y toca Cobrar."], ["Como vendo desde el catalogo?", "Abre Catalogo, toca el producto y se agrega al talonario."], ["Como funciona la venta por voz?", "Toca el microfono negro y dicta, por ejemplo: dos libras y media de arroz. La IA interpreta y te pide confirmar."], ["Que es la Lista de Pedido con IA?", "Una caja de texto donde escribes o dictas varios productos a la vez. La IA los cruza con tu catalogo."], ["Como comparto una factura por WhatsApp?", "Al cobrar toca Enviar por WhatsApp. Se abre el chat con el detalle de la venta."], ["Puedo enviar facturas en texto?", "Si. El detalle se envia como mensaje de texto ordenado."], ["Puedo enviar facturas en imagen?", "Puedes imprimir o guardar el ticket como imagen desde el boton de impresion."], ["Como funcionan los creditos?", "Elige A credito al cobrar, asigna cliente y fecha de cobro."], ["Como activo el ITBIS?", "En el Panel, el interruptor ITBIS 18% aplica o quita el impuesto de la venta."], ["Como registro un cliente?", "Al cobrar escribe el nombre del cliente. En Gestion de clientes guardas su WhatsApp."], ["Funciona sin internet?", "Si. Todo se guarda en tu telefono y sube solo cuando vuelve la conexion."]];
   const QUICK = [["cart", "Crear una venta", "Agrega productos y cobra en segundos."], ["users", "Registrar un cliente", "Guarda nombre, WhatsApp y direccion."], ["truck", "Registrar un proveedor", "Agrega proveedores con saldo inicial."], ["box", "Registrar una compra", "Registra movimientos de proveedor."], ["list", "Compartir una factura", "Envia facturas por WhatsApp."], ["print", "Imprimir factura", "Conecta tu impresora Bluetooth."], ["card", "Registrar credito", "Vende a credito con fecha de cobro."], ["tag", "Cobrar una deuda", "Registra pagos de clientes."], ["wa", "Configurar WhatsApp", "Conecta tu numero de WhatsApp."], ["print", "Configurar impresion", "Configura impresora termica ESC/POS."]];
   function renderSoporte() {
-    const sh = (ic, t, p) => `<div class="sec-h"><div class="ib">${I[ic]}</div><div><h2>${t}</h2><p>${p}</p></div></div>`;
-    $("#view").innerHTML =
-      sh("book", "Documentacion Oficial", "Manual completo organizado por categorias") +
-      DOC.map(([ic, t, items]) => `<div class="acc"><button><span class="ib">${I[ic]}</span><b>${t}</b>${I.chev}</button><ul>${items.map((x) => `<li>${I.chev.replace(/width="18" height="18"/, 'width="20" height="20"')}${x}</li>`).join("")}</ul></div>`).join("") +
-      sh("bulb", "Consejos y Trucos", "Recomendaciones para mejorar tu productividad") +
-      TIPS.map(([ic, t, p]) => `<div class="tip"><div class="ib">${I[ic]}</div><b>${t}</b><p>${p}</p></div>`).join("") +
-      sh("help", "Preguntas Frecuentes", "Respuestas a las dudas mas comunes sobre PediPOS") +
-      FAQ.map(([q, a]) => `<div class="faq"><button><span>${q}</span>${I.down}</button><div class="a">${a}</div></div>`).join("") +
-      sh("bolt", "Guias rapidas", "Accesos directos a las tareas mas comunes") +
-      QUICK.map(([ic, t, p]) => `<button class="quick"><div class="ib">${I[ic]}</div><div style="flex:1"><b>${t}</b><span>${p}</span></div>${I.chev}</button>`).join("") +
-      `<div class="info blue"><div class="ib">${I.clock}</div><b>Horario de atencion</b><span>Lun a Sab &middot; 8:00 AM - 8:00 PM</span></div>
-       <div class="info green"><div class="ib">${I.ok}</div><b>Estado del servicio</b><span id="svc">&#9679; Operativo</span></div>` +
-      sh("globe", "Contacto con PediPOS", "Informacion institucional y canales oficiales") +
-      `<div class="contact"><small>PEDIPOS</small><p>Sistema de gestion de pedidos para colmados, mini markets y almacenes. Disenado para la velocidad operativa del comercio dominicano.</p>
-       <small>CONTACTO DIRECTO</small><p>WhatsApp: 829-646-9885<br>domingoguerra688@gmail.com</p>
-       <div class="cbtn"><a href="https://wa.me/18296469885" target="_blank" rel="noopener" style="background:#22C55E">${I.wa} WhatsApp</a><a href="mailto:domingoguerra688@gmail.com" style="background:#A855F7">${I.mail} Correo</a></div></div>`;
-    $$(".acc>button").forEach((b) => (b.onclick = () => b.parentElement.classList.toggle("open")));
-    $$(".faq>button").forEach((b) => (b.onclick = () => b.parentElement.classList.toggle("open")));
+    $("#view").innerHTML = `
+      <div class="hx-hero">
+        <div class="hx-tt"><div class="hx-ic">${I.help}</div><div><h2>Centro de ayuda</h2><p>Todo lo que necesitas para operar PediPOS</p></div></div>
+        <div class="hx-srch">${I.search}<input id="sq" placeholder="Buscar en la ayuda" autocomplete="off"></div>
+        <div class="hx-st"><span class="dot" id="svcdot"></span><span id="svc">Operativo</span></div>
+      </div>
+
+      <h3 class="hx-h">Accesos rapidos</h3>
+      <div class="hx-grid" id="hxq">${QUICK.map(([ic, t, p], i) => `<button class="hx-card" data-q="${i}"><span class="hx-ib">${I[ic]}</span><b>${t}</b><span>${p}</span></button>`).join("")}</div>
+
+      <h3 class="hx-h">Guias por tema</h3>
+      <div class="hx-list" id="hxd">${DOC.map(([ic, t, items], i) => `<div class="hx-acc" data-tema="${esc(t + " " + items.join(" "))}"><button class="hx-acc-b"><span class="hx-ib sm">${I[ic]}</span><b>${t}</b><i class="hx-n">${items.length}</i>${I.chev}</button><ul>${items.map((x) => `<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>
+
+      <h3 class="hx-h">Preguntas frecuentes</h3>
+      <div class="hx-list" id="hxf">${FAQ.map(([q, r], i) => `<div class="hx-faq" data-tema="${esc(q + " " + r)}"><button class="hx-faq-b"><span>${q}</span>${I.down}</button><div class="hx-a">${r}</div></div>`).join("")}</div>
+
+      <h3 class="hx-h">Soporte directo</h3>
+      <div class="hx-contact">
+        <div class="hx-ct"><span class="hx-ib">${I.wa}</span><div><b>WhatsApp</b><span>829-646-9885</span></div></div>
+        <div class="hx-ct"><span class="hx-ib">${I.mail}</span><div><b>Correo</b><span>domingoguerra688@gmail.com</span></div></div>
+        <div class="hx-ct"><span class="hx-ib">${I.clock}</span><div><b>Horario</b><span>Lun a Sab &middot; 8:00 AM a 8:00 PM</span></div></div>
+        <div class="hx-btns"><a href="https://wa.me/18296469885" target="_blank" rel="noopener" class="hx-b1">${I.wa} Escribir por WhatsApp</a><a href="mailto:domingoguerra688@gmail.com" class="hx-b2">${I.mail} Enviar correo</a></div>
+      </div>
+      <p class="hx-foot">PediPOS &middot; Sistema de gestion de pedidos para colmados, mini markets y almacenes. Hecho para el comercio dominicano.</p>`;
+
+    /* acordeones */
+    $$(".hx-acc-b").forEach((b) => (b.onclick = () => b.parentElement.classList.toggle("open")));
+    $$(".hx-faq-b").forEach((b) => (b.onclick = () => b.parentElement.classList.toggle("open")));
+
+    /* accesos rapidos */
     const GUIA = {
       "Crear una venta": () => go("panel"),
       "Registrar un cliente": () => go("clientes"),
       "Registrar un proveedor": () => go("proveedores"),
-      "Registrar una compra": () => go("catalogo"),
+      "Registrar una compra": () => go("proveedores"),
       "Compartir una factura": () => go("historial"),
       "Imprimir factura": () => go("config"),
       "Registrar credito": () => go("clientes"),
-      "Registrar un abono": () => go("clientes"),
+      "Cobrar una deuda": () => go("clientes"),
+      "Configurar WhatsApp": () => go("config"),
+      "Configurar impresion": () => go("config"),
     };
-    $$(".quick").forEach((b) => (b.onclick = () => {
-      const t = b.querySelector("b") ? b.querySelector("b").textContent.trim() : "";
-      const f = GUIA[t];
+    $$(".hx-card").forEach((b) => (b.onclick = () => {
+      const t = QUICK[+b.dataset.q][1], f = GUIA[t];
       if (f) f(); else toast("Esta guia llega pronto");
     }));
-    const svc = $("#svc"); svc.textContent = window.PPSync.state.online ? "\u25CF Operativo" : "\u25CF Sin conexion (modo local)";
+
+    /* buscador: filtra temas y preguntas */
+    const sq = $("#sq");
+    sq.oninput = () => {
+      const q = window.PPVoice.norm(sq.value);
+      let sede = 0;
+      $$("#hxd .hx-acc").forEach((el) => {
+        const hit = !q || window.PPVoice.norm(el.dataset.tema).includes(q);
+        el.style.display = hit ? "" : "none";
+        if (hit && q) { el.classList.add("open"); sede++; }
+        if (!q) el.classList.remove("open");
+      });
+      $$("#hxf .hx-faq").forEach((el) => {
+        const hit = !q || window.PPVoice.norm(el.dataset.tema).includes(q);
+        el.style.display = hit ? "" : "none";
+        if (hit && q) { el.classList.add("open"); sede++; }
+        if (!q) el.classList.remove("open");
+      });
+      $$("#hxq .hx-card").forEach((el) => {
+        const t = window.PPVoice.norm(el.querySelector("b").textContent + " " + el.querySelector("span:last-child").textContent);
+        el.style.display = !q || t.includes(q) ? "" : "none";
+      });
+      let vacio = $("#hxnone");
+      if (q && !sede) {
+        if (!vacio) { vacio = document.createElement("div"); vacio.id = "hxnone"; vacio.className = "empty"; vacio.textContent = "No encontramos resultados. Escribenos por WhatsApp."; $("#hxd").after(vacio); }
+      } else if (vacio) vacio.remove();
+    };
+
+    /* estado real del servicio */
+    const on = window.PPSync.state.online;
+    $("#svc").textContent = on ? "Servicio operativo" : "Sin conexion (modo local)";
+    $("#svcdot").classList.toggle("off", !on);
   }
 
   /* ---------- Menu lateral ---------- */
   function openMenu() {
     const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes y creditos", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
-    const s = sheet(`<div class="sh-h"><h2>${esc(db().settings.negocio)}</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Menu de Navegacion</h2><button class="sh-x" id="x">${I.x}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`);
     $("#x", s).onclick = () => closeSheet();
     $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(true); go(b.dataset.g); }));

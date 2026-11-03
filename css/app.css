@@ -352,3 +352,104 @@ main#view.vin{animation:vin .34s cubic-bezier(.22,.9,.3,1) both}
 .iguide .n{width:26px;height:26px;border-radius:50%;background:var(--g-soft);color:#0B7A52;font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
 .iguide p{margin:0;font-size:14.5px;line-height:1.35}
 .instbar.vin{animation:vin .34s cubic-bezier(.22,.9,.3,1) both}
+
+/* ========== v18: tarjetas de producto, gestos y ajustes ========== */
+
+/* --- fila del talonario: cantidad y precio editables, deslizar para borrar --- */
+.row .p{font-weight:700;text-align:center;border:0;background:none;font-size:16px;width:100%;color:var(--ink);-moz-appearance:textfield}
+.row .p::-webkit-outer-spin-button,.row .p::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.row .p:focus{background:#eef6f1;border-radius:8px;outline:2px solid var(--g-line)}
+.row[touch-action]{touch-action:pan-y}
+#tickb .row{will-change:transform;transition:transform .18s cubic-bezier(.3,.8,.3,1),opacity .18s,background .18s;background:var(--card)}
+#tickb .row.drag{transition:none;background:#f3f7f5}
+#tickb .row.gone{transform:translateX(-110%)!important;opacity:0}
+
+/* --- rejilla de tarjetas de producto (2 columnas) --- */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:2px 0 6px}
+.pcard{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:9px 10px 10px;box-shadow:0 1px 2px #0000000a;transition:transform .14s,border-color .14s,box-shadow .14s}
+.pcard:active{transform:scale(.975)}
+.pcard .ph{width:100%;aspect-ratio:1.35/1;border-radius:12px;background:#f1f4f6;display:grid;place-items:center;color:#9aa5ad;overflow:hidden;margin-bottom:5px}
+.pcard .ph svg{width:30px;height:30px}
+.pcard .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.pcard .nm{font-size:13px;font-weight:700;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:31px}
+.pcard .pr{font-size:14.5px;font-weight:800;color:var(--g)}
+.pcard .un{font-size:11px;color:var(--mut);text-transform:capitalize}
+.pcard.in{border-color:var(--g);box-shadow:0 0 0 2px #1f9d5c22}
+.pcard .cntb{position:absolute;top:-7px;right:-6px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--g);color:#fff;font-size:12px;font-weight:800;font-style:normal;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 6px #1f9d5c55}
+@keyframes hitpulse{0%{transform:scale(1)}45%{transform:scale(.94)}100%{transform:scale(1)}}
+.pcard.hit{animation:hitpulse .28s ease}
+
+/* --- boton flotante circular (nuevo cliente / proveedor / producto) --- */
+.fab{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 88px);width:56px;height:56px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;box-shadow:0 10px 24px #1f9d5c66;z-index:22}
+.fab:active{transform:scale(.94)}
+.fab svg{width:26px;height:26px}
+body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
+
+/* --- menu de navegacion: iconos en gris claro --- */
+.mnu .mi{background:#EFF2F4!important;color:#6B7480!important}
+.mnu .mi svg{stroke:#6B7480}
+
+/* --- confirmar pedido: titulos mas pequenos y campo de cantidad angosto --- */
+.sh-h.compacta h2{font-size:16.5px;font-weight:700}
+.sh-h.compacta .sh-x{width:40px;height:38px}
+.item .nm b{font-size:15.5px}
+.item .nm span{font-size:13px}
+.item{padding:10px 12px;border-radius:16px;gap:10px}
+.qty{width:62px;height:44px;border-radius:13px;font-size:15px;font-weight:700}
+.item .ic{display:none}
+
+/* --- campo de foto en crear/editar producto --- */
+.upimg{display:flex;align-items:center;gap:10px}
+.upimg .pv{width:56px;height:56px;border-radius:14px;background:#f1f4f6;display:grid;place-items:center;color:#9aa5ad;overflow:hidden;flex:none}
+.upimg .pv img{width:100%;height:100%;object-fit:cover}
+.upimg .pv svg{width:26px;height:26px}
+.upimg .btn{height:46px;font-size:14px}
+.btn.gris{background:#EFF2F4;color:#374151}
+
+/* ========== Soporte rediseñado ========== */
+.hx-hero{background:linear-gradient(150deg,#EAF7F0,#F7FCFA);border:1.5px solid var(--g-line);border-radius:20px;padding:14px 14px 12px;margin-bottom:14px}
+.hx-tt{display:flex;gap:11px;align-items:center;margin-bottom:10px}
+.hx-tt h2{margin:0;font-size:17px;font-weight:800}
+.hx-tt p{margin:1px 0 0;font-size:12px;color:#5b6670}
+.hx-ic{width:38px;height:38px;border-radius:12px;background:#fff;color:var(--g);display:grid;place-items:center;flex:none;box-shadow:0 2px 8px #1f9d5c1f}
+.hx-ic svg{width:20px;height:20px}
+.hx-srch{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:0 12px;height:42px;margin-bottom:9px}
+.hx-srch svg{width:17px;height:17px;color:var(--mut);flex:none}
+.hx-srch input{flex:1;min-width:0;border:0;background:none;font-size:14px}
+.hx-st{display:flex;align-items:center;gap:7px;font-size:12px;color:#0B7A52;font-weight:600}
+.hx-st .dot{width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 3px #22c55e26}
+.hx-st .dot.off{background:#f59e0b;box-shadow:0 0 0 3px #f59e0b26}
+.hx-h{margin:16px 2px 8px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#5b6670}
+.hx-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.hx-card{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:11px 11px 12px}
+.hx-card:active{transform:scale(.98)}
+.hx-card b{font-size:12.5px;font-weight:700;line-height:1.2}
+.hx-card span:last-child{font-size:11px;color:var(--mut);line-height:1.25}
+.hx-ib{width:32px;height:32px;border-radius:10px;background:var(--g-soft);color:#0B7A52;display:grid;place-items:center;flex:none;margin-bottom:4px}
+.hx-ib svg{width:17px;height:17px}
+.hx-ib.sm{margin-bottom:0;width:30px;height:30px}
+.hx-list{display:flex;flex-direction:column;gap:8px}
+.hx-acc,.hx-faq{background:#fff;border:1.5px solid var(--line);border-radius:15px;overflow:hidden}
+.hx-acc-b,.hx-faq-b{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;text-align:left}
+.hx-acc-b b{flex:1;font-size:13.5px;font-weight:700}
+.hx-acc-b svg:last-child,.hx-faq-b svg{width:16px;height:16px;color:var(--mut);transition:transform .2s}
+.hx-n{font-style:normal;font-size:11px;font-weight:700;color:#5b6670;background:#EFF2F4;border-radius:999px;padding:2px 7px}
+.hx-acc ul{list-style:none;margin:0;padding:0 14px;max-height:0;overflow:hidden;transition:max-height .26s ease,padding .26s}
+.hx-acc.open ul{max-height:420px;padding:2px 14px 12px}
+.hx-acc li{position:relative;font-size:13px;color:#3d464e;padding:5px 0 5px 16px;line-height:1.3}
+.hx-acc li::before{content:"";position:absolute;left:2px;top:11px;width:6px;height:6px;border-radius:50%;background:var(--g-line)}
+.hx-acc.open .hx-acc-b svg:last-child{transform:rotate(180deg)}
+.hx-faq-b span{flex:1;font-size:13.5px;font-weight:600}
+.hx-faq.open .hx-faq-b svg{transform:rotate(180deg)}
+.hx-a{max-height:0;overflow:hidden;transition:max-height .26s ease,padding .26s;font-size:13px;color:#4b5563;line-height:1.4;padding:0 12px}
+.hx-faq.open .hx-a{max-height:240px;padding:0 12px 12px}
+.hx-contact{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px}
+.hx-ct{display:flex;align-items:center;gap:10px;padding:6px 0}
+.hx-ct b{display:block;font-size:13px}
+.hx-ct span:not(.hx-ib){font-size:12px;color:var(--mut)}
+.hx-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.hx-b1,.hx-b2{display:flex;align-items:center;justify-content:center;gap:6px;height:42px;border-radius:13px;font-size:12.5px;font-weight:700;color:#fff;text-decoration:none}
+.hx-b1{background:#22C55E}
+.hx-b2{background:#334155}
+.hx-b1 svg,.hx-b2 svg{width:16px;height:16px}
+.hx-foot{margin:14px 4px 8px;font-size:11px;color:var(--mut);text-align:center;line-height:1.4}
