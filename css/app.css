@@ -386,8 +386,8 @@ main#view.vin{animation:vin .34s cubic-bezier(.22,.9,.3,1) both}
 body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 
 /* --- menu de navegacion: iconos en gris claro --- */
-.mnu .mi{background:#EFF2F4!important;color:#6B7480!important}
-.mnu .mi svg{stroke:#6B7480}
+.mnu .mi{background:#E9EDF0!important;color:#5F6975!important}
+.mnu .mi svg{stroke:#5F6975}
 
 /* --- confirmar pedido: titulos mas pequenos y campo de cantidad angosto --- */
 .sh-h.compacta h2{font-size:16.5px;font-weight:700}

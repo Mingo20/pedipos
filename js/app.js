@@ -729,7 +729,7 @@
   function openMenu() {
     const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes y creditos", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
-    const s = sheet(`<div class="sh-h"><h2>Menu de Navegacion</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Men&uacute; de Navegaci&oacute;n</h2><button class="sh-x" id="x">${I.x}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`);
     $("#x", s).onclick = () => closeSheet();
     $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(true); go(b.dataset.g); }));
