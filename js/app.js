@@ -287,7 +287,7 @@
   /* ---------- Hojas ---------- */
   /* Icono segun el titulo de cada ventana (tambien aplica a las hojas de extra.js). */
   const ICONO_HOJA = [
-    [/^agregar producto|^buscar/i, "search"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
+    [/^agregar producto|^buscar/i, "box"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
     [/^cobrar/i, "wallet"], [/venta registrada/i, "ok"], [/detalle del pedido/i, "order"],
     [/nuevo cliente|editar cliente/i, "userplus"], [/abono/i, "wallet"], [/proveedor/i, "truck2"],
     [/crear producto|editar producto/i, "box"], [/entrar a la caja/i, "users"],
