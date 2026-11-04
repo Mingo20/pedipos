@@ -543,7 +543,8 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 
 /* 5) barra de venta: sin marco, fondo gris claro al haber productos */
 .act.hay::before{display:none}
-.act.hay{background:#EDF1F3;border-top-color:#DCE3E7}
+.act.hay{background:#E9EEF1;border-top-color:#D8E0E5}
+.act{transition:background .28s ease,border-color .28s ease}
 
 /* 4) filas nuevas del talonario entran con un desliz suave */
 @keyframes filaIn{from{opacity:0;transform:translateY(8px) scale(.985);background:#E7F6EE}to{opacity:1;transform:none;background:var(--card)}}
