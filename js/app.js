@@ -28,13 +28,16 @@
     spark: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
     box: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5L12 12l8-4.5M12 12v9"/></svg>',
+    compass: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.6 13.6 8.5 15.5 10.4 10.4z"/></svg>',
+    stop: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>',
+    filtro: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>',
     chev: '<svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
     down: '<svg class="chev" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
     ticket: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3M9 10h6M9 14h6"/></svg>',
     bike: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3.2"/><circle cx="18" cy="17" r="3.2"/><path d="M6 17l4-8h5l3 8M10 9l-1-3h3"/></svg>',
     book: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5C5 4 8.500 4 12 6c3.500-2 7-2 10-.5V19c-3-1.500-6.500-1.500-10.500.500C8.500 17.500 5 17.500 2 19V5.500zM12 6v13.500"/></svg>',
     chart: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 21V10M12 21V3M19 21v-7"/></svg>',
-    wa: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-11.800 7L4 20l1.100-4A8 8 0 1 1 20 12z"/></svg>',
+    wa: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12.05 21.785h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413"/></svg>',
     mail: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
     globe: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
     help: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.7.400-1 1-1 1.700M12 17h.01"/></svg>',
@@ -78,12 +81,18 @@
     try {
       AC = AC || new (window.AudioContext || window.webkitAudioContext)();
       if (AC.state === "suspended") AC.resume();
-      const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime;
-      o.type = "sine"; o.frequency.setValueAtTime(880, t);
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.14, t + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
-      o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + 0.14);
+      const t = AC.currentTime;
+      /* dos notas cortas y suaves: se percibe como una confirmacion agradable */
+      [{ f: 987.77, d: 0.09, v: 0.13 }, { f: 1318.51, d: 0.13, v: 0.10 }].reduce((st, n) => {
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.type = "sine"; o.frequency.setValueAtTime(n.f, st);
+        g.gain.setValueAtTime(0.0001, st);
+        g.gain.exponentialRampToValueAtTime(n.v, st + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, st + n.d);
+        o.connect(g); g.connect(AC.destination);
+        o.start(st); o.stop(st + n.d + 0.02);
+        return st + n.d * 0.85;
+      }, t);
     } catch (_) {}
   }
   function vibrar(ms) { try { navigator.vibrate && navigator.vibrate(ms || 14); } catch (_) {} }
@@ -207,14 +216,16 @@
         const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
         if (!vertical && Math.abs(my) > Math.abs(mx) && Math.abs(my) > 12) { vertical = true; activo = false; row.classList.remove("drag"); row.style.transform = ""; row.style.opacity = ""; return; }
         if (vertical) return;
-        dx = mx;
+        /* solo cuenta el deslizamiento hacia la izquierda */
+        dx = Math.min(0, mx);
+        if (dx > 0) { row.style.transform = ""; row.style.opacity = ""; return; }
         row.style.transform = `translateX(${dx}px)`;
-        row.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 220));
+        row.style.opacity = String(Math.max(0.3, 1 + dx / 220));
       }, { passive: true });
       const soltar = () => {
         if (!activo) return;
         activo = false; row.classList.remove("drag");
-        if (Math.abs(dx) > 64) {
+        if (dx < -64) {
           const i = +row.dataset.i;
           row.classList.add("gone");
           vibrar(18);
@@ -241,21 +252,30 @@
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar productos</div>')}${manual ? manualRow() : ""}</div>
         <div class="tick-f">
           <div class="itbis-r"><span>ITBIS ${Math.round(rate() * 100)}%</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
-          <div class="line"><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
-          <div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span>+${money(t.itbis)}</span></div>
-          <div class="tot"><span>TOTAL A COBRAR</span><b>${money(t.total)}</b></div>
+          <div class="line"><span>Subtotal</span><span id="vSub">${money(t.subtotal)}</span></div>
+          <div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>
+          <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
         </div>
         <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}</button>
       </section>
       <div class="act ${n ? "hay" : ""}">
         <button class="n" id="bNew">Nueva</button>
         <button class="c" id="bPay" ${n ? "" : "disabled"}>Cobrar</button>
-        <div class="mic ${voice.phase === "listening" || voice.phase === "recording" ? "on" : voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${I.mic}</i></div>
+        <div class="mic ${voice.phase === "listening" || voice.phase === "recording" ? "on" : voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "listening" || voice.phase === "recording" ? I.stop : voice.phase === "wait" ? I.clock : I.mic}</i></div>
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => { manual = true; render(); const f = $("#mnm"); f && f.focus(); };
     if (manual) bindManual();
-    $("#swItbis").onclick = () => { cart().itbis = !cart().itbis; S.save(); render(); };
+    $("#swItbis").onclick = () => {
+      const a = tot();
+      cart().itbis = !cart().itbis; S.save();
+      const b = tot();
+      const sw = $("#swItbis"); sw.classList.toggle("on", cart().itbis);
+      cuenta("#vSub", a.subtotal, b.subtotal, false);
+      cuenta("#vIt", a.itbis, b.itbis, true);
+      cuenta("#vTot", a.total, b.total, false);
+      tap();
+    };
     $("#bNew").onclick = () => { if (cart().lines.length && !confirm("Descartar la venta actual?")) return; cart().lines = []; manual = false; S.save(); render(); };
     $("#bPay").onclick = openPay;
     $("#bMic").onclick = () => { if (voice.phase === "recording") { voice.phase = "wait"; render(); showProc(); finishWhisper(); } else toggleVoice(); };
@@ -287,7 +307,7 @@
   /* ---------- Hojas ---------- */
   /* Icono segun el titulo de cada ventana (tambien aplica a las hojas de extra.js). */
   const ICONO_HOJA = [
-    [/^agregar producto|^buscar/i, "box"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
+    [/^agregar producto|^buscar/i, "box"], [/^men/i, "compass"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
     [/^cobrar/i, "wallet"], [/venta registrada/i, "ok"], [/detalle del pedido/i, "order"],
     [/nuevo cliente|editar cliente/i, "userplus"], [/abono/i, "wallet"], [/proveedor/i, "truck2"],
     [/crear producto|editar producto/i, "box"], [/entrar a la caja/i, "users"],
@@ -312,11 +332,36 @@
     s.innerHTML = '<div class="grip"></div>' + html;
     $("#layer").append(m, s);
     decorar(s);
+    if (lado) bindCerrarLado(s);
     const t0 = Date.now();
     /* el mismo toque que abre la hoja no debe cerrarla */
     m.onclick = () => { if (Date.now() - t0 < 320) return; closeSheet(); onClose && onClose(); };
     return s;
   }
+  /* La barra lateral se oculta deslizandola hacia la derecha. */
+  function bindCerrarLado(s) {
+    let x0 = 0, dx = 0, activo = false;
+    s.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      x0 = e.touches[0].clientX; dx = 0; activo = true;
+      s.classList.add("arrastrando");
+    }, { passive: true });
+    s.addEventListener("touchmove", (e) => {
+      if (!activo) return;
+      dx = Math.max(0, e.touches[0].clientX - x0);
+      s.style.transform = "translateX(" + dx + "px)";
+    }, { passive: true });
+    const soltar = () => {
+      if (!activo) return;
+      activo = false; s.classList.remove("arrastrando");
+      if (dx > 62) { s.style.transform = ""; closeSheet(); }
+      else { s.style.transform = ""; }
+      dx = 0;
+    };
+    s.addEventListener("touchend", soltar);
+    s.addEventListener("touchcancel", soltar);
+  }
+
   /* Cierre con desvanecimiento. closeSheet(true) cierra de golpe (cuando se reemplaza por otra hoja). */
   function closeSheet(ya) {
     const layer = $("#layer");
@@ -329,8 +374,8 @@
 
   /* ----- Buscar producto: tarjetas en dos columnas ----- */
   function openSearch() {
-    const s = sheet(`<div class="sh-h"><h2>Agregar producto</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <div class="search">${I.box}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
+    const s = sheet(`<div class="sh-h compacta"><h2>Agregar producto</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <div class="search">${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
       <div class="pgrid" id="res"></div>`);
     $("#x", s).onclick = closeSheet;
     const q = $("#q", s), res = $("#res", s);
@@ -367,17 +412,16 @@
   /* ----- Lista de pedido con IA ----- */
   let orderRec = false;
   function openOrder(initial) {
-    const s = sheet(`<div class="sh-h"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <div class="ia">${I.spark}<span>DeepSeek para procesar</span></div>
-      <textarea class="ta" id="ta" placeholder="Escribe o dicta: dos leches, media libra de arroz...">${esc(initial || "")}</textarea>
-      <div class="sh-f"><button class="m" id="m" aria-label="Dictar">${I.mic}</button><button class="big" id="go">${I.spark} Procesar pedido</button></div>`, () => { window.PPVoice.stopDictation(); orderRec = false; });
+    const s = sheet(`<div class="sh-h compacta"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <textarea class="ta chica" id="ta" placeholder="Escribe o dicta: dos leches, media libra de arroz...">${esc(initial || "")}</textarea>
+      <div class="sh-f"><button class="m" id="m" aria-label="Dictar">${I.mic}</button><button class="big slim" id="go">${I.spark} <span class="bl">Procesar pedido</span></button></div>`, () => { window.PPVoice.stopDictation(); orderRec = false; });
     $("#x", s).onclick = () => { window.PPVoice.stopDictation(); closeSheet(); };
     const ta = $("#ta", s), go = $("#go", s), m = $("#m", s);
     m.onclick = () => {
       if (orderRec) { window.PPVoice.stopDictation(); return; }
-      orderRec = window.PPVoice.startDictation((t) => (ta.value = t), () => { orderRec = false; m.classList.remove("on"); },
-        () => { orderRec = false; m.classList.remove("on"); toast("El dictado no esta disponible. Escribe el pedido."); });
-      if (orderRec) m.classList.add("on");
+      orderRec = window.PPVoice.startDictation((t) => (ta.value = t), () => { orderRec = false; m.classList.remove("on"); m.innerHTML = I.mic; },
+        () => { orderRec = false; m.classList.remove("on"); m.innerHTML = I.mic; toast("El dictado no esta disponible. Escribe el pedido."); });
+      if (orderRec) { m.classList.add("on"); m.innerHTML = I.stop; }
     };
     go.onclick = async () => {
       const text = ta.value.trim();
@@ -404,6 +448,60 @@
     };
   }
 
+  /* Cuenta animada: los montos se deslizan al nuevo valor en vez de saltar. */
+  function cuenta(sel, desde, hasta, signo) {
+    const el = $(sel);
+    if (!el) return;
+    if (Math.abs(hasta - desde) < 0.005) { el.textContent = (signo ? "+" : "") + money(hasta); return; }
+    el.classList.add("cambiando");
+    const t0 = performance.now(), dur = 320;
+    const paso = (t) => {
+      const k = Math.min(1, (t - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);           /* salida suave */
+      const v = desde + (hasta - desde) * e;
+      el.textContent = (signo ? "+" : "") + money(v);
+      if (k < 1) requestAnimationFrame(paso);
+      else { el.textContent = (signo ? "+" : "") + money(hasta); el.classList.remove("cambiando"); }
+    };
+    requestAnimationFrame(paso);
+  }
+
+  /* ----- Voz: los productos entran directo al talonario ----- */
+  function agregarDirecto(r) {
+    const lines = (r && r.lines) || [];
+    if (!lines.length) {
+      toast("No reconoci productos en el pedido");
+      if (r && r.missing && r.missing.length) toast("No encontre: " + r.missing.join(", "));
+      return;
+    }
+    const antes = cart().lines.length;
+    let n = 0;
+    for (const l of lines) {
+      const p = db().products.find((x) => x.pid === l.pid);
+      if (!p) continue;
+      addLine(p, l.cant || 1);
+      n++;
+    }
+    S.save(); render();
+    animarNuevas(antes, n);
+    vibrar(24); tap();
+    if (n) toast(n + " producto" + (n === 1 ? "" : "s") + " agregado" + (n === 1 ? "" : "s") + " al talonario");
+    if (r.missing && r.missing.length) setTimeout(() => toast("No encontre: " + r.missing.join(", ")), 1100);
+  }
+  /* Entrada escalonada de las filas recien agregadas. */
+  function animarNuevas(desde, cuantas) {
+    const rows = $$("#tickb .row[data-i]");
+    if (!rows.length) return;
+    const inicio = Math.max(0, Math.min(desde, rows.length) - 0);
+    const ultimas = rows.slice(rows.length - Math.max(cuantas, 1));
+    ultimas.forEach((row, i) => {
+      row.classList.add("fila-nueva");
+      row.style.animationDelay = (i * 70) + "ms";
+    });
+    const caja = $("#tickb");
+    if (caja) { caja.classList.add("brillo"); setTimeout(() => caja.classList.remove("brillo"), 1100); }
+  }
+
   /* ----- Voz directa desde el boton negro ----- */
   function toggleVoice() {
     if (voice.phase === "listening") { window.PPVoice.stopDictation(); return; }
@@ -416,7 +514,7 @@
         if (!text) { render(); return; }
         voice.phase = "wait"; render(); showProc();
         const r = await window.PPVoice.interpret(text, db().products);
-        voice = { phase: "idle", text: "" }; $("#proc") && $("#proc").remove(); render(); confirmOrder(r);
+        voice = { phase: "idle", text: "" }; $("#proc") && $("#proc").remove(); render(); agregarDirecto(r);
       },
       (e) => { voice = { phase: "idle", text: "" }; render(); toast(e === "not-allowed" ? "Permite el microfono para dictar" : "No se pudo escuchar. Prueba escribiendo."); openOrder(""); });
   }
@@ -442,7 +540,7 @@
     showProc();
     const r = await window.PPVoice.interpret(text, db().products);
     $("#proc") && $("#proc").remove();
-    confirmOrder(r);
+    agregarDirecto(r);
   }
 
   function renderListen() {
@@ -560,21 +658,37 @@
   /* ---------- Catalogo ---------- */
   let catQ = "", catCat = "";
   function renderCatalogo() {
-    const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))];
-    $("#view").innerHTML = `<div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}"></div>
-      <div class="chips"><button class="chip ${catCat ? "" : "on"}" data-c="">Todos</button>${cats.map((c) => `<button class="chip ${catCat === c ? "on" : ""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+    const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
+    $("#view").innerHTML = `<div class="searchrow">
+        <div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}" autocomplete="off"></div>
+        <button class="fbtn ${catCat ? "on" : ""}" id="cfil" aria-label="Filtrar por categoria">${I.filtro}</button>
+      </div>
+      ${catCat ? `<button class="chip on solo" id="cquit">${esc(catCat)} ${I.x}</button>` : ""}
       <div class="pgrid" id="cl"></div>`;
     const draw = () => {
       const t = window.PPVoice.norm(catQ);
       const l = db().products.filter((p) => p.activo !== false && (!catCat || p.categoria === catCat) && (!t || window.PPVoice.norm(p.nombre).includes(t)));
-      $("#cl").innerHTML = l.length ? l.map((p) => pcard(p, `title="${esc(p.categoria || "General")}"`)).join("") : '<div class="empty">Sin productos. Crea el primero con el boton +.</div>';
+      $("#cl").innerHTML = l.length ? l.map((p) => pcard(p, `title="${esc(p.categoria || "General")}"`)).join("") : '<div class="empty">Sin productos con ese filtro.</div>';
       $$("#cl .pcard").forEach((el) => (el.onclick = () => { tap(); editProduct(db().products.find((p) => p.pid === el.dataset.p)); }));
     };
     $("#cq").oninput = (e) => { catQ = e.target.value; draw(); };
-    $$(".chip").forEach((c) => (c.onclick = () => { catCat = c.dataset.c; renderCatalogo(); }));
+    $("#cfil").onclick = () => abrirFiltroCategorias(cats);
+    const q = $("#cquit");
+    if (q) q.onclick = () => { catCat = ""; renderCatalogo(); };
     setFab(I.plus, () => editProduct(null), "Crear producto");
     draw();
   }
+  /* Hoja con las categorias para elegir con un toque. */
+  function abrirFiltroCategorias(cats) {
+    const s = sheet(`<div class="sh-h compacta"><h2>Categorias</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <div class="fopts">
+        <button class="fopt ${catCat ? "" : "on"}" data-cat="">Todas las categorias ${I.check}</button>
+        ${cats.map((c) => `<button class="fopt ${catCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${I.check}</button>`).join("")}
+      </div>`);
+    $("#x", s).onclick = closeSheet;
+    $$("[data-cat]", s).forEach((b) => (b.onclick = () => { catCat = b.dataset.cat; closeSheet(true); renderCatalogo(); }));
+  }
+
   function editProduct(p) {
     const n = !p; p = p || { pid: S.uid("P"), nombre: "", precio: 0, unidad: "unidad", categoria: "", stock: 0, itbis: true, activo: true };
     const s = sheet(`<div class="sh-h"><h2>${n ? "Crear producto" : "Editar producto"}</h2><button class="sh-x" id="x">${I.x}</button></div>
@@ -588,6 +702,7 @@
           <label class="btn gris" style="margin:0;flex:1">Elegir foto<input type="file" accept="image/*" id="fi" hidden></label>
           <button class="btn gris" id="fq" style="margin:0" ${p.img ? "" : "hidden"}>Quitar</button>
         </div>
+        <small class="nota" id="estadoFoto">${p.img ? "Foto guardada" : "La foto se guarda con el producto"}</small>
       </div>
       <button class="btn" id="sv">Guardar</button>${n ? "" : '<button class="btn red" id="dl" style="margin-top:10px">Eliminar</button>'}`);
     $("#x", s).onclick = closeSheet;
@@ -601,19 +716,21 @@
       rd.onload = () => {
         const im = new Image();
         im.onload = () => {
-          const max = 420, k = Math.min(1, max / Math.max(im.width, im.height));
+          /* se guarda liviana para que la foto viaje y quede guardada en la nube */
+          const max = 320, k = Math.min(1, max / Math.max(im.width, im.height));
           const cv = document.createElement("canvas");
           cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
           cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
-          img = cv.toDataURL("image/jpeg", 0.7);
+          img = cv.toDataURL("image/jpeg", 0.62);
           $("#pv", s).innerHTML = `<img src="${img}" alt="">`;
           $("#fq", s).hidden = false;
+          $("#estadoFoto", s).textContent = "Foto lista";
         };
         im.src = rd.result;
       };
       rd.readAsDataURL(f);
     };
-    $("#fq", s).onclick = () => { img = ""; $("#pv", s).innerHTML = I.box; $("#fq", s).hidden = true; };
+    $("#fq", s).onclick = () => { img = ""; $("#pv", s).innerHTML = I.box; $("#fq", s).hidden = true; const e = $("#estadoFoto", s); if (e) e.textContent = "La foto se guarda con el producto"; };
     $("#sv", s).onclick = () => {
       const nom = $("#fn", s).value.trim(), pr = parseFloat(String($("#fp", s).value).replace(",", "."));
       if (!nom || !(pr >= 0)) return toast("Falta el nombre o el precio");
@@ -749,27 +866,74 @@
   function openMenu() {
     const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes y creditos", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
-    const s = sheet(`<div class="sh-h"><h2>Men&uacute; de Navegaci&oacute;n</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x" id="x">${I.x}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
     $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(true); go(b.dataset.g); }));
   }
   /* ---------- Pedidos: listado con filtros ---------- */
-  let pedFiltro = 8;
+  let pedFiltro = 9999;   /* rango: 4, 8 o todos */
+  let pedTipo = "";       /* "", "pagado" o "credito" */
+  let pedQ = "";
   function renderHistorial() {
-    const all = db().sales.slice().reverse();
-    const L = all.slice(0, pedFiltro);
-    const chip = (n, t) => `<button class="chip ${pedFiltro === n ? "on" : ""}" data-f="${n}">${t}</button>`;
-    $("#view").innerHTML = `<div class="filt">${chip(4, "Ultimos 4")}${chip(8, "Ultimos 8")}${chip(9999, "Por fecha")}</div>` +
+    const q = window.PPVoice.norm(pedQ);
+    const conFiltro = pedTipo || pedFiltro < 9000;
+    const esCredito = (s) => s.metodo === "credito";
+    let L = db().sales.slice().reverse().filter((s) => {
+      if (pedTipo === "credito" && !esCredito(s)) return false;
+      if (pedTipo === "pagado" && esCredito(s)) return false;
+      if (!q) return true;
+      const f = new Date(s.fecha);
+      const mes = f.toLocaleDateString("es-DO", { month: "long" });
+      const anio = String(f.getFullYear());
+      const tipo = esCredito(s) ? "a credito credito fiado pendiente" : "pagado contado efectivo";
+      return window.PPVoice.norm([s.cliente || "sin cliente", mes, anio, tipo].join(" ")).includes(q);
+    });
+    if (pedFiltro < 9000) L = L.slice(0, pedFiltro);
+
+    $("#view").innerHTML = `<div class="searchrow">
+        <div class="search">${I.search}<input id="pq2" placeholder="Buscar pedido" value="${esc(pedQ)}" autocomplete="off"></div>
+        <button class="fbtn ${conFiltro ? "on" : ""}" id="pfil" aria-label="Filtrar pedidos">${I.filtro}</button>
+      </div>` +
       (L.length ? L.map((s) => {
-        const est = s.metodo === "credito" ? "A credito" : "Pagado";
+        const est = esCredito(s) ? "A credito" : "Pagado";
         return `<button class="ord" data-v="${esc(s.vid)}">
-          <div class="ord-t"><b>${esc(s.cliente || "Sin cliente")}</b><span class="badge ${s.metodo === "credito" ? "cred" : ""}">${est}</span></div>
+          <div class="ord-t"><b>${esc(s.cliente || "Sin cliente")}</b><span class="badge ${esCredito(s) ? "cred" : ""}">${est}</span></div>
           <div class="ord-b"><span>${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span><b>${money(s.total)}</b></div>
         </button>`;
-      }).join("") : '<div class="card"><div class="cnt">Todavia no hay pedidos. Registra el primero desde el panel.</div></div>');
-    $$(".filt .chip", $("#view")).forEach((c) => (c.onclick = () => { pedFiltro = parseInt(c.dataset.f, 10); renderHistorial(); }));
+      }).join("") : '<div class="card"><div class="cnt">No hay pedidos que coincidan con esa busqueda.</div></div>');
+
+    const inp = $("#pq2");
+    inp.oninput = (e) => {
+      pedQ = e.target.value;
+      const pos = e.target.selectionStart;
+      renderHistorial();
+      const n2 = $("#pq2"); if (n2) { n2.focus(); n2.setSelectionRange(pos, pos); }
+    };
+    $("#pfil").onclick = abrirFiltroPedidos;
     $$(".ord", $("#view")).forEach((b) => (b.onclick = () => openDetalle(db().sales.find((x) => x.vid === b.dataset.v))));
+  }
+
+  /* Hoja de filtros: tipo de venta y rango. */
+  function abrirFiltroPedidos() {
+    const s = sheet(`<div class="sh-h compacta"><h2>Filtrar pedidos</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <p class="lbl" style="margin:2px 2px 8px">TIPO DE VENTA</p>
+      <div class="fopts">
+        <button class="fopt ${pedTipo === "" ? "on" : ""}" data-t="">Todos ${I.check}</button>
+        <button class="fopt ${pedTipo === "pagado" ? "on" : ""}" data-t="pagado">Pagados ${I.check}</button>
+        <button class="fopt ${pedTipo === "credito" ? "on" : ""}" data-t="credito">A credito ${I.check}</button>
+      </div>
+      <p class="lbl" style="margin:14px 2px 8px">CANTIDAD</p>
+      <div class="fopts">
+        <button class="fopt ${pedFiltro === 4 ? "on" : ""}" data-r="4">Ultimos 4 ${I.check}</button>
+        <button class="fopt ${pedFiltro === 8 ? "on" : ""}" data-r="8">Ultimos 8 ${I.check}</button>
+        <button class="fopt ${pedFiltro >= 9000 ? "on" : ""}" data-r="9999">Todo el historial ${I.check}</button>
+      </div>
+      <button class="btn sec" id="plimpia" style="margin-top:14px">Quitar filtros</button>`);
+    $("#x", s).onclick = closeSheet;
+    $$("[data-t]", s).forEach((b) => (b.onclick = () => { pedTipo = b.dataset.t; closeSheet(true); renderHistorial(); }));
+    $$("[data-r]", s).forEach((b) => (b.onclick = () => { pedFiltro = parseInt(b.dataset.r, 10); closeSheet(true); renderHistorial(); }));
+    $("#plimpia", s).onclick = () => { pedTipo = ""; pedFiltro = 9999; closeSheet(true); renderHistorial(); };
   }
 
   /* ---------- Detalle del pedido ---------- */

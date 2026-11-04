@@ -520,3 +520,57 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 .upimg .btn{display:flex;align-items:center;justify-content:center;text-align:center;padding:0 14px}
 /* el dock ya no muestra la rayita verde de la pantalla activa */
 .dock button.on::after{display:none}
+
+/* ========== v23 ========== */
+
+/* 2) encabezado un poco mas grande */
+.top h1{font-size:20.5px}
+@media (max-width:420px){.top h1{font-size:19.5px}}
+
+/* 1) barra lateral: se puede arrastrar para cerrar + titulo compacto */
+.sheet.side{transition:transform .18s ease}
+.sheet.side.arrastrando{transition:none}
+.sheet.side .sh-h h2{font-size:17px}
+
+/* 3) Lista de pedido: textos mas contenidos */
+.sh-h.compacta h2{font-size:16px}
+.ta.chica{font-size:17.5px;min-height:170px}
+.ta.chica::placeholder{font-size:16px;color:#94a0a8}
+.big.slim{font-size:16px}
+.big.slim .bl{font-size:16px}
+.sh-f .m.on{background:var(--red);color:#fff;border-color:var(--red)}
+.sh-f .m.on svg{width:20px;height:20px}
+
+/* 5) barra de venta: sin marco, fondo gris claro al haber productos */
+.act.hay::before{display:none}
+.act.hay{background:#EDF1F3;border-top-color:#DCE3E7}
+
+/* 4) filas nuevas del talonario entran con un desliz suave */
+@keyframes filaIn{from{opacity:0;transform:translateY(8px) scale(.985);background:#E7F6EE}to{opacity:1;transform:none;background:var(--card)}}
+#tickb .row.fila-nueva{animation:filaIn .42s cubic-bezier(.22,.9,.3,1) both}
+#tickb.brillo{box-shadow:inset 0 0 0 2px #1f9d5c33;transition:box-shadow .25s}
+/* la cuenta de los montos se ve fluida */
+.cambiando{color:var(--g);transition:color .2s}
+
+/* 7 y 8) barra de busqueda con boton de filtro a la derecha */
+.searchrow{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.searchrow .search{flex:1;margin:0}
+.fbtn{width:50px;height:50px;flex:none;border-radius:16px;background:#fff;border:1.5px solid var(--line);display:grid;place-items:center;color:#41505c}
+.fbtn.on{background:var(--g);border-color:var(--g);color:#fff}
+.chip.solo{display:inline-flex;align-items:center;gap:6px;margin-bottom:10px}
+.chip.solo svg{width:14px;height:14px}
+.fopts{display:flex;flex-direction:column;gap:8px}
+.fopt{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;height:50px;padding:0 16px;border-radius:14px;border:1.5px solid var(--line);background:#fff;font-size:15px;font-weight:600;color:var(--ink)}
+.fopt svg{width:17px;height:17px;opacity:0;color:var(--g);flex:none}
+.fopt.on{border-color:var(--g);background:var(--g-soft);color:#0B7A52}
+.fopt.on svg{opacity:1}
+
+/* 10) foto del producto: los dos botones del mismo ancho y texto centrado */
+.upimg{display:flex;align-items:center;gap:10px}
+.upimg .btn{flex:1 1 0;width:auto;min-width:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 8px;font-size:13.5px;white-space:nowrap}
+.upimg .pv{flex:none}
+.nota{display:block;margin-top:6px;font-size:11.5px;color:var(--mut)}
+
+/* 9) WhatsApp con el color de la marca en las listas */
+.ico.wa{color:#1FA855}
+.hx-ib svg[viewBox="0 0 24 24"][fill="currentColor"]{width:18px;height:18px}
