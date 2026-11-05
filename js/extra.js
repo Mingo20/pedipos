@@ -33,6 +33,9 @@
   let sub = null;
 
   /* ---------- Pantalla Clientes ---------- */
+  let cliFiltro = "";   /* "", "debe", "aldia" */
+  let provFiltro = "";
+
   function renderClientes() {
     const view = document.getElementById("view");
     if (sub && sub.tipo === "cliente") {
@@ -40,6 +43,7 @@
       if (c) return pintarCliente(c);
       sub = null;
     } else if (sub) sub = null;
+    document.body.classList.remove("focus");
     const list = db().clients || [];
     const total = list.reduce((s, c) => s + Math.max(0, deudaDe(c.cid)), 0);
     const conDeuda = list.filter((c) => deudaDe(c.cid) > 0).length;
@@ -49,34 +53,48 @@
         <div class="kpi"><small>Por cobrar</small><b>${money(total)}</b></div>
         <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
       </div>
-      <div class="search">${window.PPUI.I.search}
-        <input id="cq2" placeholder="Buscar cliente" autocomplete="off">
+      <div class="stickbar">
+        <div class="searchrow">
+          <div class="search">${window.PPUI.I.search}<input id="cq2" placeholder="Buscar cliente" autocomplete="off"></div>
+          <button class="fbtn" id="cfil2" aria-label="Filtrar clientes">${window.PPUI.I.filtro}</button>
+        </div>
+        <div class="filtro-pop" id="cfp" hidden>
+          <button class="fopt" data-e="">Todos los clientes ${window.PPUI.I.check}</button>
+          <button class="fopt" data-e="debe">Con deuda ${window.PPUI.I.check}</button>
+          <button class="fopt" data-e="aldia">Al dia ${window.PPUI.I.check}</button>
+        </div>
       </div>
       <div id="cl2"></div>`;
 
     const draw = (f = "") => {
       const t = f.toLowerCase().trim();
-      const l = list.filter((c) => !t || String(c.nombre).toLowerCase().includes(t) || String(c.whatsapp || c.telefono || "").includes(t));
+      const l = list.filter((c) => !t || String(c.nombre).toLowerCase().includes(t) || String(c.direccion || "").toLowerCase().includes(t))
+        .filter((c) => cliFiltro === "debe" ? deudaDe(c.cid) > 0 : cliFiltro === "aldia" ? deudaDe(c.cid) <= 0 : true);
       document.getElementById("cl2").innerHTML = l.length
-        ? l.map((c) => {
-            const d = deudaDe(c.cid), n = ventasDe(c.cid).length;
-            return `<div class="clrow">
-              <div class="cli">
-                <b>${esc(c.nombre)}</b>
-                <span>${esc(c.whatsapp || c.telefono || "sin WhatsApp")} &middot; ${n} compra${n === 1 ? "" : "s"}${d > 0 ? " &middot; debe " + money(d) : ""}</span>
-              </div>
-              <button class="ico wa" data-w="${esc(c.cid)}" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
-              <button class="mini ${d > 0 ? "red" : ""}" data-c="${esc(c.cid)}">${d > 0 ? "Cobrar" : "Ver"}</button>
-            </div>`;
-          }).join("")
-        : '<p class="cnt" style="text-align:center;padding:20px 0">Sin clientes todavia.</p>';
-      $$("[data-c]").forEach((b) => (b.onclick = () => verCliente(list.find((c) => c.cid === b.dataset.c))));
-      $$("[data-w]").forEach((b) => (b.onclick = () => {
+        ? l.map((c) => `<div class="clrow" data-c="${esc(c.cid)}">
+              <div class="cli"><b>${esc(c.nombre)}</b><span>${esc(c.direccion || "Sin direccion")}</span></div>
+              <span class="ico wa wa-end" data-w="${esc(c.cid)}" role="button" aria-label="WhatsApp">${window.PPUI.I.wa}</span>
+            </div>`).join("")
+        : '<p class="cnt" style="text-align:center;padding:20px 0">Sin clientes con ese filtro.</p>';
+      /* toda la tarjeta abre el detalle */
+      $$(".clrow").forEach((el) => (el.onclick = () => verCliente(list.find((c) => c.cid === el.dataset.c))));
+      $$("[data-w]").forEach((b) => (b.onclick = (e) => {
+        e.stopPropagation();
         const c = list.find((x) => x.cid === b.dataset.w);
         window.PPUI.chatear(c.whatsapp || c.telefono, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
       }));
     };
-    document.getElementById("cq2").oninput = (e) => draw(e.target.value);
+    const inp = document.getElementById("cq2");
+    inp.oninput = (e) => draw(e.target.value);
+    const pop = document.getElementById("cfp"), fb = document.getElementById("cfil2");
+    fb.classList.toggle("on", !!cliFiltro);
+    const marcar = () => $$("[data-e]", pop).forEach((b) => b.classList.toggle("on", b.dataset.e === cliFiltro));
+    marcar();
+    fb.onclick = () => { pop.hidden = !pop.hidden; };
+    $$("[data-e]", pop).forEach((b) => (b.onclick = () => {
+      cliFiltro = b.dataset.e; fb.classList.toggle("on", !!cliFiltro);
+      pop.hidden = true; marcar(); draw(inp.value);
+    }));
     window.PPUI.setFab(window.PPUI.I.plus, () => editarCliente(null), "Nuevo cliente");
     draw();
   }
@@ -100,37 +118,28 @@
           ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
         <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
     };
-    window.PPUI.clearFab();   /* en el detalle no hay boton flotante */
-    const ini = String(c.nombre || "?").trim().charAt(0).toUpperCase();
+    window.PPUI.clearFab();
+    document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
+    const dir = c.direccion || "Sin direccion registrada";
     view.innerHTML = `<div class="subv">
       <div class="subv-h">
         <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
-        <div class="subv-tt"><b>${esc(c.nombre)}</b><span>Cliente</span></div>
+        <div class="subv-tt"><b>${esc(c.nombre)}</b><span>${esc(dir)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="subv-hero">
-        <span class="subv-av">${esc(ini)}</span>
-        <div class="subv-ht">
-          <b>${esc(c.nombre)}</b>
-          <span>${esc(c.whatsapp || c.telefono || "Sin WhatsApp")}</span>
-          <span>${esc(c.direccion || "Sin direccion registrada")}</span>
-        </div>
-      </div>
-      <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px">
         <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:15.5px">${money(comprado)}</b></div>
         <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:15.5px;color:#0B6B45">${money(pagado)}</b></div>
         <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:15.5px;color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
       </div>
-      <div class="subv-acc">
-        ${d > 0 ? '<button class="btn" id="svPay" style="height:48px">Registrar abono</button>' : ""}
-        <button class="btn sec" id="svEdit" style="height:48px">Editar cliente</button>
-      </div>
-      <p class="lbl" style="margin:16px 2px 8px">HISTORIAL DE COMPRAS (${vs.length})</p>
-      ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 0">Sin compras registradas.</p>'}
+      ${d > 0 ? '<div class="subv-acc"><button class="btn" id="svPay" style="height:48px;width:100%">Registrar pagos y abono</button></div>' : ""}
+      <p class="lbl subv-lbl">HISTORIAL DE COMPRAS (${vs.length})</p>
+      ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
+      <div class="subv-acc"><button class="btn sec" id="svEdit" style="height:48px;width:100%">Editar cliente</button></div>
     </div>`;
     view.scrollTop = 0;
     const wa = c.whatsapp || c.telefono;
-    $("#svBack").onclick = () => { sub = null; render(); };
+    $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     $("#svEdit").onclick = () => editarCliente(c);
     const pay = $("#svPay");
@@ -209,6 +218,7 @@
       if (p) return pintarProveedor(p);
       sub = null;
     } else if (sub) sub = null;
+    document.body.classList.remove("focus");
     const list = db().providers || [];
     const debeTotal = list.reduce((s, p) => s + Math.max(0, saldoProv(p).debe), 0);
     const conDeuda = list.filter((p) => saldoProv(p).debe > 0).length;
@@ -217,33 +227,49 @@
         <div class="kpi"><small>Por pagar</small><b>${money(debeTotal)}</b></div>
         <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
       </div>
-      <div class="search">${window.PPUI.I.search}
-        <input id="pq" placeholder="Buscar proveedor" autocomplete="off">
+      <div class="stickbar">
+        <div class="searchrow">
+          <div class="search">${window.PPUI.I.search}<input id="pq" placeholder="Buscar proveedor" autocomplete="off"></div>
+          <button class="fbtn" id="pvfil" aria-label="Filtrar proveedores">${window.PPUI.I.filtro}</button>
+        </div>
+        <div class="filtro-pop" id="pvp" hidden>
+          <button class="fopt" data-e="">Todos los proveedores ${window.PPUI.I.check}</button>
+          <button class="fopt" data-e="debe">Con deuda ${window.PPUI.I.check}</button>
+          <button class="fopt" data-e="aldia">Al dia ${window.PPUI.I.check}</button>
+        </div>
       </div>
       <div id="pl2"></div>`;
     const draw = (f = "") => {
       const t = f.toLowerCase().trim();
-      const l = list.filter((p) => !t || String(p.nombre).toLowerCase().includes(t) || String(p.whatsapp || p.telefono || "").includes(t));
+      const l = list.filter((p) => !t || String(p.nombre).toLowerCase().includes(t) || String(p.contacto || "").toLowerCase().includes(t))
+        .filter((p) => provFiltro === "debe" ? saldoProv(p).debe > 0 : provFiltro === "aldia" ? saldoProv(p).debe <= 0 : true);
       document.getElementById("pl2").innerHTML = l.length
         ? l.map((p) => {
-            const s = saldoProv(p), n = comprasDe(p).length;
-            return `<div class="clrow">
-              <div class="cli">
-                <b>${esc(p.nombre)}</b>
-                <span>${esc(p.whatsapp || p.telefono || "sin WhatsApp")} &middot; ${n} compra${n === 1 ? "" : "s"}${s.debe > 0 ? " &middot; debe " + money(s.debe) : ""}</span>
-              </div>
-              <button class="ico wa" data-w="${esc(p.prid)}" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
-              <button class="mini ${s.debe > 0 ? "red" : ""}" data-pv="${esc(p.prid)}">Ver</button>
+            const s = saldoProv(p);
+            return `<div class="clrow" data-pv="${esc(p.prid)}">
+              <div class="cli"><b>${esc(p.nombre)}</b><span>${p.contacto ? esc(p.contacto) : (s.debe > 0 ? "Debe " + money(s.debe) : "Al dia")}${p.contacto && s.debe > 0 ? " &middot; debe " + money(s.debe) : ""}</span></div>
+              <span class="ico wa wa-end" data-w="${esc(p.prid)}" role="button" aria-label="WhatsApp">${window.PPUI.I.wa}</span>
             </div>`;
           }).join("")
-        : '<p class="cnt" style="text-align:center;padding:20px 0">Sin proveedores todavia.</p>';
-      $$("[data-pv]").forEach((b) => (b.onclick = () => verProveedor(list.find((x) => x.prid === b.dataset.pv))));
-      $$("[data-w]").forEach((b) => (b.onclick = () => {
+        : '<p class="cnt" style="text-align:center;padding:20px 0">Sin proveedores con ese filtro.</p>';
+      $$(".clrow").forEach((el) => (el.onclick = () => verProveedor(list.find((x) => x.prid === el.dataset.pv))));
+      $$("[data-w]").forEach((b) => (b.onclick = (e) => {
+        e.stopPropagation();
         const p = list.find((x) => x.prid === b.dataset.w);
         window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
       }));
     };
-    document.getElementById("pq").oninput = (e) => draw(e.target.value);
+    const inp = document.getElementById("pq");
+    inp.oninput = (e) => draw(e.target.value);
+    const pop = document.getElementById("pvp"), fb = document.getElementById("pvfil");
+    fb.classList.toggle("on", !!provFiltro);
+    const marcar = () => $$("[data-e]", pop).forEach((b) => b.classList.toggle("on", b.dataset.e === provFiltro));
+    marcar();
+    fb.onclick = () => { pop.hidden = !pop.hidden; };
+    $$("[data-e]", pop).forEach((b) => (b.onclick = () => {
+      provFiltro = b.dataset.e; fb.classList.toggle("on", !!provFiltro);
+      pop.hidden = true; marcar(); draw(inp.value);
+    }));
     window.PPUI.setFab(window.PPUI.I.plus, () => editarProveedor(null), "Nuevo proveedor");
     draw();
   }
@@ -270,36 +296,29 @@
         <b class="${compra ? (pend > 0 ? "red" : "") : "green"}">${compra ? "-" + money(m.x.total) : "+" + money(m.x.monto)}</b></div>`;
     };
     window.PPUI.clearFab();
-    const ini = String(p.nombre || "?").trim().charAt(0).toUpperCase();
+    document.body.classList.add("focus");
+    const contacto = p.contacto || p.whatsapp || p.telefono || "Sin contacto";
     view.innerHTML = `<div class="subv">
       <div class="subv-h">
         <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
-        <div class="subv-tt"><b>${esc(p.nombre)}</b><span>Proveedor</span></div>
+        <div class="subv-tt"><b>${esc(p.nombre)}</b><span>${esc(contacto)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="subv-hero">
-        <span class="subv-av">${esc(ini)}</span>
-        <div class="subv-ht">
-          <b>${esc(p.nombre)}</b>
-          <span>${esc(p.contacto || "Sin contacto")}</span>
-          <span>${esc(p.whatsapp || p.telefono || "Sin WhatsApp")}</span>
-        </div>
-      </div>
-      <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px">
         <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:15.5px">${money(s0.comprado)}</b></div>
         <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:15.5px;color:#0B6B45">${money(s0.pagado)}</b></div>
         <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:15.5px;color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
       <div class="subv-acc">
         <button class="btn" id="svCompra" style="height:48px">Nueva compra</button>
-        ${s0.debe > 0 ? '<button class="btn sec" id="svPago" style="height:48px">Registrar pago o abono</button>' : ""}
-        <button class="btn sec" id="svEdit" style="height:48px">Editar proveedor</button>
+        ${s0.debe > 0 ? '<button class="btn sec" id="svPago" style="height:48px">Registrar pago</button>' : ""}
       </div>
-      <p class="lbl" style="margin:16px 2px 8px">MOVIMIENTOS (${mov.length})</p>
-      ${mov.length ? mov.map(fila).join("") : '<p class="cnt" style="padding:10px 0">Sin movimientos registrados.</p>'}
+      <p class="lbl subv-lbl">MOVIMIENTOS (${mov.length})</p>
+      ${mov.length ? mov.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin movimientos registrados.</p>'}
+      <div class="subv-acc"><button class="btn sec" id="svEdit" style="height:48px;width:100%">Editar proveedor</button></div>
     </div>`;
     view.scrollTop = 0;
-    $("#svBack").onclick = () => { sub = null; render(); };
+    $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     $("#svCompra").onclick = () => registrarCompra(p);
     $("#svEdit").onclick = () => editarProveedor(p);

@@ -98,6 +98,8 @@
   }
   function vibrar(ms) { try { navigator.vibrate && navigator.vibrate(ms || 14); } catch (_) {} }
   function tap() { beep(); vibrar(14); }
+  /* confirmacion con vibracion fuerte al agregar al talonario */
+  function tapFuerte() { beep(); try { navigator.vibrate && navigator.vibrate([55, 40, 90]); } catch (_) {} }
 
   /* ---------- Boton flotante (vive fuera del area con scroll: queda fijo) ---------- */
   function setFab(icon, onclick, label) {
@@ -147,6 +149,63 @@
     $$("#dock button").forEach((b) => (b.onclick = () => go(b.dataset.t)));
   }
   const TITULOS = { panel: "PANEL", catalogo: "CATALOGO", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
+  /* ----- Avisos de pagos a credito ----- */
+  const DIAS = 86400000;
+  function avisosPago() {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const out = [];
+    for (const s of db().sales || []) {
+      if (s.metodo !== "credito" || s.pagada || !s.fecha_pago) continue;
+      const f = new Date(String(s.fecha_pago) + "T00:00:00");
+      if (isNaN(f)) continue;
+      const dias = Math.round((f - hoy) / DIAS);
+      if (dias > 2) continue;
+      out.push({ clave: s.vid + ":" + (dias <= 0 ? "v" : "p"), tipo: dias <= 0 ? "vencido" : "proximo", dias, s });
+    }
+    return out.sort((a, b) => a.dias - b.dias);
+  }
+  /* suena y vibra solo cuando aparece un aviso nuevo */
+  function revisarAvisos() {
+    const av = avisosPago();
+    const vista = (db().avisos = db().avisos || { vistos: [] });
+    const nuevos = av.filter((a) => !vista.vistos.includes(a.clave));
+    const dot = $("#bellDot");
+    if (dot) dot.hidden = !av.length;
+    if (!nuevos.length) return;
+    for (const a of nuevos) vista.vistos.push(a.clave);
+    S.save();
+    /* aviso sonoro y vibracion de notificacion */
+    try { beep(); setTimeout(() => beep(), 240); } catch (_) {}
+    try { navigator.vibrate && navigator.vibrate([120, 70, 120, 70, 220]); } catch (_) {}
+    toast(nuevos.length === 1
+      ? (nuevos[0].tipo === "vencido" ? "Tienes un pago vencido" : "Un pago vence en 2 dias")
+      : nuevos.length + " avisos de pago");
+  }
+  function renderAvisos() {
+    const av = avisosPago();
+    const fila = (a) => {
+      const s = a.s;
+      const nombre = s.cliente || "Sin cliente";
+      const fecha = new Date(String(s.fecha_pago) + "T00:00:00");
+      const cuando = a.tipo === "vencido"
+        ? (a.dias === 0 ? "Vence hoy" : "Vencido hace " + Math.abs(a.dias) + " dia" + (Math.abs(a.dias) === 1 ? "" : "s"))
+        : "Faltan " + a.dias + " dias";
+      return `<button class="aviso ${a.tipo}" data-v="${esc(s.vid)}">
+        <span class="av-ic">${a.tipo === "vencido" ? I.clock : I.card}</span>
+        <span class="av-tx"><b>${a.tipo === "vencido" ? "Pago vencido" : "Pago proximo a vencer"}</b>
+          <span>${esc(nombre)} &middot; ${money(s.total)}</span>
+          <span>${fecha.toLocaleDateString("es-DO")} &middot; ${cuando}</span></span>
+        <span class="av-go">${I.chev}</span>
+      </button>`;
+    };
+    $("#view").innerHTML = `<div class="av-h"><b>Notificaciones</b><span>${av.length ? av.length + " aviso" + (av.length === 1 ? "" : "s") + " de pago" : "Sin avisos por ahora"}</span></div>
+      ${av.length ? av.map(fila).join("") : '<div class="card"><div class="cnt" style="text-align:center;padding:26px 10px">No hay pagos proximos a vencer ni vencidos.</div></div>'}`;
+    $$(".aviso", $("#view")).forEach((b) => (b.onclick = () => {
+      const s = (db().sales || []).find((x) => x.vid === b.dataset.v);
+      if (s) openDetalle(s);
+    }));
+  }
+
   function go(t) {
     const cambio = t !== tab;
     tab = t;
@@ -226,21 +285,49 @@
       const soltar = () => {
         if (!activo) return;
         activo = false; row.classList.remove("drag");
-        if (dx < -64) {
-          const i = +row.dataset.i;
-          row.classList.add("gone");
-          vibrar(18);
-          setTimeout(() => {
-            cart().lines.splice(i, 1); S.save(); render();
-            toast("Producto quitado del talonario");
-          }, 170);
+        if (dx < -46) {
+          /* deslizar abre el editor de la seccion del producto */
+          row.style.transform = ""; row.style.opacity = "";
+          vibrar(20);
+          abrirEditorFila(+row.dataset.i);
         } else { row.style.transform = ""; row.style.opacity = ""; }
         dx = 0;
       };
+      /* tocar la fila tambien abre el editor */
+      row.addEventListener("click", (e) => { if (e.target.tagName === "INPUT") return; abrirEditorFila(+row.dataset.i); });
       row.addEventListener("touchend", soltar);
       row.addEventListener("touchcancel", soltar);
     });
   }
+  /* Editor compacto de una seccion del talonario. */
+  function abrirEditorFila(i) {
+    const l = cart().lines[i];
+    if (!l) return;
+    const s = sheet(`<div class="sh-h compacta"><h2>Editar producto</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <label class="field"><span>Nombre</span><input id="en" value="${esc(l.nombre)}" autocomplete="off"></label>
+      <div class="duo">
+        <label class="field"><span>Cantidad</span><input id="eq" inputmode="decimal" value="${num(l.cant)}"></label>
+        <label class="field"><span>Precio (RD$)</span><input id="ep" inputmode="decimal" value="${num(l.precio)}"></label>
+      </div>
+      <div class="sh-f"><button class="big" id="eok">${I.check} <span class="bl">Listo</span></button></div>
+      <button class="btn red" id="edel" style="margin-top:10px;width:100%">Quitar del talonario</button>`);
+    $("#x", s).onclick = closeSheet;
+    $("#eok", s).onclick = () => {
+      const nom = $("#en", s).value.trim();
+      const q2 = parseFloat(String($("#eq", s).value).replace(",", "."));
+      const p2 = parseFloat(String($("#ep", s).value).replace(",", "."));
+      if (!nom) return toast("Escribe el nombre del producto");
+      if (!(q2 > 0)) return toast("La cantidad debe ser mayor que cero");
+      if (!(p2 >= 0)) return toast("El precio no es valido");
+      Object.assign(cart().lines[i], { nombre: nom, cant: S.round2(q2), precio: p2 });
+      S.save(); closeSheet(); render(); toast("Producto actualizado");
+    };
+    $("#edel", s).onclick = () => {
+      cart().lines.splice(i, 1); S.save(); closeSheet();
+      vibrar(26); render(); toast("Producto quitado del talonario");
+    };
+  }
+
   function renderPanel() {
     const c = cart(), t = tot(), n = c.lines.length;
     $("#view").innerHTML = `
@@ -295,6 +382,28 @@
     }));
     bindSwipeRows();
     renderListen();
+    bindAbrirInventario();
+  }
+
+  /* Deslizar desde el borde izquierdo abre la barra de inventario. */
+  let abriendoInv = false;
+  function bindAbrirInventario() {
+    const v = $("#view");
+    if (!v || abriendoInv) return;
+    abriendoInv = true;
+    let x0 = 0, y0 = 0, activo = false;
+    v.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+      activo = x0 < 26;
+    }, { passive: true });
+    v.addEventListener("touchmove", (e) => {
+      if (!activo) return;
+      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+      if (Math.abs(dy) > Math.abs(dx)) { activo = false; return; }
+      if (dx > 66) { activo = false; openSearch(); }
+    }, { passive: true });
+    v.addEventListener("touchend", () => { activo = false; });
   }
 
   function addLine(p, cant) {
@@ -364,6 +473,34 @@
     s.addEventListener("touchcancel", soltar);
   }
 
+  /* Cerrar una hoja deslizandola hacia la derecha (solo gestos horizontales). */
+  function bindCerrarDerecha(s, handle) {
+    const zona = handle || s;
+    let x0 = 0, y0 = 0, dx = 0, activo = false, vertical = false;
+    zona.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; activo = true; vertical = false;
+      s.classList.add("arrastrando");
+    }, { passive: true });
+    zona.addEventListener("touchmove", (e) => {
+      if (!activo) return;
+      const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+      if (!vertical && Math.abs(my) > Math.abs(mx) && Math.abs(my) > 12) { vertical = true; activo = false; s.style.transform = ""; s.classList.remove("arrastrando"); return; }
+      if (vertical) return;
+      dx = Math.max(0, mx);
+      s.style.transform = "translateX(" + dx + "px)";
+    }, { passive: true });
+    const soltar = () => {
+      if (!activo) return;
+      activo = false; s.classList.remove("arrastrando");
+      s.style.transform = "";
+      if (dx > 70) closeSheet();
+      dx = 0;
+    };
+    zona.addEventListener("touchend", soltar);
+    zona.addEventListener("touchcancel", soltar);
+  }
+
   /* Cierre con desvanecimiento. closeSheet(true) cierra de golpe (cuando se reemplaza por otra hoja). */
   function closeSheet(ya) {
     const layer = $("#layer");
@@ -386,19 +523,22 @@
     const s = sheet(`<div class="inv">
       <div class="inv-h">
         <div class="inv-tt"><span class="hi">${I.box}</span><h2>Inventario</h2></div>
-        <button class="inv-b" id="invMic" aria-label="Agregar por voz">${I.mic}</button>
-        <button class="inv-b" id="x" aria-label="Cerrar">${I.x}</button>
+        <div class="inv-acts">
+          <button class="inv-b rnd" id="x" aria-label="Cerrar">${I.x}</button>
+          <button class="inv-b rnd" id="invFil" aria-label="Filtrar por categoria">${I.filtro}</button>
+        </div>
       </div>
       <div class="inv-c">
-        <div class="searchrow">
-          <div class="search">${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
-          <button class="fbtn" id="invFil" aria-label="Filtrar por categoria">${I.filtro}</button>
+        <div class="search inv-search">
+          ${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off">
+          <button class="mic-in" id="invMic" aria-label="Agregar por voz">${I.mic}</button>
         </div>
         <div class="inv-filtro" id="invCatList" hidden></div>
       </div>
       <div class="inv-lista"><div class="pgrid" id="res"></div></div>
     </div>`, () => { window.PPVoice.stopDictation(); invRec = false; }, { alto: true });
     decorar(s);
+    bindCerrarDerecha(s, $(".inv-h", s));
 
     const q = $("#q", s), res = $("#res", s), mic = $("#invMic", s);
     const cats = () => [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
@@ -441,7 +581,7 @@
         if (!p) return;
         addLine(p, 1);
         invToque.set(p.pid, Date.now());
-        tap();
+        tapFuerte();
         el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit");
         render();
         pintar(true);   /* el producto sube solo hacia la parte superior */
@@ -522,24 +662,19 @@
   /* ----- Lista de pedido con IA ----- */
   let orderRec = false;
   function openOrder(initial) {
-    const s = sheet(`<div class="sh-h compacta"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <textarea class="ta chica" id="ta" placeholder="Escribe o dicta: dos leches, media libra de arroz...">${esc(initial || "")}</textarea>
-      <div class="sh-f"><button class="m" id="m" aria-label="Dictar">${I.mic}</button><button class="big slim" id="go">${I.spark} <span class="bl">Procesar pedido</span></button></div>`, () => { window.PPVoice.stopDictation(); orderRec = false; });
+    const s = sheet(`<div class="sh-h"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <textarea class="ta baja" id="ta" placeholder="Escribe el pedido: dos leches, media libra de arroz...">${esc(initial || "")}</textarea>
+      <div class="sh-f solo"><button class="big" id="go">${I.spark} <span class="bl">Procesar pedido</span></button></div>`);
     $("#x", s).onclick = () => { window.PPVoice.stopDictation(); closeSheet(); };
-    const ta = $("#ta", s), go = $("#go", s), m = $("#m", s);
-    m.onclick = () => {
-      if (orderRec) { window.PPVoice.stopDictation(); return; }
-      orderRec = window.PPVoice.startDictation((t) => (ta.value = t), () => { orderRec = false; m.classList.remove("on"); m.innerHTML = I.mic; },
-        () => { orderRec = false; m.classList.remove("on"); m.innerHTML = I.mic; toast("El dictado no esta disponible. Escribe el pedido."); });
-      if (orderRec) { m.classList.add("on"); m.innerHTML = I.stop; }
-    };
+    const ta = $("#ta", s), go = $("#go", s);
+    setTimeout(() => ta.focus(), 220);
     go.onclick = async () => {
       const text = ta.value.trim();
-      if (!text) return toast("Escribe o dicta un pedido");
-      window.PPVoice.stopDictation();
+      if (!text) return toast("Escribe el pedido");
       go.disabled = true; go.innerHTML = '<span class="bar" id="bar" style="width:4%"></span><span class="spin" style="border-color:#fff;border-top-color:transparent"></span><span id="pc">Procesando... 4%</span>';
-      const r = await window.PPVoice.interpret(text, db().products, (p) => { const b = $("#bar"), c = $("#pc"); if (b) b.style.width = p + "%"; if (c) c.textContent = "Procesando... " + p + "%"; });
-      confirmOrder(r);
+      const r = await window.PPVoice.interpret(text, db().products, (p) => { const b2 = $("#bar"), c = $("#pc"); if (b2) b2.style.width = p + "%"; if (c) c.textContent = "Procesando... " + p + "%"; });
+      closeSheet();
+      setTimeout(() => agregarDirecto(r), 180);
     };
   }
 
@@ -594,7 +729,7 @@
     }
     S.save(); render();
     animarNuevas(antes, n);
-    vibrar(24); tap();
+    tapFuerte();
     if (n) toast(n + " producto" + (n === 1 ? "" : "s") + " agregado" + (n === 1 ? "" : "s") + " al talonario");
     if (r.missing && r.missing.length) setTimeout(() => toast("No encontre: " + r.missing.join(", ")), 1100);
   }
@@ -815,23 +950,23 @@
     const s = sheet(`<div class="sh-h"><h2>${n ? "Crear producto" : "Editar producto"}</h2><button class="sh-x" id="x">${I.x}</button></div>
       <label class="field"><span>Nombre</span><input id="fn" value="${esc(p.nombre)}"></label>
       <label class="field"><span>Mi precio (RD$)</span><input id="fp" inputmode="decimal" value="${p.precio || ""}"></label>
-      <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
       <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
-      <label class="field"><span>Stock</span><input id="fs" inputmode="decimal" value="${p.stock || 0}"></label>
+      <div class="duo">
+        <label class="field"><span>Stock</span><input id="fs" inputmode="decimal" value="${p.stock || 0}"></label>
+        <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
+      </div>
       <div class="field"><span>Foto del producto</span>
         <div class="upimg"><span class="pv" id="pv">${fotoDe(p)}</span>
-          <label class="btn gris" style="margin:0;flex:1">Elegir foto<input type="file" accept="image/*" id="fi" hidden></label>
-          <button class="btn gris" id="fq" style="margin:0" ${p.img ? "" : "hidden"}>Quitar</button>
+          <label class="btn gris" style="margin:0">Subir foto<input type="file" accept="image/*" id="fi" hidden></label>
+          <label class="btn gris" style="margin:0">Tomar foto<input type="file" accept="image/*" capture="environment" id="fcam" hidden></label>
         </div>
-        <small class="nota" id="estadoFoto">${p.img ? "Foto guardada" : "La foto se guarda con el producto"}</small>
       </div>
       <button class="btn" id="sv">Guardar</button>${n ? "" : '<button class="btn red" id="dl" style="margin-top:10px">Eliminar</button>'}`);
     $("#x", s).onclick = closeSheet;
     /* foto opcional: se guarda comprimida y se usa en las tarjetas */
     let img = p.img || "";
-    const fi = $("#fi", s);
-    fi.onchange = () => {
-      const f = fi.files && fi.files[0];
+    const procesar = (input) => {
+      const f = input.files && input.files[0];
       if (!f) return;
       const rd = new FileReader();
       rd.onload = () => {
@@ -844,14 +979,15 @@
           cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
           img = cv.toDataURL("image/jpeg", 0.62);
           $("#pv", s).innerHTML = `<img src="${img}" alt="">`;
-          $("#fq", s).hidden = false;
-          $("#estadoFoto", s).textContent = "Foto lista";
         };
         im.src = rd.result;
       };
       rd.readAsDataURL(f);
     };
-    $("#fq", s).onclick = () => { img = ""; $("#pv", s).innerHTML = I.box; $("#fq", s).hidden = true; const e = $("#estadoFoto", s); if (e) e.textContent = "La foto se guarda con el producto"; };
+    $("#fi", s).onchange = () => procesar($("#fi", s));
+    $("#fcam", s).onchange = () => procesar($("#fcam", s));
+    /* tocar la vista previa quita la foto */
+    $("#pv", s).onclick = () => { if (!img) return; img = ""; $("#pv", s).innerHTML = I.box; toast("Foto quitada"); };
     $("#sv", s).onclick = () => {
       const nom = $("#fn", s).value.trim(), pr = parseFloat(String($("#fp", s).value).replace(",", "."));
       if (!nom || !(pr >= 0)) return toast("Falta el nombre o el precio");
@@ -1060,6 +1196,13 @@
   }
 
   /* ---------- Detalle del pedido ---------- */
+  /* 5/11/2026 - 11:39 a. m. */
+  function fechaCorta(f) {
+    const d = new Date(f);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("es-DO") + " - " + d.toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
+  }
+
   function openDetalle(s) {
     if (!s) return;
     const st = db().settings;
@@ -1067,7 +1210,8 @@
     const pagado = s.metodo !== "credito";
     const sh = sheet(`<div class="sh-h"><h2>Detalle del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
       <div class="mch"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
-      <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span></div>
+      <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${fechaCorta(s.fecha)}</span></div>
+      <div class="dsum"><div class="r"><span>Nombre</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
       <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
       <div class="dls">${lineas}</div>
       <div class="dsum">
@@ -1139,6 +1283,7 @@
     else if (tab === "proveedores") renderProveedores();
     else if (tab === "historial") renderHistorial();
     else if (tab === "config") renderConfig();
+    else if (tab === "avisos") renderAvisos();
   }
 
   /* ---------- Acceso con PIN ---------- */
@@ -1253,17 +1398,17 @@
   /* ---------- Conexion y arranque ---------- */
   function netbar() {
     const b = $("#netbar"), st = window.PPSync.state;
-    if (!st.online) { b.hidden = false; b.className = "netbar"; b.textContent = "Sin conexion. Sigues vendiendo; todo se guarda en tu telefono." + (st.pending ? " (" + st.pending + " por enviar)" : ""); }
+    if (!st.online) { b.hidden = true; b.textContent = ""; }
     else if (st.pending) { b.hidden = false; b.className = "netbar ok"; b.textContent = "Enviando " + st.pending + " pendiente(s)..."; }
     else b.hidden = true;
   }
-  window.addEventListener("pp:sync", netbar);
+  window.addEventListener("pp:sync", () => { netbar(); revisarAvisos(); });
   window.addEventListener("pp:data", () => { if (!document.getElementById("sheet") && voice.phase === "idle" && tab !== "panel") render(); });
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab };
   $("#btnMenu").onclick = openMenu;
-  $("#btnBell").onclick = () => toast(window.PPSync.state.pending ? window.PPSync.state.pending + " envio(s) pendiente(s)" : "Todo al dia");
-  go("panel"); netbar(); window.PPSync.start(); initInstall();
+  $("#btnBell").onclick = () => go("avisos");
+  go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
   addEventListener("pp:installable", () => { const b = $("#instbar"); if (b && b.hidden && !localStorage.getItem(INS_DONE)) { localStorage.removeItem(INS_OFF); b.hidden = false; } });
   addEventListener("pp:installed", () => { localStorage.setItem(INS_DONE, "1"); const b = $("#instbar"); if (b) { b.hidden = true; } toast("PediPOS instalada"); });
   if (db().settings.pinReq && !db().session) setTimeout(loginScreen, 260);

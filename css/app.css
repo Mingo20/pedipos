@@ -629,3 +629,94 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 /* 1) el talonario se llena con una entrada suave y escalonada */
 @keyframes filaIn{from{opacity:0;transform:translateY(14px) scale(.97);background:#D9F2E4}to{opacity:1;transform:none;background:var(--card)}}
 #tickb .row.fila-nueva{animation:filaIn .5s cubic-bezier(.22,.9,.3,1) both}
+
+/* ========== v28 ========== */
+
+/* 1) Lista de pedido: campo mas bajo y boton unico */
+.ta.baja{min-height:118px;font-size:18px;padding:16px;border-radius:22px}
+.ta.baja::placeholder{font-size:16px;color:#94a0a8}
+.sh-f.solo .big{width:100%}
+.sh-f.solo .big .bl{font-size:17px}
+
+/* 1) inventario: entra desde la derecha, se cierra con gesto */
+.sheet.alto{animation:invIn .32s cubic-bezier(.22,.9,.3,1) both}
+@keyframes invIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.sheet.alto.out{animation:invOut .24s cubic-bezier(.4,0,.8,.4) both}
+@keyframes invOut{from{transform:translateX(0)}to{transform:translateX(100%)}}
+.sheet.alto.arrastrando{transition:none}
+.inv-h{align-items:flex-start;gap:8px}
+.inv-acts{display:flex;flex-direction:column;gap:8px;align-items:center;flex:none}
+.inv-b.rnd{border-radius:50%;width:40px;height:40px}
+.inv-b.rnd svg{width:18px;height:18px}
+.inv-c .search{margin-bottom:0}
+.inv-search{height:44px;padding:0 5px 0 15px;gap:10px;border-radius:999px}
+.inv-search input{font-size:14.5px}
+.inv-search .mic-in{width:34px;height:34px;border-radius:50%;background:#F1F4F6;color:var(--ink);display:grid;place-items:center;flex:none;transition:.2s}
+.inv-search .mic-in svg{width:18px;height:18px}
+.inv-search .mic-in.on{background:var(--red);color:#fff}
+.inv-filtro{left:auto;right:16px;top:4px;min-width:230px;max-width:calc(100% - 32px)}
+
+/* 1) talonario: cuatro productos a la vista y el resto con scroll */
+.tick-b{max-height:212px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.row{cursor:pointer}
+.row:active{background:#eef1f4}
+/* campos en dos columnas */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duo .field{margin-bottom:12px}
+/* 1) barra de venta verde como el interruptor de ITBIS */
+.act.hay{background:var(--g);border-top-color:var(--g)}
+.act.hay button.n,.act.hay button.c{color:#fff}
+.act.hay .mic i{background:#14181C;color:#fff;box-shadow:0 0 0 3px #ffffff55}
+
+/* 2) menu mas grande */
+.sheet.side .sh-h h2{font-size:20px}
+.sheet.side .sh-h h2 .hi{width:42px;height:42px;border-radius:13px}
+.sheet.side .sh-h h2 .hi svg{width:24px;height:24px}
+.sheet.side .sh-x{width:44px;height:44px}
+.sheet.side .sh-x svg{width:26px;height:26px}
+
+/* 3, 6, 8) buscadores con filtro circular */
+.fbtn{width:44px;height:44px;border-radius:50%;padding:0}
+.stickbar .search{height:46px;padding:0 16px;font-size:14px}
+.stickbar .search input{font-size:14.5px}
+.stickbar .search svg{width:18px;height:18px}
+.filtro-pop{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:8px;box-shadow:0 14px 34px #0002;z-index:20;min-width:210px}
+.filtro-pop[hidden]{display:none}
+.filtro-pop .fopt{margin-bottom:4px}
+.filtro-pop .fopt:last-child{margin-bottom:0}
+
+/* 3, 6) tarjetas de cliente y proveedor */
+.clrow{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.clrow:active{background:#f2f6f4;transform:scale(.995)}
+.clrow .cli span{font-size:12.5px}
+.wa-end{margin-left:auto;flex:none}
+
+/* 4, 7) subpantallas sin encabezado ni barra inferior */
+body.focus .top,body.focus .dock,body.focus #instbar{display:none!important}
+body.focus main#view{padding-top:calc(env(safe-area-inset-top) + 6px);padding-bottom:20px}
+.subv{animation:subIn .3s cubic-bezier(.22,.9,.3,1) both}
+@keyframes subIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.subv-lbl{margin:18px 16px 10px!important;padding-left:2px}
+.subv-acc{grid-template-columns:1fr;justify-items:center}
+.subv-acc .btn{max-width:420px}
+.subv > .subv-acc{margin-top:14px}
+
+/* 5) avisos de pago */
+.av-h{padding:6px 2px 14px}
+.av-h b{display:block;font-size:20px}
+.av-h span{display:block;color:var(--mut);font-size:13px;margin-top:2px}
+.aviso{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:13px 14px;margin-bottom:9px}
+.aviso .av-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--amber-soft);color:#92400E}
+.aviso .av-tx{flex:1;min-width:0}
+.aviso .av-tx b{display:block;font-size:14.5px}
+.aviso .av-tx span{display:block;color:var(--mut);font-size:12.5px;margin-top:1px}
+.aviso .av-go{color:#b4bcc4;flex:none}
+.aviso.proximo{border-color:#F3D9A4;background:#FFFDF6}
+.aviso.vencido{border-color:#F3C0C2;background:#FFF8F8}
+.aviso.vencido .av-ic{background:#FDE7E8;color:#B3261E}
+.aviso.vencido .av-tx b{color:#B3261E}
+
+/* 12) barra inferior a todo el ancho y pegada al final */
+.dock{left:0;right:0;transform:none;width:100%;max-width:560px;margin:0 auto;bottom:0;height:auto;min-height:64px;border-radius:0;border-left:0;border-right:0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -6px 18px #0001}
+.dock button.mid .orb{margin-top:-16px}
+body.has-dock main#view{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
