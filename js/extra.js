@@ -100,6 +100,7 @@
           ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
         <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
     };
+    window.PPUI.clearFab();   /* en el detalle no hay boton flotante */
     const ini = String(c.nombre || "?").trim().charAt(0).toUpperCase();
     view.innerHTML = `<div class="subv">
       <div class="subv-h">
@@ -268,6 +269,7 @@
           <span>${new Date(m.t).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${compra ? (pend > 0 ? " &middot; debe " + money(pend) : " &middot; pagada") : ""}</span></div>
         <b class="${compra ? (pend > 0 ? "red" : "") : "green"}">${compra ? "-" + money(m.x.total) : "+" + money(m.x.monto)}</b></div>`;
     };
+    window.PPUI.clearFab();
     const ini = String(p.nombre || "?").trim().charAt(0).toUpperCase();
     view.innerHTML = `<div class="subv">
       <div class="subv-h">
