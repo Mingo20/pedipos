@@ -458,7 +458,7 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 
 /* --- barra de venta: microfono verde, mas grande, y marco en vez de fondo verde --- */
 .act .mic{width:58px;height:58px}
-.act .mic i{width:50px;height:50px;background:var(--g);color:#fff}
+.act .mic i{width:50px;height:50px;background:#14181C;color:#fff}
 .act .mic i svg{width:26px;height:26px}
 .act .mic.on i{background:var(--red);box-shadow:0 0 0 8px #e5484d2e}
 .act .mic.wait i{background:#f59e0b}
@@ -543,7 +543,7 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 
 /* 5) barra de venta: sin marco, fondo gris claro al haber productos */
 .act.hay::before{display:none}
-.act.hay{background:#E9EEF1;border-top-color:#D8E0E5}
+.act.hay{background:#DCF3E6;border-top-color:#BEE6CE}
 .act{transition:background .28s ease,border-color .28s ease}
 
 /* 4) filas nuevas del talonario entran con un desliz suave */
@@ -575,3 +575,57 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 /* 9) WhatsApp con el color de la marca en las listas */
 .ico.wa{color:#1FA855}
 .hx-ib svg[viewBox="0 0 24 24"][fill="currentColor"]{width:18px;height:18px}
+
+/* ========== v25 ========== */
+
+/* 1) inventario a pantalla completa */
+.sheet.alto{left:0;right:0;bottom:0;top:0;width:100%;max-width:100%;height:100dvh;max-height:100dvh;border-radius:0;padding:0;display:flex;flex-direction:column;overflow:hidden;animation:invUp .34s cubic-bezier(.22,.9,.3,1) both}
+.sheet.alto .grip{display:none}
+.sheet.alto.out{animation:invDown .22s cubic-bezier(.4,0,.8,.4) both}
+@keyframes invUp{from{transform:translateY(100%)}}
+@keyframes invDown{to{transform:translateY(100%)}}
+.inv{display:flex;flex-direction:column;height:100%;min-height:0}
+.inv-h{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 14px) 16px 10px;background:#fff;flex:none}
+.inv-tt{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
+.inv-tt .hi{width:38px;height:38px;border-radius:13px;background:var(--g-soft);color:var(--g);display:grid;place-items:center;flex:none}
+.inv-tt h2{margin:0;font-size:19px;font-weight:700}
+.inv-b{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#F1F4F6;color:var(--ink);flex:none;transition:.2s}
+.inv-b.on{background:var(--red);color:#fff}
+.inv-c{padding:0 16px 10px;background:#fff;flex:none;position:relative}
+.inv-c .searchrow{margin-bottom:0}
+.inv-filtro{position:absolute;left:16px;right:16px;top:calc(100% - 4px);background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:8px;box-shadow:0 14px 34px #0002;z-index:8;max-height:56dvh;overflow:auto}
+.inv-filtro[hidden]{display:none}
+.inv-filtro .fopt{height:46px;margin-bottom:4px}
+.inv-lista{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px calc(env(safe-area-inset-bottom) + 24px);background:var(--bg)}
+
+/* 2 y 3) subpantallas de cliente y proveedor */
+.subv{margin:-14px -14px 0;padding:0 0 24px;min-height:100%}
+.subv-h{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:-14px;z-index:6}
+.subv-back{width:42px;height:42px;border-radius:13px;background:#F1F4F6;display:grid;place-items:center;flex:none;color:var(--ink)}
+.subv-tt{flex:1;min-width:0}
+.subv-tt b{display:block;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subv-tt span{display:block;color:var(--mut);font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+.subv-hero{display:flex;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:16px 16px 18px}
+.subv-av{width:56px;height:56px;border-radius:50%;background:var(--g-soft);color:#0B7A52;display:grid;place-items:center;font-size:23px;font-weight:800;flex:none}
+.subv-ht{min-width:0}
+.subv-ht b{display:block;font-size:18px;margin-bottom:2px}
+.subv-ht span{display:block;color:var(--mut);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subv > .kpis,.subv > .lbl,.subv > .hrow,.subv > .cnt,.subv-acc{margin-left:14px;margin-right:14px}
+.subv > .kpis{margin-top:14px}
+.subv-acc{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-top:0}
+.subv-acc .btn{width:100%}
+.subv-acc .btn:only-child{grid-column:1 / -1}
+.fpago{display:block;color:#B3261E;font-size:11.5px;font-weight:600;margin-top:2px}
+
+/* 4 y 5) barras fijas bajo el encabezado */
+.stickbar{position:sticky;top:-14px;z-index:10;background:var(--bg);padding:14px 0 8px;margin:-14px 0 4px}
+.stickbar .searchrow{margin-bottom:0}
+.stickbar .chip.solo{margin:8px 0 0}
+.fbtn{border-radius:22px}
+
+/* 4) iconos de Imprimir y Enviar un poco mas pequenos */
+.big.slim svg{width:20px;height:20px;height:20px}
+
+/* 1) el talonario se llena con una entrada suave y escalonada */
+@keyframes filaIn{from{opacity:0;transform:translateY(14px) scale(.97);background:#D9F2E4}to{opacity:1;transform:none;background:var(--card)}}
+#tickb .row.fila-nueva{animation:filaIn .5s cubic-bezier(.22,.9,.3,1) both}

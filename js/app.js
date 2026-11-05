@@ -28,6 +28,7 @@
     spark: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
     box: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5L12 12l8-4.5M12 12v9"/></svg>',
+    back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>',
     compass: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13.6 13.6 8.5 15.5 10.4 10.4z"/></svg>',
     stop: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>',
     filtro: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>',
@@ -307,7 +308,7 @@
   /* ---------- Hojas ---------- */
   /* Icono segun el titulo de cada ventana (tambien aplica a las hojas de extra.js). */
   const ICONO_HOJA = [
-    [/^agregar producto|^buscar/i, "box"], [/^men/i, "compass"], [/^categor|^filtrar/i, "filtro"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
+    [/^agregar producto|^buscar|^inventario/i, "box"], [/^men/i, "compass"], [/^categor|^filtrar/i, "filtro"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
     [/^cobrar/i, "wallet"], [/venta registrada/i, "ok"], [/detalle del pedido/i, "order"],
     [/nuevo cliente|editar cliente/i, "userplus"], [/abono/i, "wallet"], [/proveedor/i, "truck2"],
     [/crear producto|editar producto/i, "box"], [/entrar a la caja/i, "users"],
@@ -328,7 +329,8 @@
     closeSheet(true);
     const lado = opts && opts.lado;
     const m = document.createElement("div"); m.className = "mask"; m.id = "mask";
-    const s = document.createElement("section"); s.className = "sheet" + (lado ? " side" : ""); s.id = "sheet";
+    const alto = opts && opts.alto;
+    const s = document.createElement("section"); s.className = "sheet" + (lado ? " side" : "") + (alto ? " alto" : ""); s.id = "sheet";
     s.innerHTML = '<div class="grip"></div>' + html;
     $("#layer").append(m, s);
     decorar(s);
@@ -369,44 +371,152 @@
     const sh = $("#sheet"), mk = $("#mask");
     if (!sh || sh.classList.contains("out")) return;
     sh.classList.add("out"); mk && mk.classList.add("out");
-    setTimeout(() => { if (sh.classList.contains("out")) layer.innerHTML = ""; }, 230);
+    /* solo se limpia si esa hoja sigue siendo la actual: asi una hoja nueva no desaparece */
+    setTimeout(() => { if ($("#sheet") === sh) layer.innerHTML = ""; }, 230);
   }
 
   /* ----- Buscar producto: tarjetas en dos columnas ----- */
+  /* ---------- Barra de inventario (pantalla completa) ---------- */
+  let invCat = "";
+  const invToque = new Map();   /* pid -> momento del ultimo toque (para subir los recientes) */
+  let invRec = false;
+  let invGrabando = false;
+
   function openSearch() {
-    const s = sheet(`<div class="sh-h compacta"><h2>Agregar producto</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <div class="search">${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
-      <div class="pgrid" id="res"></div>`);
-    $("#x", s).onclick = closeSheet;
-    const q = $("#q", s), res = $("#res", s);
-    const ponerContadores = () => {
-      const c = cart();
+    const s = sheet(`<div class="inv">
+      <div class="inv-h">
+        <div class="inv-tt"><span class="hi">${I.box}</span><h2>Inventario</h2></div>
+        <button class="inv-b" id="invMic" aria-label="Agregar por voz">${I.mic}</button>
+        <button class="inv-b" id="x" aria-label="Cerrar">${I.x}</button>
+      </div>
+      <div class="inv-c">
+        <div class="searchrow">
+          <div class="search">${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off"></div>
+          <button class="fbtn" id="invFil" aria-label="Filtrar por categoria">${I.filtro}</button>
+        </div>
+        <div class="inv-filtro" id="invCatList" hidden></div>
+      </div>
+      <div class="inv-lista"><div class="pgrid" id="res"></div></div>
+    </div>`, () => { window.PPVoice.stopDictation(); invRec = false; }, { alto: true });
+    decorar(s);
+
+    const q = $("#q", s), res = $("#res", s), mic = $("#invMic", s);
+    const cats = () => [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
+
+    const enCarrito = (pid) => cart().lines.filter((l) => l.pid === pid).reduce((x, l) => x + l.cant, 0);
+
+    /* lista ordenada: primero lo que esta en el talonario, lo mas reciente arriba */
+    const ordenar = (list) => list.slice().sort((a, b) => {
+      const ca = enCarrito(a.pid) > 0 ? 1 : 0, cb = enCarrito(b.pid) > 0 ? 1 : 0;
+      if (ca !== cb) return cb - ca;
+      if (ca && cb) return (invToque.get(b.pid) || 0) - (invToque.get(a.pid) || 0);
+      return 0;
+    });
+
+    const filtrar = () => {
+      const t = window.PPVoice.norm(q.value);
+      return db().products.filter((p) => p.activo !== false
+        && (!invCat || p.categoria === invCat)
+        && (!t || window.PPVoice.norm(p.nombre).includes(t)));
+    };
+
+    const marcar = () => {
       $$(".pcard", res).forEach((el) => {
-        const enCarrito = c.lines.filter((l) => l.pid === el.dataset.p).reduce((x, l) => x + l.cant, 0);
+        const n = enCarrito(el.dataset.p);
         let b = el.querySelector(".cntb");
-        if (enCarrito > 0) {
+        if (n > 0) {
           if (!b) { b = document.createElement("i"); b.className = "cntb"; el.append(b); }
-          b.textContent = num(enCarrito); el.classList.add("in");
-        } else { b && b.remove(); el.classList.remove("in"); }
+          b.textContent = num(n); el.classList.add("in");
+        } else { if (b) b.remove(); el.classList.remove("in"); }
       });
     };
-    const draw = () => {
-      const t = window.PPVoice.norm(q.value);
-      const list = db().products.filter((p) => p.activo !== false && (!t || window.PPVoice.norm(p.nombre).includes(t))).slice(0, 60);
-      res.innerHTML = list.length ? list.map((p) => pcard(p)).join("") : '<div class="empty">No encontramos ese producto. Puedes crearlo en Catalogo.</div>';
+
+    const pintar = (animar) => {
+      const antes = new Map();
+      if (animar) $$(".pcard", res).forEach((el) => antes.set(el.dataset.p, el.getBoundingClientRect()));
+      const list = ordenar(filtrar());
+      res.innerHTML = list.length ? list.map((p) => pcard(p)).join("") : '<div class="empty">Sin productos con ese filtro.</div>';
       $$(".pcard", res).forEach((el) => (el.onclick = () => {
         const p = db().products.find((x) => x.pid === el.dataset.p);
         if (!p) return;
         addLine(p, 1);
-        tap();                                     /* vibra y suena en cada toque */
+        invToque.set(p.pid, Date.now());
+        tap();
         el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit");
-        ponerContadores();
         render();
-        const live = $("#res"); if (live) ponerContadores();
+        pintar(true);   /* el producto sube solo hacia la parte superior */
       }));
-      ponerContadores();
+      /* cada tarjeta viaja de su posicion anterior a la nueva */
+      if (animar) $$(".pcard", res).forEach((el) => {
+        const a = antes.get(el.dataset.p);
+        if (!a) return;
+        const b = el.getBoundingClientRect();
+        const dx = a.left - b.left, dy = a.top - b.top;
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+        el.style.transition = "none";
+        el.style.transform = `translate(${dx}px,${dy}px)`;
+        requestAnimationFrame(() => {
+          el.style.transition = "transform .38s cubic-bezier(.22,.9,.3,1)";
+          el.style.transform = "";
+        });
+      });
+      marcar();
     };
-    q.oninput = draw; draw();   /* sin foco automatico: el teclado ya no salta solo */
+
+    /* filtro por categoria, dentro de la misma barra */
+    const panel = $("#invCatList", s);
+    const pintarCats = () => {
+      panel.innerHTML = [["", "Todas las categorias"], ...cats().map((c) => [c, c])]
+        .map(([v, t]) => `<button class="fopt ${invCat === v ? "on" : ""}" data-cat="${esc(v)}">${esc(t)} ${I.check}</button>`).join("");
+      $$("[data-cat]", panel).forEach((b) => (b.onclick = () => {
+        invCat = b.dataset.cat;
+        $("#invFil", s).classList.toggle("on", !!invCat);
+        panel.hidden = true;
+        pintar(false);
+      }));
+    };
+    pintarCats();
+    $("#invFil", s).classList.toggle("on", !!invCat);
+    $("#invFil", s).onclick = () => { panel.hidden = !panel.hidden; };
+    q.oninput = () => pintar(false);
+    $("#x", s).onclick = () => closeSheet();
+    mic.onclick = () => vozInventario(mic, () => pintar(true));
+    pintar(false);
+  }
+
+  /* Dictado dentro del inventario: agrega al talonario sin salir de la barra. */
+  async function vozInventario(btn, refrescar) {
+    const listo = (on) => { btn.classList.toggle("on", on); btn.innerHTML = on ? I.stop : I.mic; };
+    const aplicar = async (text) => {
+      const t = String(text || "").trim();
+      if (!t) { toast("No se escucho nada"); return; }
+      showProc();
+      const r = await window.PPVoice.interpret(t, db().products);
+      $("#proc") && $("#proc").remove();
+      agregarDirecto(r);
+      (r.lines || []).forEach((l) => invToque.set(l.pid, Date.now()));
+      if (refrescar) refrescar();
+    };
+    if (invRec) { invRec = false; listo(false); window.PPVoice.stopDictation(); return; }
+
+    if (window.PPVoice.supportsDictation()) {
+      invRec = window.PPVoice.startDictation(() => {}, (txt) => { invRec = false; listo(false); aplicar(txt); },
+        () => { invRec = false; listo(false); toast("El dictado no esta disponible aqui"); });
+      if (invRec) listo(true);
+      return;
+    }
+    /* sin dictado del navegador: se graba y al tocar otra vez se transcribe */
+    if (!window.PPVoice.canRecord()) return toast("Este navegador no permite dictar");
+    if (invGrabando) {
+      invGrabando = false; listo(false);
+      try { aplicar(await window.PPVoice.recordAndTranscribe()); }
+      catch (_) { toast("No se pudo transcribir"); }
+      return;
+    }
+    try {
+      await window.PPVoice.startRecording();
+      invGrabando = true; listo(true); toast("Grabando. Toca el cuadro para terminar.");
+    } catch (_) { listo(false); toast("Sin acceso al microfono"); }
   }
 
   /* ----- Lista de pedido con IA ----- */
@@ -579,8 +689,10 @@
         <div id="newcli" hidden style="margin-top:10px;display:none">
           <input id="ncn" placeholder="Nombre del cliente" autocomplete="off" style="width:100%;height:46px;border:1.5px solid var(--g-line);border-radius:14px;padding:0 14px;font-size:15px;margin-bottom:8px;outline:none">
           <input id="nct" inputmode="tel" placeholder="Telefono (opcional)" style="width:100%;height:46px;border:1.5px solid var(--g-line);border-radius:14px;padding:0 14px;font-size:15px;margin-bottom:8px;outline:none">
+          <input id="ncd" placeholder="Direccion (opcional)" style="width:100%;height:46px;border:1.5px solid var(--g-line);border-radius:14px;padding:0 14px;font-size:15px;margin-bottom:8px;outline:none">
           <div style="display:flex;gap:10px"><button type="button" class="btn sec" id="ncx" style="flex:1">Cancelar</button><button type="button" class="btn" id="ncs" style="flex:1">Guardar y vincular</button></div>
         </div></div>
+      <label class="field" id="fpw" style="display:none"><span>Fecha de pago (obligatoria)</span><input type="date" id="fpago"></label>
       <div id="chg" class="cnt"></div>
       <button class="big" id="done" style="width:100%">${I.check} Confirmar cobro</button>`);
     $("#x", s).onclick = () => closeSheet();
@@ -592,14 +704,20 @@
       const r = parseFloat(String(rec.value).replace(",", "."));
       chg.textContent = met.value === "efectivo" && r >= t.total ? "Devuelta: " + money2(r - t.total) : "";
       $("#clilbl", s).textContent = cred ? "Cliente (obligatorio para fiar)" : "Cliente (opcional)";
-      const falta = cred && !cli.value;
-      done.disabled = falta;
+      $("#fpw", s).style.display = cred ? "block" : "none";
+      const sinCliente = cred && !cli.value;
+      const sinFecha = cred && !$("#fpago", s).value;
+      done.disabled = sinCliente || sinFecha;
       let h = $("#credhint", s);
-      if (falta) {
-        if (!h) { h = document.createElement("div"); h.id = "credhint"; h.className = "hint"; h.textContent = "Para vender a credito, elige o crea un cliente con el (+)."; done.before(h); }
+      let msg = "";
+      if (sinCliente) msg = "Para vender a credito, elige o crea un cliente con el (+).";
+      else if (sinFecha) msg = "Elige la fecha de pago para despachar el pedido a credito.";
+      if (msg) {
+        if (!h) { h = document.createElement("div"); h.id = "credhint"; h.className = "hint"; done.before(h); }
+        h.textContent = msg;
       } else if (h) h.remove();
     };
-    met.onchange = upd; rec.oninput = upd; cli.onchange = upd;
+    met.onchange = upd; rec.oninput = upd; cli.onchange = upd; $("#fpago", s).onchange = upd;
     /* (+) crea un cliente nuevo y lo vincula a esta venta sin salir del cobro */
     const nb = $("#newcli", s);
     const showNew = (v) => { nb.style.display = v ? "block" : "none"; if (v) setTimeout(() => $("#ncn", s).focus(), 60); };
@@ -611,11 +729,11 @@
       const dup = (db().clients || []).find((c) => window.PPVoice.norm(c.nombre) === window.PPVoice.norm(nom));
       let c = dup;
       if (!c) {
-        c = { cid: S.uid("C"), nombre: nom, telefono: $("#nct", s).value.trim(), direccion: "", nota: "", limite_credito: 0, activo: true };
+        c = { cid: S.uid("C"), nombre: nom, telefono: $("#nct", s).value.trim(), direccion: $("#ncd", s).value.trim(), nota: "", limite_credito: 0, activo: true };
         (db().clients = db().clients || []).push(c); S.save(); window.PPSync.saveCliente(c);
       }
       cli.innerHTML = '<option value="">Sin cliente</option>' + clientOpts(c.cid);
-      cli.value = c.cid; showNew(false); $("#ncn", s).value = ""; $("#nct", s).value = "";
+      cli.value = c.cid; showNew(false); $("#ncn", s).value = ""; $("#nct", s).value = ""; $("#ncd", s).value = "";
       toast(dup ? "Cliente existente vinculado" : "Cliente creado y vinculado"); upd();
     };
     upd();
@@ -628,6 +746,7 @@
         metodo: met.value, cajero: (db().session && db().session.nombre) || "Caja",
         recibido: (() => { const r = parseFloat(String(rec.value || "").replace(",", ".")); return isFinite(r) ? r : 0; })(),
         cambio: (() => { const r = parseFloat(String(rec.value || "").replace(",", ".")); return isFinite(r) && r >= t.total ? S.round2(r - t.total) : 0; })(),
+        fecha_pago: met.value === "credito" ? $("#fpago", s).value : "",
         cliente_id: $("#cli2", s).value || "", cliente: (() => { const c = (db().clients || []).find((x) => x.cid === $("#cli2", s).value); return c ? c.nombre : ""; })(),
       };
       db().sales.push(sale);
@@ -659,11 +778,13 @@
   let catQ = "", catCat = "";
   function renderCatalogo() {
     const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
-    $("#view").innerHTML = `<div class="searchrow">
-        <div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}" autocomplete="off"></div>
-        <button class="fbtn ${catCat ? "on" : ""}" id="cfil" aria-label="Filtrar por categoria">${I.filtro}</button>
+    $("#view").innerHTML = `<div class="stickbar">
+        <div class="searchrow">
+          <div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}" autocomplete="off"></div>
+          <button class="fbtn ${catCat ? "on" : ""}" id="cfil" aria-label="Filtrar por categoria">${I.filtro}</button>
+        </div>
+        ${catCat ? `<button class="chip on solo" id="cquit">${esc(catCat)} ${I.x}</button>` : ""}
       </div>
-      ${catCat ? `<button class="chip on solo" id="cquit">${esc(catCat)} ${I.x}</button>` : ""}
       <div class="pgrid" id="cl"></div>`;
     const draw = () => {
       const t = window.PPVoice.norm(catQ);
@@ -891,9 +1012,11 @@
     });
     if (pedFiltro < 9000) L = L.slice(0, pedFiltro);
 
-    $("#view").innerHTML = `<div class="searchrow">
-        <div class="search">${I.search}<input id="pq2" placeholder="Buscar pedido" value="${esc(pedQ)}" autocomplete="off"></div>
-        <button class="fbtn ${conFiltro ? "on" : ""}" id="pfil" aria-label="Filtrar pedidos">${I.filtro}</button>
+    $("#view").innerHTML = `<div class="stickbar">
+        <div class="searchrow">
+          <div class="search">${I.search}<input id="pq2" placeholder="Buscar pedido" value="${esc(pedQ)}" autocomplete="off"></div>
+          <button class="fbtn ${conFiltro ? "on" : ""}" id="pfil" aria-label="Filtrar pedidos">${I.filtro}</button>
+        </div>
       </div>` +
       (L.length ? L.map((s) => {
         const est = esCredito(s) ? "A credito" : "Pagado";
@@ -951,6 +1074,7 @@
         <div class="r"><span>Subtotal</span><span>${money2(s.subtotal)}</span></div>
         <div class="r it"><span>ITBIS (${Math.round((s.aplica_itbis ? rate() : 0) * 100)}%)</span><span>${money2(s.itbis)}</span></div>
         <div class="r tot"><span>TOTAL</span><span>${money2(s.total)}</span></div>
+        ${s.fecha_pago ? `<div class="r"><span>Pago prometido</span><span>${new Date(s.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long", year: "numeric" })}</span></div>` : ""}
         ${s.recibido ? `<div class="r"><span>Recibido</span><span>${money2(s.recibido)}</span></div><div class="r chg"><span>Cambio</span><span>${money2(s.cambio || 0)}</span></div>` : ""}
       </div>
       ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}

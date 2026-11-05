@@ -29,9 +29,17 @@
     return db().sales.filter((s) => s.cliente_id === cid).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
   }
 
+  /* Subpantalla a todo el ancho (detalle de cliente o proveedor). */
+  let sub = null;
+
   /* ---------- Pantalla Clientes ---------- */
   function renderClientes() {
     const view = document.getElementById("view");
+    if (sub && sub.tipo === "cliente") {
+      const c = (db().clients || []).find((x) => x.cid === sub.id);
+      if (c) return pintarCliente(c);
+      sub = null;
+    } else if (sub) sub = null;
     const list = db().clients || [];
     const total = list.reduce((s, c) => s + Math.max(0, deudaDe(c.cid)), 0);
     const conDeuda = list.filter((c) => deudaDe(c.cid) > 0).length;
@@ -75,40 +83,59 @@
 
   function verCliente(c) {
     if (!c) return;
+    sub = { tipo: "cliente", id: c.cid };
+    pintarCliente(c);
+  }
+
+  function pintarCliente(c) {
+    const view = document.getElementById("view");
     const d = deudaDe(c.cid), vs = ventasDe(c.cid);
     const comprado = vs.reduce((x, v) => x + (Number(v.total) || 0), 0);
     const pagado = Math.max(0, Math.round((comprado - d) * 100) / 100);
     const fila = (v) => {
       const cred = v.metodo === "credito";
-      return `<div class="hrow">
+      return `<div class="hrow" data-v="${esc(v.vid || "")}">
         <div class="hi"><b>${cred ? (v.pagada ? "Credito pagado" : "Credito pendiente") : "Contado"}</b>
-          <span>${new Date(v.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${v.lineas ? " &middot; " + (lineasDe2(v).length) + " art." : ""}</span></div>
+          <span>${new Date(v.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${v.lineas ? " &middot; " + lineasDe2(v).length + " art." : ""}</span>
+          ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
         <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
     };
-    const s = sheetCliente(`<div class="sh-h"><h2>${esc(c.nombre)}</h2><button class="sh-x" data-x>✕</button></div>
-      <div class="card" style="margin:0 0 10px;padding:14px">
-        <div class="line" style="margin:4px 0;font-size:14px"><span>WhatsApp</span><span>${esc(c.whatsapp || c.telefono || "-")}</span></div>
-        <div class="line" style="margin:4px 0;font-size:14px"><span>Direccion</span><span>${esc(c.direccion || "-")}</span></div>
+    const ini = String(c.nombre || "?").trim().charAt(0).toUpperCase();
+    view.innerHTML = `<div class="subv">
+      <div class="subv-h">
+        <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
+        <div class="subv-tt"><b>${esc(c.nombre)}</b><span>Cliente</span></div>
+        <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
+      </div>
+      <div class="subv-hero">
+        <span class="subv-av">${esc(ini)}</span>
+        <div class="subv-ht">
+          <b>${esc(c.nombre)}</b>
+          <span>${esc(c.whatsapp || c.telefono || "Sin WhatsApp")}</span>
+          <span>${esc(c.direccion || "Sin direccion registrada")}</span>
+        </div>
       </div>
       <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
-        <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:16px">${money(comprado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:16px;color:#0B6B45">${money(pagado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:16px;color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
+        <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:15.5px">${money(comprado)}</b></div>
+        <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:15.5px;color:#0B6B45">${money(pagado)}</b></div>
+        <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:15.5px;color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
       </div>
-      <div class="sh-f" style="margin:0 0 10px;gap:10px">
-        <button class="btn sec" data-wa style="height:46px">${window.PPUI.I.wa} WhatsApp</button>
-        ${d > 0 ? '<button class="btn" data-pay style="height:46px">Registrar abono</button>' : ""}
+      <div class="subv-acc">
+        ${d > 0 ? '<button class="btn" id="svPay" style="height:48px">Registrar abono</button>' : ""}
+        <button class="btn sec" id="svEdit" style="height:48px">Editar cliente</button>
       </div>
-      <p class="lbl" style="margin:10px 2px 8px">HISTORIAL DE COMPRAS (${vs.length})</p>
+      <p class="lbl" style="margin:16px 2px 8px">HISTORIAL DE COMPRAS (${vs.length})</p>
       ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 0">Sin compras registradas.</p>'}
-      <button class="btn sec" data-edit style="margin-top:12px">Editar cliente</button>`);
-
-    s.querySelector("[data-x]").onclick = closeSheet;
-    s.querySelector("[data-edit]").onclick = () => { closeSheet(); editarCliente(c); };
-    s.querySelector("[data-wa]").onclick = () => window.PPUI.chatear(c.whatsapp || c.telefono, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
-    const pay = s.querySelector("[data-pay]");
+    </div>`;
+    view.scrollTop = 0;
+    const wa = c.whatsapp || c.telefono;
+    $("#svBack").onclick = () => { sub = null; render(); };
+    $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
+    $("#svEdit").onclick = () => editarCliente(c);
+    const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
   }
+
   function lineasDe2(v) {
     let l = v && v.lineas;
     if (typeof l === "string") { try { l = JSON.parse(l); } catch (_) { l = []; } }
@@ -176,6 +203,11 @@
 
   function renderProveedores() {
     const view = document.getElementById("view");
+    if (sub && sub.tipo === "proveedor") {
+      const p = (db().providers || []).find((x) => x.prid === sub.id);
+      if (p) return pintarProveedor(p);
+      sub = null;
+    } else if (sub) sub = null;
     const list = db().providers || [];
     const debeTotal = list.reduce((s, p) => s + Math.max(0, saldoProv(p).debe), 0);
     const conDeuda = list.filter((p) => saldoProv(p).debe > 0).length;
@@ -217,6 +249,12 @@
 
   function verProveedor(p) {
     if (!p) return;
+    sub = { tipo: "proveedor", id: p.prid };
+    pintarProveedor(p);
+  }
+
+  function pintarProveedor(p) {
+    const view = document.getElementById("view");
     const s0 = saldoProv(p);
     const mov = [
       ...comprasDe(p).map((c) => ({ t: c.fecha, tipo: "compra", x: c })),
@@ -230,29 +268,40 @@
           <span>${new Date(m.t).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${compra ? (pend > 0 ? " &middot; debe " + money(pend) : " &middot; pagada") : ""}</span></div>
         <b class="${compra ? (pend > 0 ? "red" : "") : "green"}">${compra ? "-" + money(m.x.total) : "+" + money(m.x.monto)}</b></div>`;
     };
-    const s = sheetCliente(`<div class="sh-h"><h2>${esc(p.nombre)}</h2><button class="sh-x" data-x>✕</button></div>
-      <div class="card" style="margin:0 0 10px;padding:14px">
-        <div class="line" style="margin:4px 0;font-size:14px"><span>Contacto</span><span>${esc(p.contacto || "-")}</span></div>
-        <div class="line" style="margin:4px 0;font-size:14px"><span>WhatsApp</span><span>${esc(p.whatsapp || p.telefono || "-")}</span></div>
+    const ini = String(p.nombre || "?").trim().charAt(0).toUpperCase();
+    view.innerHTML = `<div class="subv">
+      <div class="subv-h">
+        <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
+        <div class="subv-tt"><b>${esc(p.nombre)}</b><span>Proveedor</span></div>
+        <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
+      </div>
+      <div class="subv-hero">
+        <span class="subv-av">${esc(ini)}</span>
+        <div class="subv-ht">
+          <b>${esc(p.nombre)}</b>
+          <span>${esc(p.contacto || "Sin contacto")}</span>
+          <span>${esc(p.whatsapp || p.telefono || "Sin WhatsApp")}</span>
+        </div>
       </div>
       <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
-        <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:16px">${money(s0.comprado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:16px;color:#0B6B45">${money(s0.pagado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:16px;color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
+        <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:15.5px">${money(s0.comprado)}</b></div>
+        <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:15.5px;color:#0B6B45">${money(s0.pagado)}</b></div>
+        <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:15.5px;color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
-      <div class="sh-f" style="margin:0 0 10px;gap:10px">
-        <button class="btn sec" data-wa style="height:46px">${window.PPUI.I.wa} WhatsApp</button>
-        <button class="btn" data-compra style="height:46px">Nueva compra</button>
+      <div class="subv-acc">
+        <button class="btn" id="svCompra" style="height:48px">Nueva compra</button>
+        ${s0.debe > 0 ? '<button class="btn sec" id="svPago" style="height:48px">Registrar pago o abono</button>' : ""}
+        <button class="btn sec" id="svEdit" style="height:48px">Editar proveedor</button>
       </div>
-      ${s0.debe > 0 ? '<button class="btn sec" data-pago style="height:46px;margin-bottom:10px">Registrar pago o abono</button>' : ""}
-      <p class="lbl" style="margin:10px 2px 8px">MOVIMIENTOS (${mov.length})</p>
+      <p class="lbl" style="margin:16px 2px 8px">MOVIMIENTOS (${mov.length})</p>
       ${mov.length ? mov.map(fila).join("") : '<p class="cnt" style="padding:10px 0">Sin movimientos registrados.</p>'}
-      <button class="btn sec" data-edit style="margin-top:12px">Editar proveedor</button>`);
-    s.querySelector("[data-x]").onclick = closeSheet;
-    s.querySelector("[data-edit]").onclick = () => { closeSheet(); editarProveedor(p); };
-    s.querySelector("[data-wa]").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
-    s.querySelector("[data-compra]").onclick = () => registrarCompra(p);
-    const pg = s.querySelector("[data-pago]");
+    </div>`;
+    view.scrollTop = 0;
+    $("#svBack").onclick = () => { sub = null; render(); };
+    $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
+    $("#svCompra").onclick = () => registrarCompra(p);
+    $("#svEdit").onclick = () => editarProveedor(p);
+    const pg = $("#svPago");
     if (pg) pg.onclick = () => registrarPago(p);
   }
 
