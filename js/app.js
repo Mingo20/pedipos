@@ -189,7 +189,7 @@
       const fecha = new Date(String(s.fecha_pago) + "T00:00:00");
       const cuando = a.tipo === "vencido"
         ? (a.dias === 0 ? "Vence hoy" : "Vencido hace " + Math.abs(a.dias) + " dia" + (Math.abs(a.dias) === 1 ? "" : "s"))
-        : "Faltan " + a.dias + " dias";
+        : (a.dias === 1 ? "Falta 1 dia" : "Faltan " + a.dias + " dias");
       return `<button class="aviso ${a.tipo}" data-v="${esc(s.vid)}">
         <span class="av-ic">${a.tipo === "vencido" ? I.clock : I.card}</span>
         <span class="av-tx"><b>${a.tipo === "vencido" ? "Pago vencido" : "Pago proximo a vencer"}</b>
@@ -391,17 +391,20 @@
     const v = $("#view");
     if (!v || abriendoInv) return;
     abriendoInv = true;
-    let x0 = 0, y0 = 0, activo = false;
+    let x0 = 0, y0 = 0, activo = false, borde = "";
     v.addEventListener("touchstart", (e) => {
       if (e.touches.length !== 1) return;
       x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
-      activo = x0 < 26;
+      const w = window.innerWidth;
+      borde = x0 < 26 ? "izq" : x0 > w - 26 ? "der" : "";
+      activo = !!borde;
     }, { passive: true });
     v.addEventListener("touchmove", (e) => {
       if (!activo) return;
       const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
       if (Math.abs(dy) > Math.abs(dx)) { activo = false; return; }
-      if (dx > 66) { activo = false; openSearch(); }
+      /* desde el borde izquierdo se abre arrastrando a la derecha; desde el derecho, a la izquierda */
+      if ((borde === "izq" && dx > 66) || (borde === "der" && dx < -66)) { activo = false; openSearch(); }
     }, { passive: true });
     v.addEventListener("touchend", () => { activo = false; });
   }
@@ -672,8 +675,12 @@
       const text = ta.value.trim();
       if (!text) return toast("Escribe el pedido");
       go.disabled = true; go.innerHTML = '<span class="bar" id="bar" style="width:4%"></span><span class="spin" style="border-color:#fff;border-top-color:transparent"></span><span id="pc">Procesando... 4%</span>';
-      const r = await window.PPVoice.interpret(text, db().products, (p) => { const b2 = $("#bar"), c = $("#pc"); if (b2) b2.style.width = p + "%"; if (c) c.textContent = "Procesando... " + p + "%"; });
+      let r = null;
+      try {
+        r = await window.PPVoice.interpret(text, db().products, (p) => { const b2 = $("#bar"), c = $("#pc"); if (b2) b2.style.width = p + "%"; if (c) c.textContent = "Procesando... " + p + "%"; });
+      } catch (_) { r = null; }
       closeSheet();
+      if (!r) return toast("No se pudo procesar la lista. Intenta de nuevo.");
       setTimeout(() => agregarDirecto(r), 180);
     };
   }
