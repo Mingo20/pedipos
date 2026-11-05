@@ -49,10 +49,6 @@
     const conDeuda = list.filter((c) => deudaDe(c.cid) > 0).length;
 
     view.innerHTML = `
-      <div class="kpis">
-        <div class="kpi"><small>Por cobrar</small><b>${money(total)}</b></div>
-        <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
-      </div>
       <div class="stickbar">
         <div class="searchrow">
           <div class="search">${window.PPUI.I.search}<input id="cq2" placeholder="Buscar cliente" autocomplete="off"></div>
@@ -63,6 +59,10 @@
           <button class="fopt" data-e="debe">Con deuda ${window.PPUI.I.check}</button>
           <button class="fopt" data-e="aldia">Al dia ${window.PPUI.I.check}</button>
         </div>
+      </div>
+      <div class="kpis" style="margin-bottom:12px">
+        <div class="kpi"><small>Por cobrar</small><b>${money(total)}</b></div>
+        <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
       </div>
       <div id="cl2"></div>`;
 
@@ -223,10 +223,6 @@
     const debeTotal = list.reduce((s, p) => s + Math.max(0, saldoProv(p).debe), 0);
     const conDeuda = list.filter((p) => saldoProv(p).debe > 0).length;
     view.innerHTML = `
-      <div class="kpis">
-        <div class="kpi"><small>Por pagar</small><b>${money(debeTotal)}</b></div>
-        <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
-      </div>
       <div class="stickbar">
         <div class="searchrow">
           <div class="search">${window.PPUI.I.search}<input id="pq" placeholder="Buscar proveedor" autocomplete="off"></div>
@@ -237,6 +233,10 @@
           <button class="fopt" data-e="debe">Con deuda ${window.PPUI.I.check}</button>
           <button class="fopt" data-e="aldia">Al dia ${window.PPUI.I.check}</button>
         </div>
+      </div>
+      <div class="kpis" style="margin-bottom:12px">
+        <div class="kpi"><small>Por pagar</small><b>${money(debeTotal)}</b></div>
+        <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
       </div>
       <div id="pl2"></div>`;
     const draw = (f = "") => {
