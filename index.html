@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="img/logo-96.png" type="image/png">
 <link rel="apple-touch-icon" href="img/logo-192.png">
-<link rel="stylesheet" href="css/app.css?v=30">
+<link rel="stylesheet" href="css/app.css?v=31">
 </head>
 <body>
 <div id="app">
@@ -34,11 +34,54 @@
 <div class="toast" id="toast" hidden></div>
 <script>/* captura temprana: el aviso de instalacion puede llegar antes que la app */window.__ppInstallPrompt=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__ppInstallPrompt=e;dispatchEvent(new Event("pp:installable"))});addEventListener("appinstalled",function(){window.__ppInstallPrompt=null;dispatchEvent(new Event("pp:installed"))});</script>
 <script src="https://js.puter.com/v2/"></script>
-<script src="js/store.js?v=30"></script>
-<script src="js/sync.js?v=30"></script>
-<script src="js/voice.js?v=30"></script>
-<script src="js/extra.js?v=30"></script>
-<script src="js/app.js?v=30"></script>
-<script>if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
+<script src="js/store.js?v=31"></script>
+<script src="js/sync.js?v=31"></script>
+<script src="js/voice.js?v=31"></script>
+<script src="js/extra.js?v=31"></script>
+<script src="js/app.js?v=31"></script>
+<script>
+/* Siempre la ultima version: el service worker se revisa al abrir y cada vez que se vuelve a la app. */
+(function(){
+  var VERSION="31";
+  if(!("serviceWorker"in navigator))return;
+  var recargando=false;
+  navigator.serviceWorker.addEventListener("controllerchange",function(){
+    if(recargando)return; recargando=true;
+    /* hay una version nueva activa: recarga para ejecutarla (no si se esta grabando o escribiendo) */
+    var a=document.activeElement;
+    if(document.body.classList.contains("grabando")||(a&&/INPUT|TEXTAREA/.test(a.tagName))){recargando=false;return;}
+    location.reload();
+  });
+  addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(reg){
+      var buscar=function(){try{reg.update();}catch(e){}};
+      buscar();
+      document.addEventListener("visibilitychange",function(){if(!document.hidden)buscar();});
+      addEventListener("focus",buscar);
+      addEventListener("pageshow",buscar);
+      setInterval(buscar,5*60*1000);
+      /* si ya habia una version nueva esperando, se activa de inmediato */
+      if(reg.waiting)reg.waiting.postMessage("activar");
+      reg.addEventListener("updatefound",function(){
+        var w=reg.installing; if(!w)return;
+        w.addEventListener("statechange",function(){ if(w.state==="installed"&&navigator.serviceWorker.controller)w.postMessage("activar"); });
+      });
+    }).catch(function(){});
+    /* comprobacion extra: compara la version del servidor con la que esta corriendo */
+    var chequear=function(){
+      fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json();}).then(function(v){
+        if(v&&String(v.v)!==VERSION){
+          var a=document.activeElement;
+          if(document.body.classList.contains("grabando")||(a&&/INPUT|TEXTAREA/.test(a.tagName)))return;
+          navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.update();}));}).finally(function(){location.reload();});
+        }
+      }).catch(function(){});
+    };
+    document.addEventListener("visibilitychange",function(){if(!document.hidden)chequear();});
+    addEventListener("pageshow",function(e){if(e.persisted)chequear();});
+    setTimeout(chequear,4000);
+  });
+})();
+</script>
 </body>
 </html>

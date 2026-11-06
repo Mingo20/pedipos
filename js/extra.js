@@ -121,29 +121,72 @@
     window.PPUI.clearFab();
     document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
     const dir = c.direccion || "Sin direccion registrada";
-    view.innerHTML = `<div class="subv">
+    view.innerHTML = `<div class="subv conbarra">
       <div class="subv-h">
         <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
         <div class="subv-tt"><b>${esc(c.nombre)}</b><span>${esc(dir)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px">
-        <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:15.5px">${money(comprado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:15.5px;color:#0B6B45">${money(pagado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:15.5px;color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
+      <div class="kpis kpi3">
+        <div class="kpi"><small>Comprado</small><b>${money(comprado)}</b></div>
+        <div class="kpi"><small>Pagado</small><b style="color:#0B6B45">${money(pagado)}</b></div>
+        <div class="kpi"><small>Debe</small><b style="color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
       </div>
-      ${d > 0 ? '<div class="subv-acc"><button class="btn" id="svPay" style="height:48px;width:100%">Registrar pagos y abono</button></div>' : ""}
+      <div class="subv-duo">
+        ${d > 0 ? '<button class="btn mini2" id="svPay">Registrar pago</button>' : ""}
+        <button class="btn sec mini2" id="svCorte">Fecha de corte</button>
+      </div>
       <p class="lbl subv-lbl">HISTORIAL DE COMPRAS (${vs.length})</p>
       ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
-      <div class="subv-acc"><button class="btn sec" id="svEdit" style="height:48px;width:100%">Editar cliente</button></div>
-    </div>`;
+    </div>
+    <div class="subv-foot"><button class="btn sec" id="svEdit">Editar cliente</button></div>`;
     view.scrollTop = 0;
     const wa = c.whatsapp || c.telefono;
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     $("#svEdit").onclick = () => editarCliente(c);
+    $("#svCorte").onclick = () => fechaCorte(c);
     const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
+  }
+
+  /* Fecha de corte: suma todos los creditos pendientes del cliente, desde el primero
+     hasta el dia anterior a la fecha de pago, y envia el resumen por WhatsApp. */
+  function fechaCorte(c) {
+    const pend = db().sales
+      .filter((s) => s.cliente_id === c.cid && s.metodo === "credito" && !s.pagada)
+      .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+    if (!pend.length) return toast("Este cliente no tiene creditos pendientes");
+    /* fecha de pago de referencia: la mas proxima entre los creditos pendientes */
+    const pagos = pend.map((s) => s.fecha_pago).filter(Boolean).sort();
+    const refPago = pagos[0] || "";
+    let limite = null;
+    if (refPago) { limite = new Date(refPago + "T00:00:00"); limite.setDate(limite.getDate() - 1); limite.setHours(23, 59, 59, 999); }
+    const incl = pend.filter((s) => !limite || new Date(s.fecha) <= limite);
+    if (!incl.length) return toast("No hay creditos dentro del periodo de corte");
+    const fmtF = (f) => new Date(f).toLocaleDateString("es-DO");
+    const total = incl.reduce((x, s) => x + (Number(s.total) || 0), 0);
+    const neg = db().settings.negocio || "mi negocio";
+    const lineas = incl.map((s, i) => {
+      const art = lineasDe2(s).map((l) => (Number(l.cant) % 1 ? Number(l.cant).toFixed(2) : Number(l.cant)) + " " + l.nombre).join(", ");
+      return (i + 1) + ". " + fmtF(s.fecha) + " - " + money2(s.total) + (art ? "\n    " + art : "");
+    });
+    const txt = [
+      "*ESTADO DE CUENTA*",
+      "*" + neg + "*",
+      "",
+      "Cliente: " + c.nombre,
+      "Periodo: " + fmtF(incl[0].fecha) + " al " + fmtF(limite || new Date()),
+      refPago ? "Fecha de pago: " + new Date(refPago + "T12:00:00").toLocaleDateString("es-DO") : "",
+      "",
+      "*Pedidos a credito:*",
+      ...lineas,
+      "",
+      "*TOTAL A PAGAR: " + money2(total) + "*",
+      "",
+      "Este monto corresponde a " + incl.length + " pedido" + (incl.length === 1 ? "" : "s") + " a credito pendiente" + (incl.length === 1 ? "" : "s") + " de pago. Gracias por su preferencia.",
+    ].filter((x, i, arr) => !(x === "" && arr[i - 1] === "")).join("\n");
+    window.PPUI.chatear(c.whatsapp || c.telefono, txt);
   }
 
   function lineasDe2(v) {
@@ -298,25 +341,25 @@
     window.PPUI.clearFab();
     document.body.classList.add("focus");
     const contacto = p.contacto || p.whatsapp || p.telefono || "Sin contacto";
-    view.innerHTML = `<div class="subv">
+    view.innerHTML = `<div class="subv conbarra">
       <div class="subv-h">
         <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
         <div class="subv-tt"><b>${esc(p.nombre)}</b><span>${esc(contacto)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="kpis" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px">
-        <div class="kpi" style="padding:12px"><small>Comprado</small><b style="font-size:15.5px">${money(s0.comprado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Pagado</small><b style="font-size:15.5px;color:#0B6B45">${money(s0.pagado)}</b></div>
-        <div class="kpi" style="padding:12px"><small>Debe</small><b style="font-size:15.5px;color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
+      <div class="kpis kpi3">
+        <div class="kpi"><small>Comprado</small><b>${money(s0.comprado)}</b></div>
+        <div class="kpi"><small>Pagado</small><b style="color:#0B6B45">${money(s0.pagado)}</b></div>
+        <div class="kpi"><small>Debe</small><b style="color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
-      <div class="subv-acc">
-        <button class="btn" id="svCompra" style="height:48px">Nueva compra</button>
-        ${s0.debe > 0 ? '<button class="btn sec" id="svPago" style="height:48px">Registrar pago</button>' : ""}
+      <div class="subv-duo">
+        <button class="btn mini2" id="svCompra">Nueva compra</button>
+        ${s0.debe > 0 ? '<button class="btn sec mini2" id="svPago">Registrar pago</button>' : ""}
       </div>
       <p class="lbl subv-lbl">MOVIMIENTOS (${mov.length})</p>
       ${mov.length ? mov.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin movimientos registrados.</p>'}
-      <div class="subv-acc"><button class="btn sec" id="svEdit" style="height:48px;width:100%">Editar proveedor</button></div>
-    </div>`;
+    </div>
+    <div class="subv-foot"><button class="btn sec" id="svEdit">Editar proveedor</button></div>`;
     view.scrollTop = 0;
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");

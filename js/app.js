@@ -22,6 +22,9 @@
     list: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
     plus: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     mic: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    sendarrow: '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg>',
     bag: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -331,10 +334,6 @@
   function renderPanel() {
     const c = cart(), t = tot(), n = c.lines.length;
     $("#view").innerHTML = `
-      <div class="pair">
-        <button class="pill" id="bList">${I.list} Lista</button>
-        <button class="pill" id="bSearch">${I.box} Productos</button>
-      </div>
       <section class="tick">
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar productos</div>')}${manual ? manualRow() : ""}</div>
@@ -344,12 +343,16 @@
           <div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>
           <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
         </div>
-        <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}</button>
+        <div class="tools">
+          <button class="plus tl" id="bList" aria-label="Lista de pedido">${I.list}</button>
+          <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}</button>
+          <button class="plus tl" id="bSearch" aria-label="Bolsa de pedido">${I.bag}</button>
+        </div>
       </section>
-      <div class="act ${n ? "hay" : ""}">
-        <button class="n" id="bNew">Nueva</button>
-        <button class="c" id="bPay" ${n ? "" : "disabled"}>Cobrar</button>
-        <div class="mic ${voice.phase === "listening" || voice.phase === "recording" ? "on" : voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "listening" || voice.phase === "recording" ? I.stop : voice.phase === "wait" ? I.clock : I.mic}</i></div>
+      <div class="act ${n ? "hay" : ""}" id="actbar">
+        <button class="n" id="bNew">NUEVA</button>
+        <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
+        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => { manual = true; render(); const f = $("#mnm"); f && f.focus(); };
@@ -366,7 +369,7 @@
     };
     $("#bNew").onclick = () => { if (cart().lines.length && !confirm("Descartar la venta actual?")) return; cart().lines = []; manual = false; S.save(); render(); };
     $("#bPay").onclick = openPay;
-    $("#bMic").onclick = () => { if (voice.phase === "recording") { voice.phase = "wait"; render(); showProc(); finishWhisper(); } else toggleVoice(); };
+    bindMicGestos();
     $$(".row .q").forEach((inp) => (inp.onchange = () => {
       const v = parseFloat(String(inp.value).replace(",", "."));
       const i = +inp.dataset.i;
@@ -420,7 +423,7 @@
   /* ---------- Hojas ---------- */
   /* Icono segun el titulo de cada ventana (tambien aplica a las hojas de extra.js). */
   const ICONO_HOJA = [
-    [/^agregar producto|^buscar|^inventario/i, "box"], [/^men/i, "compass"], [/^categor|^filtrar/i, "filtro"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
+    [/^agregar producto|^buscar|^inventario|^catalogo/i, "box"], [/^men/i, "compass"], [/^categor|^filtrar/i, "filtro"], [/lista de pedido/i, "list"], [/confirmar pedido/i, "check"],
     [/^cobrar/i, "wallet"], [/venta registrada/i, "ok"], [/detalle del pedido/i, "order"],
     [/nuevo cliente|editar cliente/i, "userplus"], [/abono/i, "wallet"], [/proveedor/i, "truck2"],
     [/crear producto|editar producto/i, "box"], [/entrar a la caja/i, "users"],
@@ -525,16 +528,16 @@
   function openSearch() {
     const s = sheet(`<div class="inv">
       <div class="inv-h">
-        <div class="inv-tt"><span class="hi">${I.box}</span><h2>Inventario</h2></div>
-        <div class="inv-acts">
-          <button class="inv-b rnd" id="x" aria-label="Cerrar">${I.x}</button>
-          <button class="inv-b rnd" id="invFil" aria-label="Filtrar por categoria">${I.filtro}</button>
-        </div>
+        <div class="inv-tt"><span class="hi">${I.box}</span><h2>Catalogo</h2></div>
+        <button class="inv-b rnd" id="x" aria-label="Cerrar">${I.x}</button>
       </div>
       <div class="inv-c">
-        <div class="search inv-search">
-          ${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off">
-          <button class="mic-in" id="invMic" aria-label="Agregar por voz">${I.mic}</button>
+        <div class="invrow">
+          <div class="search inv-search">
+            ${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off">
+            <button class="mic-in" id="invMic" aria-label="Agregar por voz">${I.mic}</button>
+          </div>
+          <button class="inv-b rnd" id="invFil" aria-label="Filtrar por categoria">${I.filtro}</button>
         </div>
         <div class="inv-filtro" id="invCatList" hidden></div>
       </div>
@@ -755,6 +758,143 @@
   }
 
   /* ----- Voz directa desde el boton negro ----- */
+  /* ====== Microfono estilo nota de voz ======
+     Toque corto: dicta (como antes).
+     Mantener 1 s: vibra y la barra se transforma en grabadora.
+       soltar            -> termina y procesa
+       deslizar izquierda -> cancela
+       deslizar derecha   -> bloquea (manos libres) con opcion de eliminar o procesar */
+  const MIC = { t: null, activo: false, bloqueado: false, x0: 0, dx: 0, hold: false, seg: 0, tick: null, rec: null, usaDictado: false };
+
+  function micVibra(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (_) {} }
+
+  function bindMicGestos() {
+    const mic = $("#bMic");
+    if (!mic) return;
+    let down = false, largo = false, x0 = 0, y0 = 0, tmr = null;
+
+    const inicio = (x, y) => { down = true; largo = false; x0 = x; y0 = y; micVibra(18);
+      tmr = setTimeout(() => { if (!down) return; largo = true; micVibra([40, 30, 70]); iniciarGrabacionGesto(); }, 1000); };
+    const mueve = (x) => {
+      if (!down || !largo || MIC.bloqueado) return;
+      MIC.dx = x - x0;
+      actualizarArrastre();
+    };
+    const fin = () => {
+      if (!down) return;
+      down = false; clearTimeout(tmr);
+      if (!largo) { /* toque corto */ toggleVoice(); return; }
+      if (MIC.bloqueado) return;
+      /* soltar: segun hacia donde quedo el dedo */
+      if (MIC.dx < -70) cancelarGrabacionGesto(true);
+      else if (MIC.dx > 70) bloquearGrabacionGesto();
+      else terminarGrabacionGesto();
+    };
+    mic.addEventListener("touchstart", (e) => { e.preventDefault(); const t = e.touches[0]; inicio(t.clientX, t.clientY); }, { passive: false });
+    mic.addEventListener("touchmove", (e) => { const t = e.touches[0]; mueve(t.clientX); }, { passive: true });
+    mic.addEventListener("touchend", (e) => { e.preventDefault(); fin(); });
+    mic.addEventListener("touchcancel", () => { if (down && largo && !MIC.bloqueado) cancelarGrabacionGesto(false); down = false; clearTimeout(tmr); });
+    /* raton (pruebas en computadora) */
+    mic.addEventListener("mousedown", (e) => { inicio(e.clientX, e.clientY);
+      const mm = (ev) => mueve(ev.clientX), up = () => { document.removeEventListener("mousemove", mm); document.removeEventListener("mouseup", up); fin(); };
+      document.addEventListener("mousemove", mm); document.addEventListener("mouseup", up); });
+  }
+
+  const fmtSeg = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+
+  async function iniciarGrabacionGesto() {
+    if (MIC.activo) return;
+    if (voice.phase !== "idle" && voice.phase !== undefined) { try { window.PPVoice.stopDictation(); } catch (_) {} voice = { phase: "idle", text: "" }; renderListen(); }
+    if (!window.PPVoice.canRecord()) { toast("Este telefono no permite grabar audio"); return; }
+    try { await window.PPVoice.startRecording(); }
+    catch (_) { toast("Permite el microfono para grabar"); return; }
+    MIC.activo = true; MIC.bloqueado = false; MIC.dx = 0; MIC.seg = 0;
+    transformarBarra(true);
+    MIC.tick = setInterval(() => {
+      MIC.seg++;
+      const t = $("#recT"); if (t) t.textContent = fmtSeg(MIC.seg);
+    }, 1000);
+  }
+
+  /* la barra de venta se convierte en la barra de grabacion */
+  function transformarBarra(on) {
+    const bar = $("#actbar");
+    if (!bar) return;
+    document.body.classList.toggle("grabando", on);
+    if (!on) { bar.classList.remove("rec", "lock"); bar.querySelector(".recbar") && bar.querySelector(".recbar").remove(); const m = $("#bMic"); m && (m.style.transform = ""); return; }
+    bar.classList.add("rec");
+    let rb = bar.querySelector(".recbar");
+    if (!rb) {
+      rb = document.createElement("div"); rb.className = "recbar";
+      rb.innerHTML = `<span class="rdot"></span><b id="recT">0:00</b>
+        <span class="rhint" id="recH"><i>‹</i> Desliza para cancelar</span>
+        <span class="rlock" id="recL">${I.lock}<i>›</i></span>
+        <div class="rfree" id="recF" hidden>
+          <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
+          <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <button class="rsend" id="recSend" aria-label="Procesar audio">${I.sendarrow}</button>
+        </div>`;
+      bar.append(rb);
+      $("#recDel").onclick = () => cancelarGrabacionGesto(true);
+      $("#recSend").onclick = () => terminarGrabacionGesto();
+    }
+    const m = $("#bMic"); m && m.classList.add("grab");
+  }
+
+  function actualizarArrastre() {
+    const m = $("#bMic"), h = $("#recH"), L = $("#recL");
+    const dx = MIC.dx;
+    if (m) m.style.transform = "translateX(" + Math.max(-110, Math.min(110, dx)) + "px) scale(1.18)";
+    if (h) h.style.opacity = dx < 0 ? String(Math.max(0.15, 1 + dx / 120)) : "1";
+    if (L) L.classList.toggle("on", dx > 40);
+    if (h) h.classList.toggle("warn", dx < -50);
+  }
+
+  function limpiarGrabacionGesto() {
+    clearInterval(MIC.tick); MIC.tick = null;
+    MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0;
+    const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; }
+    transformarBarra(false);
+  }
+
+  async function cancelarGrabacionGesto(vibra) {
+    if (!MIC.activo) return;
+    if (vibra) micVibra([30, 40, 30]);
+    limpiarGrabacionGesto();
+    try { await window.PPVoice.stopRecording(); } catch (_) {}
+    toast("Grabacion cancelada");
+  }
+
+  function bloquearGrabacionGesto() {
+    if (!MIC.activo) return;
+    MIC.bloqueado = true; MIC.dx = 0;
+    micVibra(40);
+    const m = $("#bMic"); if (m) { m.style.transform = ""; m.style.display = "none"; }
+    $("#recH").hidden = true; $("#recL").hidden = true; $("#recF").hidden = false;
+    $("#actbar").classList.add("lock");
+  }
+
+  async function terminarGrabacionGesto() {
+    if (!MIC.activo) return;
+    const seg = MIC.seg;
+    micVibra(30);
+    limpiarGrabacionGesto();
+    const m = $("#bMic"); if (m) m.style.display = "";
+    if (seg < 1) { try { await window.PPVoice.stopRecording(); } catch (_) {} return toast("Mantén presionado mas tiempo para grabar"); }
+    voice = { phase: "wait", text: "" }; render(); showProc();
+    let text = "";
+    try { text = await window.PPVoice.recordAndTranscribe(); } catch (_) { text = ""; }
+    $("#proc") && $("#proc").remove();
+    voice = { phase: "idle", text: "" }; render();
+    if (!text) return toast("No se entendio el audio. Intenta de nuevo.");
+    showProc();
+    let r = null;
+    try { r = await window.PPVoice.interpret(text, db().products); } catch (_) { r = null; }
+    $("#proc") && $("#proc").remove();
+    if (!r) return toast("No se pudo procesar el pedido.");
+    agregarDirecto(r);
+  }
+
   function toggleVoice() {
     if (voice.phase === "listening") { window.PPVoice.stopDictation(); return; }
     if (!window.PPVoice.supportsDictation()) return whisperMode();
@@ -925,7 +1065,10 @@
           <div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}" autocomplete="off"></div>
           <button class="fbtn ${catCat ? "on" : ""}" id="cfil" aria-label="Filtrar por categoria">${I.filtro}</button>
         </div>
-        ${catCat ? `<button class="chip on solo" id="cquit">${esc(catCat)} ${I.x}</button>` : ""}
+        <div class="filtro-pop" id="cfp" hidden>
+          <button class="fopt ${catCat ? "" : "on"}" data-cat="">Todas las categorias ${I.check}</button>
+          ${cats.map((c) => `<button class="fopt ${catCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${I.check}</button>`).join("")}
+        </div>
       </div>
       <div class="pgrid" id="cl"></div>`;
     const draw = () => {
@@ -935,9 +1078,9 @@
       $$("#cl .pcard").forEach((el) => (el.onclick = () => { tap(); editProduct(db().products.find((p) => p.pid === el.dataset.p)); }));
     };
     $("#cq").oninput = (e) => { catQ = e.target.value; draw(); };
-    $("#cfil").onclick = () => abrirFiltroCategorias(cats);
-    const q = $("#cquit");
-    if (q) q.onclick = () => { catCat = ""; renderCatalogo(); };
+    const pop = $("#cfp");
+    $("#cfil").onclick = () => { pop.hidden = !pop.hidden; };
+    $$("[data-cat]", pop).forEach((b) => (b.onclick = () => { catCat = b.dataset.cat; renderCatalogo(); }));
     setFab(I.plus, () => editProduct(null), "Crear producto");
     draw();
   }
@@ -956,8 +1099,10 @@
     const n = !p; p = p || { pid: S.uid("P"), nombre: "", precio: 0, unidad: "unidad", categoria: "", stock: 0, itbis: true, activo: true };
     const s = sheet(`<div class="sh-h"><h2>${n ? "Crear producto" : "Editar producto"}</h2><button class="sh-x" id="x">${I.x}</button></div>
       <label class="field"><span>Nombre</span><input id="fn" value="${esc(p.nombre)}"></label>
-      <label class="field"><span>Mi precio (RD$)</span><input id="fp" inputmode="decimal" value="${p.precio || ""}"></label>
-      <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
+      <div class="duo">
+        <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
+        <label class="field"><span>Precio (RD$)</span><input id="fp" inputmode="decimal" value="${p.precio || ""}"></label>
+      </div>
       <div class="duo">
         <label class="field"><span>Stock</span><input id="fs" inputmode="decimal" value="${p.stock || 0}"></label>
         <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
@@ -1141,7 +1286,7 @@
   let pedQ = "";
   function renderHistorial() {
     const q = window.PPVoice.norm(pedQ);
-    const conFiltro = pedTipo || pedFiltro < 9000;
+    const conFiltro = !!pedTipo;
     const esCredito = (s) => s.metodo === "credito";
     let L = db().sales.slice().reverse().filter((s) => {
       if (pedTipo === "credito" && !esCredito(s)) return false;
@@ -1153,12 +1298,16 @@
       const tipo = esCredito(s) ? "a credito credito fiado pendiente" : "pagado contado efectivo";
       return window.PPVoice.norm([s.cliente || "sin cliente", mes, anio, tipo].join(" ")).includes(q);
     });
-    if (pedFiltro < 9000) L = L.slice(0, pedFiltro);
 
     $("#view").innerHTML = `<div class="stickbar">
         <div class="searchrow">
           <div class="search">${I.search}<input id="pq2" placeholder="Buscar pedido" value="${esc(pedQ)}" autocomplete="off"></div>
           <button class="fbtn ${conFiltro ? "on" : ""}" id="pfil" aria-label="Filtrar pedidos">${I.filtro}</button>
+        </div>
+        <div class="filtro-pop" id="pfp" hidden>
+          <button class="fopt ${pedTipo === "" ? "on" : ""}" data-t="">Todos ${I.check}</button>
+          <button class="fopt ${pedTipo === "pagado" ? "on" : ""}" data-t="pagado">Pagados ${I.check}</button>
+          <button class="fopt ${pedTipo === "credito" ? "on" : ""}" data-t="credito">A credito ${I.check}</button>
         </div>
       </div>` +
       (L.length ? L.map((s) => {
@@ -1176,7 +1325,9 @@
       renderHistorial();
       const n2 = $("#pq2"); if (n2) { n2.focus(); n2.setSelectionRange(pos, pos); }
     };
-    $("#pfil").onclick = abrirFiltroPedidos;
+    const pp = $("#pfp");
+    $("#pfil").onclick = () => { pp.hidden = !pp.hidden; };
+    $$("[data-t]", pp).forEach((b) => (b.onclick = () => { pedTipo = b.dataset.t; renderHistorial(); }));
     $$(".ord", $("#view")).forEach((b) => (b.onclick = () => openDetalle(db().sales.find((x) => x.vid === b.dataset.v))));
   }
 
@@ -1410,7 +1561,30 @@
     else b.hidden = true;
   }
   window.addEventListener("pp:sync", () => { netbar(); revisarAvisos(); });
-  window.addEventListener("pp:data", () => { if (!document.getElementById("sheet") && voice.phase === "idle" && tab !== "panel") render(); });
+  /* Solo se redibuja si los datos de la nube realmente cambiaron: antes cada sincronizacion
+     (cada 30 s) repintaba la pantalla y la animacion de entrada parecia "parpadear". */
+  let huella = "";
+  const firma = () => {
+    const d = db();
+    return [d.products.length, d.sales.length, (d.clients || []).length, (d.providers || []).length,
+      d.sales.map((s) => s.vid + (s.pagada ? "1" : "0")).join(","),
+      (d.clients || []).map((c) => c.cid + c.nombre + (c.direccion || "")).join(","),
+      (d.providers || []).map((p) => p.prid + p.nombre + (p.compras || []).length + (p.pagos || []).length).join(","),
+      d.products.map((p) => p.pid + p.nombre + p.precio + p.stock + (p.img ? p.img.length : 0)).join(",")].join("|");
+  };
+  huella = firma();
+  window.addEventListener("pp:data", () => {
+    const nueva = firma();
+    if (nueva === huella) return;            /* nada cambio: no se toca la pantalla */
+    huella = nueva;
+    if (document.getElementById("sheet") || voice.phase !== "idle" || tab === "panel" || MIC.activo) return;
+    if (document.body.classList.contains("focus")) return;          /* no interrumpir un detalle abierto */
+    const pop = document.querySelector(".filtro-pop:not([hidden])");
+    if (pop) return;                                                  /* ni un filtro desplegado */
+    const act = document.activeElement;
+    if (act && /INPUT|TEXTAREA|SELECT/.test(act.tagName)) return;     /* ni mientras se escribe */
+    render();
+  });
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab };
   $("#btnMenu").onclick = openMenu;

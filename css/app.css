@@ -724,3 +724,78 @@ body.has-dock main#view{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 /* el buscador sticky de clientes y proveedores queda justo bajo el encabezado */
 .stickbar + .kpis{margin-top:12px}
 .stickbar .filtro-pop{z-index:30}
+
+/* ========== v31 ========== */
+
+/* 1) herramientas al pie del talonario: lista - (+) - bolsa, mismo fondo circular */
+.tools{display:flex;align-items:center;justify-content:center;gap:22px;padding:2px 0 8px}
+.tools .plus{margin:12px 0 4px}
+.tools .plus.tl{color:var(--g)}
+.tools .plus svg{width:24px;height:24px}
+
+/* barra de venta flotante: mismo ancho que el talonario y margen inferior */
+.act{left:14px;right:14px;transform:none;width:auto;max-width:calc(560px - 28px);margin:0 auto;bottom:calc(env(safe-area-inset-bottom) + 10px);height:62px;border-radius:22px;border:1px solid var(--line);box-shadow:0 10px 26px #0b141c26;padding:0;overflow:hidden}
+@media(min-width:560px){.act{left:50%;right:auto;transform:translateX(-50%);width:calc(560px - 28px)}}
+.act button.n,.act button.c{text-transform:uppercase;letter-spacing:.08em;font-size:16px;font-weight:800}
+.act.hay{border-color:var(--g)}
+body:not(.has-dock) main#view{padding-bottom:calc(env(safe-area-inset-bottom) + 100px)}
+
+/* microfono: area tactil sin seleccion */
+#bMic{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;transition:transform .12s ease}
+#bMic.grab i{background:var(--red);box-shadow:0 0 0 10px #e5484d33;animation:micPulse 1s infinite}
+#bMic.grab{z-index:6}
+@keyframes micPulse{50%{box-shadow:0 0 0 16px #e5484d14}}
+
+/* la barra se transforma en grabadora (como la nota de voz de WhatsApp) */
+.act.rec{background:#fff!important;border-color:var(--line)!important}
+.act.rec > button.n,.act.rec > button.c{visibility:hidden}
+.act .recbar{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;gap:12px;padding:0 84px 0 18px;animation:recIn .22s cubic-bezier(.22,.9,.3,1) both;z-index:3;pointer-events:none}
+.act .recbar > *{pointer-events:auto}
+@keyframes recIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.recbar .rdot{width:11px;height:11px;border-radius:50%;background:var(--red);animation:blink 1s infinite;flex:none}
+@keyframes blink{50%{opacity:.25}}
+.recbar #recT{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;min-width:48px}
+.recbar .rhint{flex:1;color:#5b646d;font-size:14px;white-space:nowrap;overflow:hidden;text-align:center;transition:opacity .1s}
+.recbar .rhint i{font-style:normal;font-size:20px;margin-right:6px;vertical-align:-1px}
+.recbar .rhint.warn{color:var(--red);font-weight:700}
+.recbar .rlock{position:absolute;right:92px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:2px;color:#5b646d;background:#F1F4F6;border-radius:999px;padding:7px 10px;transition:.15s}
+.recbar .rlock i{font-style:normal;font-size:18px}
+.recbar .rlock.on{background:var(--g);color:#fff;transform:translateY(-50%) scale(1.15)}
+/* manos libres bloqueado: eliminar - onda - procesar */
+.recbar .rfree{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:center;gap:10px;padding:0 10px 0 78px}
+.recbar .rfree[hidden]{display:none}
+.act.lock .recbar{padding:0 10px}
+.act.lock .recbar .rdot{margin-left:4px}
+.rdel{width:44px;height:44px;border-radius:50%;background:#F1F4F6;color:var(--red);display:grid;place-items:center;flex:none;position:absolute;left:12px}
+.rwave{display:flex;align-items:center;gap:4px;flex:1;justify-content:center;height:34px}
+.rwave i{display:block;width:4px;border-radius:3px;background:var(--red);height:8px;animation:wv 1s ease-in-out infinite}
+.rwave i:nth-child(2){animation-delay:.12s}.rwave i:nth-child(3){animation-delay:.24s}.rwave i:nth-child(4){animation-delay:.36s}.rwave i:nth-child(5){animation-delay:.18s}.rwave i:nth-child(6){animation-delay:.3s}.rwave i:nth-child(7){animation-delay:.06s}
+.rsend{width:48px;height:48px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;flex:none}
+.act.lock .recbar #recT{position:absolute;left:68px}
+
+/* 2) Catalogo: buscador y filtro lado a lado */
+.invrow{display:flex;align-items:center;gap:10px}
+.invrow .inv-search{flex:1;min-width:0;margin:0;height:44px}
+.invrow .inv-b.rnd{width:44px;height:44px;flex:none;background:#F1F4F6}
+.inv-c{padding-bottom:12px}
+.inv-filtro{left:16px;right:16px;top:calc(100% - 6px);max-width:none;min-width:0;border-radius:18px}
+
+/* 3, 4, 5) KPIs centrados */
+.kpi{text-align:center}
+.kpi small,.kpi b{text-align:center}
+.kpi b{margin-left:auto;margin-right:auto}
+
+/* 4, 5) detalle: encabezado con margen y barra inferior fija */
+.subv.conbarra{margin:0;padding-bottom:96px;min-height:100%}
+.subv.conbarra .subv-h{margin:0 -14px;padding:calc(env(safe-area-inset-top) + 18px) 18px 14px;top:-14px}
+.kpi3{grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 12px!important}
+.kpi3 .kpi{padding:12px 6px}
+.kpi3 .kpi b{font-size:16px}
+.subv-duo{display:flex;gap:8px;margin:0 0 4px;justify-content:center}
+.subv-duo .btn{flex:1;max-width:210px;margin:0}
+.btn.mini2{height:40px;font-size:13.5px;padding:0 12px;border-radius:14px}
+.subv.conbarra .hrow,.subv.conbarra .cnt{margin-left:0;margin-right:0}
+.subv.conbarra .subv-lbl{margin:18px 4px 10px!important}
+.subv-foot{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;padding:10px 16px calc(env(safe-area-inset-bottom) + 10px);background:#fff;border-top:1px solid var(--line);z-index:15;box-shadow:0 -6px 18px #0001}
+.subv-foot .btn{width:100%;height:48px;margin:0}
+body.focus main#view{padding-left:14px;padding-right:14px}
