@@ -137,7 +137,7 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .bar-r i u{display:block;height:100%;border-radius:12px;background:var(--g);text-decoration:none}
 .bar-r em{font-style:normal;text-align:right;font-weight:700}
 .field{display:block;margin-bottom:14px}
-.field span{display:block;color:var(--mut);font-size:13px;letter-spacing:.05em;font-weight:700;margin-bottom:6px;text-transform:uppercase}
+.field > span{display:block;color:var(--mut);font-size:13px;letter-spacing:.05em;font-weight:700;margin-bottom:6px;text-transform:uppercase}
 .field input,.field select{width:100%;height:51px;border-radius:18px;border:1.5px solid var(--line);padding:0 18px;background:#fff;outline:none}
 .btn{height:52px;border-radius:999px;background:var(--g);color:#fff;font-size:16px;font-weight:700;width:100%}
 .btn.sec{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
@@ -804,3 +804,9 @@ body.focus main#view{padding-left:14px;padding-right:14px}
 .subv.conbarra .subv-h{padding-top:calc(env(safe-area-inset-top) + 26px);padding-bottom:16px}
 .subv.conbarra .subv-back{width:44px;height:44px}
 body.focus main#view{padding-top:0}
+
+/* solo la etiqueta directa del campo lleva el estilo de titulo (evita duplicados en select) */
+.field > span{display:block}
+.field select{appearance:auto;-webkit-appearance:menulist}
+.duo .field{min-width:0}
+.duo .field select,.duo .field input{width:100%}
