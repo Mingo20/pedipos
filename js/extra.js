@@ -99,9 +99,11 @@
     draw();
   }
 
+  let animarSub = false;
   function verCliente(c) {
     if (!c) return;
     sub = { tipo: "cliente", id: c.cid };
+    animarSub = true;
     pintarCliente(c);
   }
 
@@ -121,7 +123,7 @@
     window.PPUI.clearFab();
     document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
     const dir = c.direccion || "Sin direccion registrada";
-    view.innerHTML = `<div class="subv conbarra">
+    view.innerHTML = `<div class="subv conbarra${animarSub ? " entra" : ""}">
       <div class="subv-h">
         <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
         <div class="subv-tt"><b>${esc(c.nombre)}</b><span>${esc(dir)}</span></div>
@@ -140,7 +142,7 @@
       ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar cliente</button></div>`;
-    view.scrollTop = 0;
+    animarSub = false; view.scrollTop = 0;
     const wa = c.whatsapp || c.telefono;
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
@@ -320,6 +322,7 @@
   function verProveedor(p) {
     if (!p) return;
     sub = { tipo: "proveedor", id: p.prid };
+    animarSub = true;
     pintarProveedor(p);
   }
 
@@ -341,7 +344,7 @@
     window.PPUI.clearFab();
     document.body.classList.add("focus");
     const contacto = p.contacto || p.whatsapp || p.telefono || "Sin contacto";
-    view.innerHTML = `<div class="subv conbarra">
+    view.innerHTML = `<div class="subv conbarra${animarSub ? " entra" : ""}">
       <div class="subv-h">
         <button class="subv-back" id="svBack" aria-label="Volver">${window.PPUI.I.back}</button>
         <div class="subv-tt"><b>${esc(p.nombre)}</b><span>${esc(contacto)}</span></div>
@@ -360,7 +363,7 @@
       ${mov.length ? mov.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin movimientos registrados.</p>'}
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar proveedor</button></div>`;
-    view.scrollTop = 0;
+    animarSub = false; view.scrollTop = 0;
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     $("#svCompra").onclick = () => registrarCompra(p);

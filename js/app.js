@@ -216,6 +216,8 @@
     drawDock(); render(); $("#view").scrollTop = 0;
     if (cambio) {
       const v = $("#view"); v.classList.remove("vin"); void v.offsetWidth; v.classList.add("vin");
+      /* la clase se quita al terminar: si no, cada redibujo reiniciaba la animacion (el "pestaneo") */
+      clearTimeout(v._vt); v._vt = setTimeout(() => v.classList.remove("vin"), 420);
     }
   }
 
