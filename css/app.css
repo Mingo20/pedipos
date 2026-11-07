@@ -890,7 +890,7 @@ body.focus main#view{padding-top:0}
 
 /* 5) ticket del pedido */
 .sh-h h2 .hi svg{width:20px;height:20px}
-.mch.big b{font-size:19px}
+.mch.grande b{font-size:19px}
 .tk-body{overflow-y:auto;max-height:calc(76dvh - 150px);padding-bottom:6px;-webkit-overflow-scrolling:touch}
 .sh-f.fijo{position:sticky;bottom:0;background:#fff;margin:0;padding:12px 0 calc(env(safe-area-inset-bottom) + 6px);border-top:1px solid #eef1f3;z-index:2}
 .sh-f.fijo .big{flex:1;height:46px;font-size:15px}

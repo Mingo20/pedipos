@@ -1469,7 +1469,7 @@
     const pagado = s.metodo !== "credito";
     const sh = sheet(`<div class="sh-h"><h2><span class="hi">${I.ticket}</span>Ticket del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
       <div class="tk-body">
-      <div class="mch big"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
+      <div class="mch grande"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
       <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${fechaCorta(s.fecha)}</span></div>
       <div class="dsum"><div class="r"><span>Cliente</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
       <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
