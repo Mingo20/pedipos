@@ -1013,3 +1013,9 @@ body.focus main#view{padding-top:0}
 /* el aviso de la bolsa en la pantalla principal respeta el boton (+) */
 body.has-dock #view .bag-ind{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 216px);z-index:24}
 body.has-dock #view .sel-bar{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 88px);z-index:23}
+
+/* v41: la barra de la bolsa no choca con el boton (+) y deja respirar la lista */
+body.has-dock #view .sel-bar{right:88px}
+body.has-dock #view .pgrid{padding-bottom:150px}
+.bag-fab.fab2{box-shadow:0 10px 22px #1f9d5c4d}
+@media (max-width:380px){.bag-fab.fab2{width:48px;height:48px;bottom:calc(env(safe-area-inset-bottom) + 150px)}}
