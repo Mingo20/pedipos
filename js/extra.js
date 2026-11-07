@@ -162,9 +162,10 @@
     const refPago = pagos[0] || "";
     let limite = null;
     if (refPago) { limite = new Date(refPago + "T00:00:00"); limite.setDate(limite.getDate() - 1); limite.setHours(23, 59, 59, 999); }
-    /* si el corte excluiria todo (p. ej. pago hoy o ya vencido), se muestra la situacion actual completa */
-    let incl = pend.filter((s) => !limite || new Date(s.fecha) <= limite);
-    if (!incl.length) { incl = pend; limite = null; }
+    /* El estado de cuenta muestra la SITUACION ACTUAL: todos los creditos pendientes del cliente,
+       para que el total coincida siempre con lo que realmente debe. */
+    const incl = pend;
+    limite = null;
     const total = incl.reduce((x, s) => x + (Number(s.total) || 0), 0);
     return { pend, incl, refPago, limite, total };
   }
