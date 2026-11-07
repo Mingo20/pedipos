@@ -246,6 +246,50 @@
   function manualRow() {
     return `<div class="row man" id="mrow"><input class="nm" id="mnm" placeholder="Producto" autocomplete="off" enterkeyhint="next"><input id="mq" inputmode="decimal" placeholder="Cant." value="1" enterkeyhint="next"><input id="mp" inputmode="decimal" placeholder="Precio" enterkeyhint="done"><span class="t" id="mt">RD$0</span></div>`;
   }
+  /* La seccion manual tambien se elimina deslizandola a la izquierda, igual que un producto. */
+  function bindSwipeManual() {
+    const row = $("#mrow");
+    if (!row) return;
+    let x0 = 0, y0 = 0, dx = 0, activo = false, vertical = false;
+    row.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; activo = true; vertical = false;
+      row.classList.add("drag");
+    }, { passive: true });
+    row.addEventListener("touchmove", (e) => {
+      if (!activo) return;
+      const mx = e.touches[0].clientX - x0, my = e.touches[0].clientY - y0;
+      if (!vertical && Math.abs(my) > Math.abs(mx) && Math.abs(my) > 12) {
+        vertical = true; activo = false; row.classList.remove("drag");
+        row.style.transform = ""; row.style.opacity = ""; return;
+      }
+      if (vertical) return;
+      dx = Math.min(0, mx);
+      if (dx > 0) { row.style.transform = ""; row.style.opacity = ""; return; }
+      row.style.transform = `translateX(${dx}px)`;
+      row.style.opacity = String(Math.max(0.3, 1 + dx / 220));
+    }, { passive: true });
+    const soltar = () => {
+      if (!activo) return;
+      activo = false; row.classList.remove("drag");
+      if (dx < -70) {
+        row.style.transition = "transform .18s ease, opacity .18s ease";
+        row.style.transform = "translateX(-110%)"; row.style.opacity = "0";
+        vibrar(26);
+        setTimeout(() => { manual = false; render(); }, 190);
+      } else { row.style.transform = ""; row.style.opacity = ""; }
+      dx = 0;
+    };
+    row.addEventListener("touchend", soltar); row.addEventListener("touchcancel", soltar);
+    /* con raton tambien se puede quitar */
+    row.addEventListener("mousedown", (e) => {
+      if (e.target.tagName === "INPUT") return;
+      inicio: { x0 = e.clientX; dx = 0; activo = true; }
+    });
+    row.addEventListener("mousemove", (e) => { if (!activo) return; dx = Math.min(0, e.clientX - x0); if (dx < 0) row.style.transform = `translateX(${dx}px)`; });
+    row.addEventListener("mouseup", () => { if (!activo) return; activo = false; if (dx < -70) { manual = false; render(); } else row.style.transform = ""; });
+  }
+
   /* Guarda el producto escrito a mano: entra al talonario y, si no existe, al catalogo como disponible. */
   function commitManual() {
     const nom = ($("#mnm").value || "").trim();
@@ -328,6 +372,16 @@
   }
 
   /* Deslizar una fila del talonario a cualquier lado para eliminarla. */
+  /* El talonario muestra exactamente 5 secciones; el resto se desliza. */
+  function ajustarAltoTalonario() {
+    const b = $("#tickb");
+    if (!b) return;
+    const f = b.querySelector(".row");
+    if (!f) { b.style.maxHeight = ""; return; }
+    const h = Math.ceil(f.getBoundingClientRect().height) || 52;
+    b.style.maxHeight = (h * 5) + "px";
+  }
+
   function bindSwipeRows() {
     $$("#tickb .row[data-i]").forEach((row) => {
       let x0 = 0, y0 = 0, dx = 0, activo = false, vertical = false;
@@ -451,7 +505,7 @@
       if (!(v >= 0)) { render(); return toast("Precio no valido"); }
       cart().lines[i].precio = v; S.save(); render();
     }));
-    bindSwipeRows();
+    bindSwipeRows(); bindSwipeManual(); ajustarAltoTalonario();
     renderListen();
     bindAbrirInventario();
   }
@@ -610,6 +664,10 @@
         <div class="inv-filtro" id="invCatList" hidden></div>
       </div>
       <div class="inv-lista"><div class="pgrid" id="res"></div></div>
+      <div class="bag-ind" id="bagInd" hidden><span class="dotp"></span><span id="bagIndTx">Grabando</span></div>
+      <button class="bag-fab" id="bagFab" aria-label="Pedido por voz"><i>${I.bag}</i></button>
+      <button class="sel-bar" id="selBar" hidden><span class="sb-n" id="sbN">0</span>
+        <span class="sb-tx">productos seleccionados</span><span class="sb-go">${I.check}</span></button>
     </div>`, () => { window.PPVoice.stopDictation(); invRec = false; }, { alto: true });
     decorar(s);
     bindCerrarDerecha(s, $(".inv-h", s));
@@ -634,6 +692,18 @@
         && (!t || window.PPVoice.norm(p.nombre).includes(t)));
     };
 
+    /* barra inferior: cuantas unidades hay en la bolsa y cierre directo del catalogo */
+    function pintarSeleccion() {
+      const barra = $("#selBar", s);
+      if (!barra) return;
+      const n = cart().lines.length;
+      barra.hidden = n === 0;
+      const nn = $("#sbN", s);
+      if (nn) nn.textContent = num(n);
+      const tx = $(".sb-tx", s);
+      if (tx) tx.textContent = n === 1 ? "producto en la bolsa" : "productos en la bolsa";
+    }
+
     const marcar = () => {
       $$(".pcard", res).forEach((el) => {
         const n = enCarrito(el.dataset.p);
@@ -643,6 +713,7 @@
           b.textContent = num(n); el.classList.add("in");
         } else { if (b) b.remove(); el.classList.remove("in"); }
       });
+      pintarSeleccion();
     };
 
     const pintar = (animar) => {
@@ -696,6 +767,110 @@
     $("#x", s).onclick = () => closeSheet();
     mic.onclick = () => vozInventario(mic, () => pintar(true));
     pintar(false);
+    bindBolsa(s, () => pintar(true));
+
+    const selBar = $("#selBar", s);
+    if (selBar) selBar.onclick = () => { tap(); closeSheet(); };
+  }
+
+  /* ---------- Bolsa por voz: se mantiene pulsada 0.5 s, se habla y al soltar se agrega ----------
+     Soltar  -> procesa el pedido.
+     Deslizar hacia arriba mientras se mantiene -> queda grabando a manos libres (se puede
+     recorrer el catalogo). Un toque despues termina y agrega. */
+  function bindBolsa(sheetEl, refrescar) {
+    const fab = $("#bagFab", sheetEl);
+    if (!fab) return;
+    let down = false, largo = false, libre = false, x0 = 0, y0 = 0, tmr = null;
+
+    const pintar = (modo) => {
+      fab.classList.toggle("rec", modo === "rec");
+      fab.classList.toggle("libre", modo === "libre");
+      const i = fab.querySelector("i");
+      if (i) i.innerHTML = modo === "rec" ? I.sendarrow : (modo === "libre" ? I.check : I.bag);
+      const ind = $("#bagInd", sheetEl);
+      const tx = $("#bagIndTx", sheetEl);
+      if (ind) {
+        ind.hidden = !modo;
+        ind.className = "bag-ind " + (modo || "");
+      }
+      if (tx) tx.textContent = modo === "libre" ? "Manos libres, toca para terminar" : "Escuchando el pedido";
+    };
+
+    const iniciar = () => {
+      largo = true;
+      micVibra([35, 25, 60]);
+      pintar("rec");
+      (async () => {
+        try {
+          if (window.PPVoice.canRecord()) await window.PPVoice.startRecording();
+        } catch (_) { toast("Sin acceso al microfono"); }
+      })();
+    };
+
+    const terminar = async (manualTap) => {
+      if (!largo) return;
+      largo = false; libre = false;
+      pintar("");
+      const icono = fab.querySelector("i");
+      if (icono) icono.innerHTML = I.clock;
+      fab.classList.add("wait");
+      let texto = "";
+      try {
+        texto = await window.PPVoice.recordAndTranscribe();
+      } catch (_) { texto = ""; }
+      fab.classList.remove("wait");
+      if (icono) icono.innerHTML = I.bag;
+      if (!texto) { if (manualTap) toast("No se pudo transcribir el pedido"); return; }
+      showProc();
+      let r = { lines: [] };
+      try { r = await window.PPVoice.interpret(texto, db().products); } catch (_) {}
+      const p = $("#proc"); if (p) p.remove();
+      const lines = (r && r.lines) || [];
+      if (!lines.length) { toast("No se reconocio ningun producto"); return; }
+      agregarDirecto(r);
+      lines.forEach((l) => invToque.set(l.pid, Date.now()));
+      micVibra(45);
+      toast("Agregado a la bolsa");
+      if (refrescar) refrescar();
+    };
+
+    const soltar = () => {
+      if (!down) return;
+      down = false; clearTimeout(tmr);
+      if (!largo) return;                 /* fue un toque corto: nada */
+      if (libre) { tap(); return; }       /* en manos libres un toque termina */
+      terminar(false);
+    };
+
+    fab.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      if (largo && libre) { terminar(true); return; }   /* toque para cerrar en manos libres */
+      const t = e.touches[0];
+      down = true; largo = false; libre = false; x0 = t.clientX; y0 = t.clientY;
+      micVibra(12);
+      tmr = setTimeout(() => { if (down) iniciar(); }, 500);
+    }, { passive: false });
+
+    fab.addEventListener("touchmove", (e) => {
+      if (!down || !largo) return;
+      const t = e.touches[0];
+      const dy = t.clientY - y0;
+      if (!libre && dy < -50) {           /* deslizar arriba = manos libres */
+        libre = true; micVibra([30, 20, 40]);
+        pintar("libre");
+      }
+    }, { passive: true });
+
+    fab.addEventListener("touchend", (e) => { e.preventDefault(); soltar(); });
+    fab.addEventListener("touchcancel", () => { down = false; clearTimeout(tmr); });
+
+    /* con raton: mantener tambien graba */
+    fab.addEventListener("mousedown", () => {
+      if (largo && libre) { terminar(true); return; }
+      down = true; largo = false; libre = false; micVibra(12);
+      tmr = setTimeout(() => { if (down) iniciar(); }, 500);
+    });
+    fab.addEventListener("mouseup", () => soltar());
   }
 
   /* Dictado dentro del inventario: agrega al talonario sin salir de la barra. */
@@ -895,9 +1070,9 @@
     if (!rb) {
       rb = document.createElement("div"); rb.className = "recbar";
       rb.innerHTML = `<span class="rdot"></span><b id="recT">0:00</b>
-        <span class="rhint" id="recH"><i>‹</i> Desliza para cancelar</span>
+        <span class="rhint" id="recH"><i>‹</i> Cancela <em>·</em> Manos libres <i>›</i></span>
         <span class="rtrash" id="recX" aria-hidden="true">${I.trash}</span>
-        <span class="rlock" id="recL">${I.lock}<i>›</i></span>
+
         <div class="rfree" id="recF" hidden>
           <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
           <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -919,6 +1094,7 @@
     if (h) h.style.opacity = dx < 0 ? String(Math.max(0.15, 1 + dx / 120)) : "1";
     if (L) L.classList.toggle("on", dx > 40);
     if (h) h.classList.toggle("warn", dx < -50);
+    if (h) h.classList.toggle("libre", dx > 40);   /* avisa que soltar activa manos libres */
     const X = $("#recX"), bar = $("#actbar");
     if (X) {
       const k = Math.min(1, Math.max(0, -dx / 70));          /* 0 a 1 segun lo que se desliza */
@@ -970,7 +1146,9 @@
     MIC.bloqueado = true; MIC.dx = 0;
     micVibra(40);
     const m = $("#bMic"); if (m) { m.style.transform = ""; m.style.display = "none"; }
-    $("#recH").hidden = true; $("#recL").hidden = true; $("#recF").hidden = false;
+    const hh = $("#recH"); if (hh) hh.hidden = true;
+    const ll = $("#recL"); if (ll) ll.hidden = true;
+    $("#recF").hidden = false;
     $("#actbar").classList.add("lock");
   }
 
@@ -1142,7 +1320,7 @@
     const s = sheet(`<div class="ok-big"><div class="tk">${I.ok}</div><h2>Venta registrada</h2><div class="cnt">${new Date(sale.fecha).toLocaleString("es-DO")}</div></div>
       <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
-      <div class="sh-f rcp"><button class="m" id="pr" aria-label="Imprimir">${I.print}</button><button class="big" id="wa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>
+      <div class="sh-f rcp"><button class="big" id="wa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button><button class="m negro" id="pr" aria-label="Imprimir">${I.print}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = async () => {
       try {
@@ -1483,8 +1661,8 @@
       </div>
       ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}
       </div>
-      <div class="sh-f fijo"><button class="big slim" id="send">${I.wa} <span class="bl">Enviar por WhatsApp</span></button>
-        <button class="m" id="prt" aria-label="Imprimir">${I.print}</button>
+      <div class="sh-f fijo"><button class="big slim miniwa" id="send">${I.wa} <span class="bl">Enviar por WhatsApp</span></button>
+        <button class="m negro" id="prt" aria-label="Imprimir">${I.print}</button>
         <button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button></div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => {
@@ -1689,6 +1867,7 @@
     if (act && /INPUT|TEXTAREA|SELECT/.test(act.tagName)) return;     /* ni mientras se escribe */
     render();
   });
+  window.addEventListener("resize", () => ajustarAltoTalonario());
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab };
   $("#btnMenu").onclick = openMenu;

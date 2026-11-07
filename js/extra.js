@@ -129,10 +129,9 @@
         <div class="subv-tt"><b>${esc(c.nombre)}</b><span>${esc(dir)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="kpis kpi3">
+      <div class="kpis kpi2">
         <div class="kpi"><small>Comprado</small><b>${money(comprado)}</b></div>
         <div class="kpi"><small>Pagado</small><b style="color:#0B6B45">${money(pagado)}</b></div>
-        <div class="kpi"><small>Debe</small><b style="color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
       </div>
       <div class="subv-duo">
         ${d > 0 ? `<button class="btn mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
@@ -198,9 +197,8 @@
     const I = window.PPUI.I;
     const neg = db().settings.negocio || "Mi negocio";
     const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${esc(arts(s) || "Pedido a credito")}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
-    const s = sheetCliente(`<div class="sh-h compacta"><h2><span class="hi">${I.ticket}</span>Estado de cuenta</h2><button class="sh-x" data-x>${I.x}</button></div>
+    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Estado de cuenta</h2><button class="sh-x" data-x>${I.x}</button></div>
       <div class="ec-body">
-        <div class="ec-cab"><b>${esc(neg)}</b><span>${esc(c.nombre)}</span><span>${fmtF(new Date())}</span></div>
         <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
           ${d.refPago ? `<span>Fecha de pago: ${new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO")}</span>` : ""}</div>
         ${d.incl.length ? `<p class="lbl" style="margin:14px 2px 8px">PEDIDOS A CREDITO (${d.incl.length})</p><div class="ec-lista">${filas}</div>

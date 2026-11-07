@@ -933,3 +933,73 @@ body.focus main#view{padding-top:0}
 .inv-lista{position:relative;z-index:1}
 .inv-b.rnd:focus,.fbtn:focus{outline:none}
 .inv-b.rnd:focus-visible,.fbtn:focus-visible{outline:2px solid var(--g-line)}
+
+
+/* ========== v39 ========== */
+
+/* 1) talonario: exactamente 5 secciones a la vista y separadores muy suaves */
+.tick-b{max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.tick-h{border-bottom:1px solid #EFF2F5}
+.row{border-bottom:1px solid #EFF2F5}
+.row.man{border-bottom:1px solid #EFF2F5}
+.row.man input{border:1px solid #EDF0F3;background:#fff}
+.row.man input:focus{border-color:#D8DEE4;box-shadow:0 0 0 3px #e7ebef66}
+.row.drag{transition:none}
+
+/* venta registrada: WhatsApp a la izquierda, impresora negra a la derecha */
+.sh-f.rcp{justify-content:space-between}
+.sh-f .m.negro{background:#111417;border-color:#111417;color:#fff}
+.sh-f .m.negro svg{stroke:#fff}
+.sh-f .m.negro:active{transform:scale(.95)}
+
+/* pie del ticket: enviar un poco mas compacto + impresora negra */
+.sh-f.fijo .big.miniwa{font-size:14px;gap:7px;height:46px}
+.sh-f.fijo .big.miniwa svg{width:18px;height:18px}
+
+/* ticket: encabezado centrado */
+.mch.grande{text-align:center;align-items:center}
+.mch.grande b{display:block;text-align:center}
+.mch.grande span{display:block;text-align:center}
+
+/* 3) cliente: dos tarjetas anchas y centradas */
+.kpis.kpi2,.kpis.kpi3{grid-template-columns:1fr 1fr}
+.kpis.kpi2 .kpi{text-align:center;padding:20px 12px}
+.kpis.kpi2 .kpi b{font-size:24px}
+
+/* estado de cuenta: titulo algo mas grande y sin cabecera */
+.ec .ec-h h2{font-size:20px;letter-spacing:.01em}
+.ec .ec-h .hi svg{width:23px;height:23px}
+
+/* ===== catalogo: bolsa flotante por voz ===== */
+.bag-fab{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:60;
+  width:58px;height:58px;border-radius:50%;border:0;display:grid;place-items:center;
+  background:linear-gradient(160deg,#22A05F,#1B7C4F);color:#fff;
+  box-shadow:0 10px 24px #1b7c4f4d,0 2px 6px #0000001f;
+  transition:transform .18s cubic-bezier(.22,.9,.3,1),box-shadow .2s,background .2s}
+.bag-fab svg{width:26px;height:26px}
+.bag-fab:active{transform:scale(.94)}
+.bag-fab.rec{background:linear-gradient(160deg,#E5484D,#C2302F);box-shadow:0 10px 26px #e5484d59;animation:bagPulse 1.15s ease-in-out infinite}
+.bag-fab.libre{background:linear-gradient(160deg,#2F6FED,#1E4FBF);box-shadow:0 10px 26px #2f6fed55}
+.bag-fab.wait{background:#F1F4F6;color:#7A848D;box-shadow:none}
+@keyframes bagPulse{0%,100%{box-shadow:0 10px 24px #e5484d4d,0 0 0 0 #e5484d3d}50%{box-shadow:0 10px 28px #e5484d66,0 0 0 12px #e5484d00}}
+.bag-ind{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:60;
+  max-width:210px;padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:700;color:#fff;
+  background:#111417;box-shadow:0 8px 20px #0003;display:flex;align-items:center;gap:7px;pointer-events:none}
+.bag-ind[hidden]{display:none}
+.bag-ind .dotp{width:8px;height:8px;border-radius:50%;background:#E5484D;animation:blink 1s infinite;flex:none}
+.bag-ind.libre{background:#2F6FED}
+.bag-ind.libre .dotp{background:#fff}
+
+/* barra de productos seleccionados */
+.sel-bar{position:absolute;left:16px;right:88px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:59;
+  height:52px;border-radius:999px;border:0;display:flex;align-items:center;gap:10px;padding:0 8px 0 8px;
+  background:#111417;color:#fff;box-shadow:0 12px 26px #0000002e;
+  animation:selIn .26s cubic-bezier(.22,.9,.3,1) both}
+.sel-bar[hidden]{display:none}
+.sel-bar .sb-n{width:36px;height:36px;border-radius:50%;background:#22A05F;display:grid;place-items:center;
+  font-weight:800;font-size:15px;flex:none}
+.sel-bar .sb-tx{flex:1;text-align:left;font-size:13.5px;font-weight:600;color:#EDF1F4;white-space:nowrap;overflow:hidden}
+.sel-bar .sb-go{width:34px;height:34px;border-radius:50%;background:#ffffff1f;display:grid;place-items:center;flex:none}
+.sel-bar .sb-go svg{width:17px;height:17px}
+.sel-bar:active{transform:scale(.985)}
+@keyframes selIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
