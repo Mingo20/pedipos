@@ -1003,3 +1003,13 @@ body.focus main#view{padding-top:0}
 .sel-bar .sb-go svg{width:17px;height:17px}
 .sel-bar:active{transform:scale(.985)}
 @keyframes selIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* v40: bolsa flotante en la pantalla Catalogo, encima del boton (+) */
+.bag-fab.fab2{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 154px);z-index:23;width:52px;height:52px}
+.bag-fab.fab2 svg{width:23px;height:23px}
+.bag-ind.fab2i,.bag-ind{transition:opacity .18s,transform .18s}
+.bag-fab.fab2 + .bag-ind{right:18px}
+.bag-ind[hidden]{display:none}
+/* el aviso de la bolsa en la pantalla principal respeta el boton (+) */
+body.has-dock #view .bag-ind{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 216px);z-index:24}
+body.has-dock #view .sel-bar{position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 88px);z-index:23}

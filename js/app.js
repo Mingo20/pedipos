@@ -777,8 +777,10 @@
      Soltar  -> procesa el pedido.
      Deslizar hacia arriba mientras se mantiene -> queda grabando a manos libres (se puede
      recorrer el catalogo). Un toque despues termina y agrega. */
-  function bindBolsa(sheetEl, refrescar) {
-    const fab = $("#bagFab", sheetEl);
+  function bindBolsa(sheetEl, refrescar, ids) {
+    ids = ids || {};
+    const idFab = ids.fab || "bagFab", idInd = ids.ind || "bagInd", idTx = ids.tx || "bagIndTx";
+    const fab = $("#" + idFab, sheetEl);
     if (!fab) return;
     let down = false, largo = false, libre = false, x0 = 0, y0 = 0, tmr = null;
 
@@ -787,8 +789,8 @@
       fab.classList.toggle("libre", modo === "libre");
       const i = fab.querySelector("i");
       if (i) i.innerHTML = modo === "rec" ? I.sendarrow : (modo === "libre" ? I.check : I.bag);
-      const ind = $("#bagInd", sheetEl);
-      const tx = $("#bagIndTx", sheetEl);
+      const ind = $("#" + idInd, sheetEl);
+      const tx = $("#" + idTx, sheetEl);
       if (ind) {
         ind.hidden = !modo;
         ind.className = "bag-ind " + (modo || "");
@@ -1349,7 +1351,11 @@
           ${cats.map((c) => `<button class="fopt ${catCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${I.check}</button>`).join("")}
         </div>
       </div>
-      <div class="pgrid" id="cl"></div>`;
+      <div class="pgrid" id="cl"></div>
+      <div class="bag-ind" id="bagInd2" hidden><span class="dotp"></span><span id="bagIndTx2">Escuchando el pedido</span></div>
+      <button class="bag-fab fab2" id="bagFab2" aria-label="Pedido por voz"><i>${I.bag}</i></button>
+      <button class="sel-bar bar2" id="selBar2" hidden><span class="sb-n" id="sbN2">0</span>
+        <span class="sb-tx">productos en la bolsa</span><span class="sb-go">${I.check}</span></button>`;
     const draw = () => {
       const t = window.PPVoice.norm(catQ);
       const l = db().products.filter((p) => p.activo !== false && (!catCat || p.categoria === catCat) && (!t || window.PPVoice.norm(p.nombre).includes(t)));
@@ -1362,6 +1368,18 @@
     $$("[data-cat]", pop).forEach((b) => (b.onclick = () => { catCat = b.dataset.cat; renderCatalogo(); }));
     setFab(I.plus, () => editProduct(null), "Crear producto");
     draw();
+    bindBolsa($("#view"), () => { renderCatalogo(); }, { fab: "bagFab2", ind: "bagInd2", tx: "bagIndTx2" });
+    (function pintarBolsa() {
+      const b = $("#selBar2");
+      if (!b) return;
+      const n = cart().lines.length;
+      b.hidden = n === 0;
+      const nn = $("#sbN2");
+      if (nn) nn.textContent = num(n);
+      const tx = $(".sb-tx", b);
+      if (tx) tx.textContent = n === 1 ? "producto en la bolsa" : "productos en la bolsa";
+      b.onclick = () => { tap(); go("panel"); };
+    })();
   }
   /* Hoja con las categorias para elegir con un toque. */
   function abrirFiltroCategorias(cats) {
