@@ -925,3 +925,11 @@ body.focus main#view{padding-top:0}
 .ec-ok svg{width:34px;height:34px}
 .ec-ok span{color:var(--mut);font-size:13px}
 .ec-pie .big:disabled{opacity:.5}
+
+/* catalogo: panel de filtro identico al de clientes/proveedores, anclado al boton */
+.invrow .inv-filtro,.inv-c .inv-filtro{position:absolute;left:auto;right:16px;top:calc(100% - 2px);width:210px;min-width:210px;max-width:210px;padding:8px;border-radius:18px;max-height:56dvh;overflow-y:auto;z-index:40}
+.inv-filtro .fopt{height:46px;white-space:nowrap;font-size:15px;padding:0 14px;margin-bottom:4px}
+.inv-filtro .fopt:last-child{margin-bottom:0}
+.inv-lista{position:relative;z-index:1}
+.inv-b.rnd:focus,.fbtn:focus{outline:none}
+.inv-b.rnd:focus-visible,.fbtn:focus-visible{outline:2px solid var(--g-line)}
