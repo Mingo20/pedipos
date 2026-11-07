@@ -22,6 +22,8 @@
     list: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
     plus: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     mic: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    pausa: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.500"/><rect x="14" y="5" width="4" height="14" rx="1.500"/></svg>',
+    seguir: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5.500v13a1 1 0 0 0 1.500.860l10.500-6.500a1 1 0 0 0 0-1.720L9.500 4.640A1 1 0 0 0 8 5.500z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>',
     lock: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     sendarrow: '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg>',
@@ -167,13 +169,31 @@
     }
     return out.sort((a, b) => a.dias - b.dias);
   }
+  /* Burbuja roja con el numero de avisos SIN LEER; desaparece al tocar la campana. */
+  function sinLeer() {
+    const leidos = ((db().avisos = db().avisos || { vistos: [] }).leidos = db().avisos.leidos || []);
+    return avisosPago().filter((a) => !leidos.includes(a.clave));
+  }
+  function pintarBurbuja() {
+    const dot = $("#bellDot");
+    if (!dot) return;
+    const n = sinLeer().length;
+    dot.hidden = !n;
+    dot.textContent = n > 9 ? "9+" : String(n || "");
+    if (n) { dot.classList.remove("pop"); void dot.offsetWidth; dot.classList.add("pop"); }
+  }
+  function marcarLeidos() {
+    const a = (db().avisos = db().avisos || { vistos: [] });
+    a.leidos = a.leidos || [];
+    for (const x of avisosPago()) if (!a.leidos.includes(x.clave)) a.leidos.push(x.clave);
+    S.save(); pintarBurbuja();
+  }
   /* suena y vibra solo cuando aparece un aviso nuevo */
   function revisarAvisos() {
     const av = avisosPago();
     const vista = (db().avisos = db().avisos || { vistos: [] });
     const nuevos = av.filter((a) => !vista.vistos.includes(a.clave));
-    const dot = $("#bellDot");
-    if (dot) dot.hidden = !av.length;
+    pintarBurbuja();
     if (!nuevos.length) return;
     for (const a of nuevos) vista.vistos.push(a.clave);
     S.save();
@@ -263,6 +283,46 @@
     }, 180));
     upd();
   }
+  /* Barra de filtro: abre/cierra con animacion, gira el icono y se cierra al tocar fuera */
+  function alternarFiltro(btn, pop) {
+    const abrir = pop.hidden;
+    $$(".filtro-pop:not([hidden]), .inv-filtro:not([hidden])").forEach((p) => { if (p !== pop) p.hidden = true; });
+    $$(".fbtn.abierto, .inv-b.rnd.abierto").forEach((b) => { if (b !== btn) b.classList.remove("abierto"); });
+    pop.hidden = !abrir;
+    btn.classList.toggle("abierto", abrir);
+    if (abrir) {
+      const fuera = (ev) => {
+        if (pop.contains(ev.target) || btn.contains(ev.target)) return;
+        pop.hidden = true; btn.classList.remove("abierto");
+        document.removeEventListener("pointerdown", fuera, true);
+      };
+      setTimeout(() => document.addEventListener("pointerdown", fuera, true), 0);
+    }
+  }
+  window.PPUI_alternarFiltro = alternarFiltro;
+
+  /* Dialogo de confirmacion propio (reemplaza al confirm() generico del navegador) */
+  function confirmar(o, onOk) {
+    const prev = document.getElementById("dlg"); prev && prev.remove();
+    const d = document.createElement("div"); d.id = "dlg"; d.className = "dlg";
+    d.innerHTML = `<div class="dlg-m"></div>
+      <div class="dlg-c" role="alertdialog" aria-modal="true">
+        <div class="dlg-i ${o.peligro ? "red" : ""}">${o.icono || I.help}</div>
+        <h3>${esc(o.titulo)}</h3>
+        <p>${esc(o.texto || "")}</p>
+        <div class="dlg-b">
+          <button class="dlg-no" id="dlgNo">${esc(o.cancelar || "Cancelar")}</button>
+          <button class="dlg-ok ${o.peligro ? "red" : ""}" id="dlgOk">${esc(o.ok || "Aceptar")}</button>
+        </div>
+      </div>`;
+    document.body.append(d);
+    requestAnimationFrame(() => d.classList.add("on"));
+    const cerrar = (cb) => { d.classList.remove("on"); setTimeout(() => { d.remove(); cb && cb(); }, 200); };
+    $("#dlgNo", d).onclick = () => cerrar();
+    $(".dlg-m", d).onclick = () => cerrar();
+    $("#dlgOk", d).onclick = () => { vibrar(18); cerrar(onOk); };
+  }
+  const MAX_FILAS = 5;
   function lineRow(l, i) {
     return `<div class="row" data-i="${i}"><b>${esc(l.nombre)}</b><input class="q" data-i="${i}" inputmode="decimal" value="${num(l.cant)}" aria-label="Cantidad"><input class="p" data-i="${i}" inputmode="decimal" value="${num(l.precio)}" aria-label="Precio"><span class="t">${money(l.cant * l.precio)}</span></div>`;
   }
@@ -290,16 +350,23 @@
       const soltar = () => {
         if (!activo) return;
         activo = false; row.classList.remove("drag");
-        if (dx < -46) {
-          /* deslizar abre el editor de la seccion del producto */
-          row.style.transform = ""; row.style.opacity = "";
-          vibrar(20);
-          abrirEditorFila(+row.dataset.i);
+        if (Math.abs(dx) > 8) row._swiped = Date.now();
+        if (dx < -70) {
+          /* deslizar a la izquierda elimina el producto de inmediato */
+          const i = +row.dataset.i;
+          row.style.transition = "transform .18s ease, opacity .18s ease, max-height .2s ease .08s";
+          row.style.transform = "translateX(-110%)"; row.style.opacity = "0";
+          vibrar(26);
+          setTimeout(() => { if (cart().lines[i]) cart().lines.splice(i, 1); S.save(); render(); }, 200);
         } else { row.style.transform = ""; row.style.opacity = ""; }
         dx = 0;
       };
       /* tocar la fila tambien abre el editor */
-      row.addEventListener("click", (e) => { if (e.target.tagName === "INPUT") return; abrirEditorFila(+row.dataset.i); });
+      row.addEventListener("click", (e) => {
+        if (e.target.tagName === "INPUT") return;
+        if (row._swiped && Date.now() - row._swiped < 450) return;   /* el click fantasma tras deslizar no abre nada */
+        abrirEditorFila(+row.dataset.i);
+      });
       row.addEventListener("touchend", soltar);
       row.addEventListener("touchcancel", soltar);
     });
@@ -308,29 +375,20 @@
   function abrirEditorFila(i) {
     const l = cart().lines[i];
     if (!l) return;
-    const s = sheet(`<div class="sh-h compacta"><h2>Editar producto</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <label class="field"><span>Nombre</span><input id="en" value="${esc(l.nombre)}" autocomplete="off"></label>
-      <div class="duo">
-        <label class="field"><span>Cantidad</span><input id="eq" inputmode="decimal" value="${num(l.cant)}"></label>
-        <label class="field"><span>Precio (RD$)</span><input id="ep" inputmode="decimal" value="${num(l.precio)}"></label>
-      </div>
-      <div class="sh-f"><button class="big" id="eok">${I.check} <span class="bl">Listo</span></button></div>
-      <button class="btn red" id="edel" style="margin-top:10px;width:100%">Quitar del talonario</button>`);
+    const s = sheet(`<div class="sh-h compacta"><h2>Editar nombre</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <label class="field"><span>Nombre del producto</span><input id="en" value="${esc(l.nombre)}" autocomplete="off"></label>
+      <div class="sh-f solo"><button class="big" id="eok">${I.check} <span class="bl">Listo</span></button></div>`);
     $("#x", s).onclick = closeSheet;
-    $("#eok", s).onclick = () => {
-      const nom = $("#en", s).value.trim();
-      const q2 = parseFloat(String($("#eq", s).value).replace(",", "."));
-      const p2 = parseFloat(String($("#ep", s).value).replace(",", "."));
+    const en = $("#en", s);
+    setTimeout(() => { en.focus(); en.select(); }, 240);
+    const guardar = () => {
+      const nom = en.value.trim();
       if (!nom) return toast("Escribe el nombre del producto");
-      if (!(q2 > 0)) return toast("La cantidad debe ser mayor que cero");
-      if (!(p2 >= 0)) return toast("El precio no es valido");
-      Object.assign(cart().lines[i], { nombre: nom, cant: S.round2(q2), precio: p2 });
-      S.save(); closeSheet(); render(); toast("Producto actualizado");
+      cart().lines[i].nombre = nom;
+      S.save(); closeSheet(); render();
     };
-    $("#edel", s).onclick = () => {
-      cart().lines.splice(i, 1); S.save(); closeSheet();
-      vibrar(26); render(); toast("Producto quitado del talonario");
-    };
+    $("#eok", s).onclick = guardar;
+    en.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); guardar(); } };
   }
 
   function renderPanel() {
@@ -357,7 +415,10 @@
         <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
-    $("#bPlus").onclick = () => { manual = true; render(); const f = $("#mnm"); f && f.focus(); };
+    $("#bPlus").onclick = () => {
+      if (cart().lines.length + (manual ? 1 : 0) >= MAX_FILAS) { vibrar(30); return toast("El talonario admite hasta " + MAX_FILAS + " productos"); }
+      manual = true; render(); const f = $("#mnm"); f && f.focus();
+    };
     if (manual) bindManual();
     $("#swItbis").onclick = () => {
       const a = tot();
@@ -369,7 +430,12 @@
       cuenta("#vTot", a.total, b.total, false);
       tap();
     };
-    $("#bNew").onclick = () => { if (cart().lines.length && !confirm("Descartar la venta actual?")) return; cart().lines = []; manual = false; S.save(); render(); };
+    $("#bNew").onclick = () => {
+      const limpiar = () => { cart().lines = []; manual = false; S.save(); render(); };
+      if (!cart().lines.length && !manual) return;
+      if (!cart().lines.length) return limpiar();
+      confirmar({ titulo: "Descartar venta actual", texto: "Se quitaran todos los productos del talonario. Esta accion no se puede deshacer.", ok: "Descartar", cancelar: "Cancelar", peligro: true, icono: I.trash }, limpiar);
+    };
     $("#bPay").onclick = openPay;
     bindMicGestos();
     $$(".row .q").forEach((inp) => (inp.onchange = () => {
@@ -619,13 +685,13 @@
       $$("[data-cat]", panel).forEach((b) => (b.onclick = () => {
         invCat = b.dataset.cat;
         $("#invFil", s).classList.toggle("on", !!invCat);
-        panel.hidden = true;
+        panel.hidden = true; $("#invFil", s).classList.remove("abierto");
         pintar(false);
       }));
     };
     pintarCats();
     $("#invFil", s).classList.toggle("on", !!invCat);
-    $("#invFil", s).onclick = () => { panel.hidden = !panel.hidden; };
+    $("#invFil", s).onclick = () => alternarFiltro($("#invFil", s), panel);
     q.oninput = () => pintar(false);
     $("#x", s).onclick = () => closeSheet();
     mic.onclick = () => vozInventario(mic, () => pintar(true));
@@ -766,7 +832,7 @@
        soltar            -> termina y procesa
        deslizar izquierda -> cancela
        deslizar derecha   -> bloquea (manos libres) con opcion de eliminar o procesar */
-  const MIC = { t: null, activo: false, bloqueado: false, x0: 0, dx: 0, hold: false, seg: 0, tick: null, rec: null, usaDictado: false };
+  const MIC = { t: null, activo: false, bloqueado: false, x0: 0, dx: 0, hold: false, seg: 0, tick: null, rec: null, usaDictado: false, pausado: false };
 
   function micVibra(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (_) {} }
 
@@ -776,7 +842,7 @@
     let down = false, largo = false, x0 = 0, y0 = 0, tmr = null;
 
     const inicio = (x, y) => { down = true; largo = false; x0 = x; y0 = y; micVibra(18);
-      tmr = setTimeout(() => { if (!down) return; largo = true; micVibra([40, 30, 70]); iniciarGrabacionGesto(); }, 1000); };
+      tmr = setTimeout(() => { if (!down) return; largo = true; micVibra([40, 30, 70]); iniciarGrabacionGesto(); }, 500); };
     const mueve = (x) => {
       if (!down || !largo || MIC.bloqueado) return;
       MIC.dx = x - x0;
@@ -823,22 +889,25 @@
     const bar = $("#actbar");
     if (!bar) return;
     document.body.classList.toggle("grabando", on);
-    if (!on) { bar.classList.remove("rec", "lock"); bar.querySelector(".recbar") && bar.querySelector(".recbar").remove(); const m = $("#bMic"); m && (m.style.transform = ""); return; }
+    if (!on) { bar.classList.remove("rec", "lock", "izq"); bar.querySelector(".recbar") && bar.querySelector(".recbar").remove(); const m = $("#bMic"); m && (m.style.transform = ""); return; }
     bar.classList.add("rec");
     let rb = bar.querySelector(".recbar");
     if (!rb) {
       rb = document.createElement("div"); rb.className = "recbar";
       rb.innerHTML = `<span class="rdot"></span><b id="recT">0:00</b>
         <span class="rhint" id="recH"><i>‹</i> Desliza para cancelar</span>
+        <span class="rtrash" id="recX" aria-hidden="true">${I.trash}</span>
         <span class="rlock" id="recL">${I.lock}<i>›</i></span>
         <div class="rfree" id="recF" hidden>
           <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
           <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <button class="rpause" id="recP" aria-label="Pausar">${I.pausa}</button>
           <button class="rsend" id="recSend" aria-label="Procesar audio">${I.sendarrow}</button>
         </div>`;
       bar.append(rb);
       $("#recDel").onclick = () => cancelarGrabacionGesto(true);
       $("#recSend").onclick = () => terminarGrabacionGesto();
+      $("#recP").onclick = alternarPausa;
     }
     const m = $("#bMic"); m && m.classList.add("grab");
   }
@@ -850,13 +919,42 @@
     if (h) h.style.opacity = dx < 0 ? String(Math.max(0.15, 1 + dx / 120)) : "1";
     if (L) L.classList.toggle("on", dx > 40);
     if (h) h.classList.toggle("warn", dx < -50);
+    const X = $("#recX"), bar = $("#actbar");
+    if (X) {
+      const k = Math.min(1, Math.max(0, -dx / 70));          /* 0 a 1 segun lo que se desliza */
+      X.style.opacity = String(k);
+      X.style.transform = "translateY(-50%) scale(" + (0.6 + 0.5 * k) + ")";
+      X.classList.toggle("on", dx < -50);
+    }
+    if (bar) bar.classList.toggle("izq", dx < -6);           /* oculta tiempo e indicaciones mientras se desliza a la izquierda */
+  }
+
+  /* pausar / continuar la grabacion a manos libres */
+  function alternarPausa() {
+    if (!MIC.activo) return;
+    const b = $("#recP"), onda = $(".rwave"), dot = $(".rdot");
+    if (!MIC.pausado) {
+      if (!window.PPVoice.pauseRecording()) return;
+      MIC.pausado = true; clearInterval(MIC.tick); MIC.tick = null;
+      micVibra(20);
+      if (b) { b.innerHTML = I.seguir; b.setAttribute("aria-label", "Continuar"); b.classList.add("on"); }
+      onda && onda.classList.add("quieta"); dot && dot.classList.add("quieto");
+    } else {
+      if (!window.PPVoice.resumeRecording()) return;
+      MIC.pausado = false; micVibra(20);
+      MIC.tick = setInterval(() => { MIC.seg++; const t = $("#recT"); if (t) t.textContent = fmtSeg(MIC.seg); }, 1000);
+      if (b) { b.innerHTML = I.pausa; b.setAttribute("aria-label", "Pausar"); b.classList.remove("on"); }
+      onda && onda.classList.remove("quieta"); dot && dot.classList.remove("quieto");
+    }
   }
 
   function limpiarGrabacionGesto() {
     clearInterval(MIC.tick); MIC.tick = null;
-    MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0;
-    const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; }
+    MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.pausado = false;
+    /* el microfono vuelve siempre visible (antes quedaba oculto tras cancelar en manos libres) */
+    const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; m.style.display = ""; }
     transformarBarra(false);
+    const m2 = $("#bMic"); if (m2) m2.style.display = "";
   }
 
   async function cancelarGrabacionGesto(vibra) {
@@ -878,6 +976,7 @@
 
   async function terminarGrabacionGesto() {
     if (!MIC.activo) return;
+    try { if (MIC.pausado) window.PPVoice.resumeRecording(); } catch (_) {}
     const seg = MIC.seg;
     micVibra(30);
     limpiarGrabacionGesto();
@@ -1043,7 +1142,7 @@
     const s = sheet(`<div class="ok-big"><div class="tk">${I.ok}</div><h2>Venta registrada</h2><div class="cnt">${new Date(sale.fecha).toLocaleString("es-DO")}</div></div>
       <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
-      <div class="sh-f"><button class="m" id="pr" aria-label="Imprimir">${I.print}</button><button class="big" id="wa">${I.wa} Enviar por WhatsApp</button></div>
+      <div class="sh-f rcp"><button class="m" id="pr" aria-label="Imprimir">${I.print}</button><button class="big" id="wa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = async () => {
       try {
@@ -1081,7 +1180,7 @@
     };
     $("#cq").oninput = (e) => { catQ = e.target.value; draw(); };
     const pop = $("#cfp");
-    $("#cfil").onclick = () => { pop.hidden = !pop.hidden; };
+    $("#cfil").onclick = () => alternarFiltro($("#cfil"), pop);
     $$("[data-cat]", pop).forEach((b) => (b.onclick = () => { catCat = b.dataset.cat; renderCatalogo(); }));
     setFab(I.plus, () => editProduct(null), "Crear producto");
     draw();
@@ -1328,7 +1427,7 @@
       const n2 = $("#pq2"); if (n2) { n2.focus(); n2.setSelectionRange(pos, pos); }
     };
     const pp = $("#pfp");
-    $("#pfil").onclick = () => { pp.hidden = !pp.hidden; };
+    $("#pfil").onclick = () => alternarFiltro($("#pfil"), pp);
     $$("[data-t]", pp).forEach((b) => (b.onclick = () => { pedTipo = b.dataset.t; renderHistorial(); }));
     $$(".ord", $("#view")).forEach((b) => (b.onclick = () => openDetalle(db().sales.find((x) => x.vid === b.dataset.v))));
   }
@@ -1368,10 +1467,11 @@
     const st = db().settings;
     const lineas = lineasDe(s).map((l) => `<div class="dl"><div><b>${esc(l.nombre)}</b><span>${num(l.cant)} ${esc(l.unidad || "unid.")} &middot; ${money(l.precio)} c/u</span></div><b>${money(l.cant * l.precio)}</b></div>`).join("");
     const pagado = s.metodo !== "credito";
-    const sh = sheet(`<div class="sh-h"><h2>Detalle del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
-      <div class="mch"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
+    const sh = sheet(`<div class="sh-h"><h2><span class="hi">${I.ticket}</span>Ticket del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+      <div class="tk-body">
+      <div class="mch big"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
       <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${fechaCorta(s.fecha)}</span></div>
-      <div class="dsum"><div class="r"><span>Nombre</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
+      <div class="dsum"><div class="r"><span>Cliente</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
       <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
       <div class="dls">${lineas}</div>
       <div class="dsum">
@@ -1382,9 +1482,10 @@
         ${s.recibido ? `<div class="r"><span>Recibido</span><span>${money2(s.recibido)}</span></div><div class="r chg"><span>Cambio</span><span>${money2(s.cambio || 0)}</span></div>` : ""}
       </div>
       ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}
-      <div class="sh-f"><button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button>
-        <button class="big slim" id="send">${I.wa} <span class="bl">Enviar</span></button>
-        <button class="big slim dark" id="prt">${I.print} <span class="bl">Imprimir</span></button></div>`);
+      </div>
+      <div class="sh-f fijo"><button class="big slim" id="send">${I.wa} <span class="bl">Enviar por WhatsApp</span></button>
+        <button class="m" id="prt" aria-label="Imprimir">${I.print}</button>
+        <button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button></div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => {
       const txt = ["*" + (db().settings.negocio || "Mi negocio") + "*", ...lineasDe(s).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)),
@@ -1579,6 +1680,7 @@
     const nueva = firma();
     if (nueva === huella) return;            /* nada cambio: no se toca la pantalla */
     huella = nueva;
+    pintarBurbuja();
     if (document.getElementById("sheet") || voice.phase !== "idle" || tab === "panel" || MIC.activo) return;
     if (document.body.classList.contains("focus")) return;          /* no interrumpir un detalle abierto */
     const pop = document.querySelector(".filtro-pop:not([hidden])");
@@ -1590,7 +1692,7 @@
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab };
   $("#btnMenu").onclick = openMenu;
-  $("#btnBell").onclick = () => go("avisos");
+  $("#btnBell").onclick = () => { marcarLeidos(); go("avisos"); };
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
   addEventListener("pp:installable", () => { const b = $("#instbar"); if (b && b.hidden && !localStorage.getItem(INS_DONE)) { localStorage.removeItem(INS_OFF); b.hidden = false; } });
   addEventListener("pp:installed", () => { localStorage.setItem(INS_DONE, "1"); const b = $("#instbar"); if (b) { b.hidden = true; } toast("PediPOS instalada"); });

@@ -94,6 +94,10 @@
     return stream;
   }
 
+  /* pausa / continua la grabacion en curso (MediaRecorder.pause / resume) */
+  function pauseRecording() { try { if (mediaRec && mediaRec.state === "recording") { mediaRec.pause(); return true; } } catch (_) {} return false; }
+  function resumeRecording() { try { if (mediaRec && mediaRec.state === "paused") { mediaRec.resume(); return true; } } catch (_) {} return false; }
+
   function stopRecording() {
     stopping = true; listening = false;
     return new Promise((resolve) => {
@@ -234,5 +238,5 @@
     return out;
   }
 
-  window.PPVoice = { dedupe, supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, recordAndTranscribe, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
+  window.PPVoice = { dedupe, supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, pauseRecording, resumeRecording, recordAndTranscribe, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
 })();

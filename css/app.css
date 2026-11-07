@@ -810,3 +810,118 @@ body.focus main#view{padding-top:0}
 .field select{appearance:auto;-webkit-appearance:menulist}
 .duo .field{min-width:0}
 .duo .field select,.duo .field input{width:100%}
+
+/* ========== v34 ========== */
+
+/* 1) talonario: linea gris suave, campo producto mas ancho, cantidad = precio, hasta 5 secciones */
+.tick-h,.row{grid-template-columns:1.55fr .72fr .72fr 1fr}
+.row.man{grid-template-columns:1.55fr .72fr .72fr 1fr;gap:6px}
+.row.man input{border:1.5px solid #E3E7EC;box-shadow:none}
+.row.man input:focus{border-color:#CBD2D9;box-shadow:0 0 0 3px #cbd2d933}
+.row .q,.row .p{padding:0;min-width:0}
+.tick-b{max-height:none}
+
+/* dialogo propio para confirmar (reemplaza al confirm() del navegador) */
+.dlg{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:24px;pointer-events:none}
+.dlg-m{position:absolute;inset:0;background:#0b1a1380;opacity:0;transition:opacity .2s;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.dlg-c{position:relative;width:min(340px,100%);background:#fff;border-radius:28px;padding:26px 22px 20px;text-align:center;box-shadow:0 24px 60px #0004;transform:translateY(18px) scale(.94);opacity:0;transition:transform .26s cubic-bezier(.22,.9,.3,1),opacity .2s}
+.dlg.on{pointer-events:auto}
+.dlg.on .dlg-m{opacity:1}
+.dlg.on .dlg-c{transform:none;opacity:1}
+.dlg-i{width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:var(--g-soft);color:var(--g)}
+.dlg-i.red{background:#FDECEC;color:var(--red)}
+.dlg-i svg{width:26px;height:26px}
+.dlg-c h3{margin:0 0 6px;font-size:19px;font-weight:800;color:var(--ink)}
+.dlg-c p{margin:0 0 20px;font-size:14px;line-height:1.45;color:var(--mut)}
+.dlg-b{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dlg-b button{height:48px;border-radius:999px;font-size:15px;font-weight:700}
+.dlg-no{background:#F1F4F6;color:var(--ink)}
+.dlg-ok{background:var(--g);color:#fff}
+.dlg-ok.red{background:var(--red)}
+.dlg-b button:active{transform:scale(.97)}
+
+/* editar nombre: hoja minima */
+.sh-f.solo{margin-top:16px}
+
+/* 2) catalogo: margen sutil del micro dentro del campo */
+.inv-search{padding:0 9px 0 15px}
+/* filtro del catalogo con el mismo ancho que el de clientes y proveedores */
+.inv-filtro{left:auto;right:0;top:calc(100% + 6px);min-width:210px;max-width:210px;padding:8px;border-radius:18px}
+.inv-filtro .fopt{height:auto}
+.invrow{position:relative}
+
+/* 6) animacion premium en TODAS las barras de filtro */
+.filtro-pop,.inv-filtro{transform-origin:top right;animation:none}
+.filtro-pop:not([hidden]),.inv-filtro:not([hidden]){animation:fpIn .24s cubic-bezier(.22,.9,.3,1) both}
+@keyframes fpIn{from{opacity:0;transform:translateY(-8px) scale(.92)}to{opacity:1;transform:none}}
+.filtro-pop .fopt,.inv-filtro .fopt{opacity:0;animation:foptIn .26s cubic-bezier(.22,.9,.3,1) both}
+.filtro-pop .fopt:nth-child(1),.inv-filtro .fopt:nth-child(1){animation-delay:.04s}
+.filtro-pop .fopt:nth-child(2),.inv-filtro .fopt:nth-child(2){animation-delay:.08s}
+.filtro-pop .fopt:nth-child(3),.inv-filtro .fopt:nth-child(3){animation-delay:.12s}
+.filtro-pop .fopt:nth-child(4),.inv-filtro .fopt:nth-child(4){animation-delay:.16s}
+.filtro-pop .fopt:nth-child(n+5),.inv-filtro .fopt:nth-child(n+5){animation-delay:.2s}
+@keyframes foptIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.fbtn,.inv-b.rnd{transition:background .2s,color .2s,transform .15s}
+.fbtn:active,.inv-b.rnd:active{transform:scale(.9)}
+.fbtn svg,.inv-b.rnd svg{transition:transform .25s cubic-bezier(.22,.9,.3,1)}
+.fbtn.abierto svg,.inv-b.rnd.abierto svg{transform:rotate(90deg)}
+
+/* 3) microfono: icono eliminar que aparece solo al deslizar a la izquierda */
+.act .recbar .rtrash{position:absolute;left:14px;top:50%;width:44px;height:44px;border-radius:50%;background:#FDECEC;color:var(--red);display:grid;place-items:center;opacity:0;transform:translateY(-50%) scale(.6);transition:background .15s,color .15s;pointer-events:none}
+.act .recbar .rtrash svg{width:22px;height:22px}
+.act .recbar .rtrash.on{background:var(--red);color:#fff;box-shadow:0 6px 16px #e5484d55}
+.act.izq .recbar .rdot,.act.izq .recbar #recT{opacity:0;transition:opacity .12s}
+.act.izq .recbar .rhint{opacity:0!important}
+.act .recbar .rdot,.act .recbar #recT{transition:opacity .15s}
+/* pausa en lugar del candado, un poco mas a la derecha, sin etiqueta */
+.rpause{width:44px;height:44px;border-radius:50%;background:#F1F4F6;color:var(--ink);display:grid;place-items:center;flex:none;margin-left:6px;transition:background .2s,color .2s,transform .15s}
+.rpause.on{background:var(--amber-soft);color:var(--amber)}
+.rpause:active{transform:scale(.92)}
+.rwave.quieta i{animation-play-state:paused;height:6px!important}
+.rdot.quieto{animation:none;opacity:.45}
+.recbar .rfree{gap:12px}
+.recbar .rwave{margin:0 6px 0 10px}
+
+/* venta registrada: boton e icono de impresora mas pequenos */
+.sh-f.rcp .m{width:42px;height:42px}
+.sh-f.rcp .m svg{width:19px;height:19px}
+.sh-f.rcp .big{height:46px;font-size:15px;padding:0 18px;gap:8px}
+.sh-f.rcp .big svg{width:20px;height:20px}
+
+/* 5) ticket del pedido */
+.sh-h h2 .hi svg{width:20px;height:20px}
+.mch.big b{font-size:19px}
+.tk-body{overflow-y:auto;max-height:calc(76dvh - 150px);padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.sh-f.fijo{position:sticky;bottom:0;background:#fff;margin:0;padding:12px 0 calc(env(safe-area-inset-bottom) + 6px);border-top:1px solid #eef1f3;z-index:2}
+.sh-f.fijo .big{flex:1;height:46px;font-size:15px}
+.sh-f.fijo .m{width:46px;height:46px}
+
+/* 2) burbuja roja con el numero de avisos */
+.ibtn .dot#bellDot{top:2px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;border:2px solid var(--bg);color:#fff;font-size:10.5px;font-weight:800;font-style:normal;line-height:14px;text-align:center;display:grid;place-items:center;box-sizing:border-box}
+.ibtn .dot#bellDot[hidden]{display:none}
+.ibtn .dot#bellDot.pop{animation:bpop .34s cubic-bezier(.22,1.4,.4,1) both}
+@keyframes bpop{from{transform:scale(0)}to{transform:scale(1)}}
+
+/* 3) cliente: botones con icono, titulo del abono mas chico, estado de cuenta */
+.btn.conic{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn.conic svg{width:18px;height:18px;flex:none}
+.h-chico{font-size:16px!important}
+.sheet.ec .ec-body{overflow-y:auto;max-height:calc(76dvh - 160px);padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.ec-cab{display:flex;flex-direction:column;gap:2px;padding:2px 2px 12px;border-bottom:1px dashed var(--line)}
+.ec-cab b{font-size:18px}
+.ec-cab span{font-size:13px;color:var(--mut)}
+.ec-tot{margin-top:14px;background:linear-gradient(135deg,#FDF3F3,#FFF8F0);border:1.5px solid #F6D5D5;border-radius:22px;padding:16px;text-align:center}
+.ec-tot small{display:block;font-size:12px;letter-spacing:.08em;font-weight:700;color:var(--mut)}
+.ec-tot b{display:block;font-size:30px;color:#B3261E;margin:4px 0}
+.ec-tot span{font-size:13px;color:var(--mut)}
+.ec-lista{display:flex;flex-direction:column;gap:8px}
+.ec-f{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:12px 14px}
+.ec-f b{font-size:14.5px}
+.ec-f > div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ec-f > div span{font-size:12.5px;color:var(--mut)}
+.ec-f > b.red{color:#B3261E;white-space:nowrap}
+.ec-per{font-size:12.5px;color:var(--mut);margin:10px 2px 0;text-align:center}
+.ec-ok{display:grid;place-items:center;gap:4px;text-align:center;padding:26px 10px;color:var(--g)}
+.ec-ok svg{width:34px;height:34px}
+.ec-ok span{color:var(--mut);font-size:13px}
+.ec-pie .big:disabled{opacity:.5}

@@ -90,7 +90,7 @@
     fb.classList.toggle("on", !!cliFiltro);
     const marcar = () => $$("[data-e]", pop).forEach((b) => b.classList.toggle("on", b.dataset.e === cliFiltro));
     marcar();
-    fb.onclick = () => { pop.hidden = !pop.hidden; };
+    fb.onclick = () => window.PPUI_alternarFiltro(fb, pop);
     $$("[data-e]", pop).forEach((b) => (b.onclick = () => {
       cliFiltro = b.dataset.e; fb.classList.toggle("on", !!cliFiltro);
       pop.hidden = true; marcar(); draw(inp.value);
@@ -135,10 +135,10 @@
         <div class="kpi"><small>Debe</small><b style="color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
       </div>
       <div class="subv-duo">
-        ${d > 0 ? '<button class="btn mini2" id="svPay">Registrar pago</button>' : ""}
-        <button class="btn sec mini2" id="svCorte">Fecha de corte</button>
+        ${d > 0 ? `<button class="btn mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
+        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Estado de cuenta</span></button>
       </div>
-      <p class="lbl subv-lbl">HISTORIAL DE COMPRAS (${vs.length})</p>
+      <p class="lbl subv-lbl">COMPRAS (${vs.length})</p>
       ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar cliente</button></div>`;
@@ -147,48 +147,72 @@
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     $("#svEdit").onclick = () => editarCliente(c);
-    $("#svCorte").onclick = () => fechaCorte(c);
+    $("#svCorte").onclick = () => estadoCuenta(c);
     const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
   }
 
-  /* Fecha de corte: suma todos los creditos pendientes del cliente, desde el primero
-     hasta el dia anterior a la fecha de pago, y envia el resumen por WhatsApp. */
-  function fechaCorte(c) {
+  /* Estado de cuenta: situacion actual del cliente, siempre disponible (sin importar la fecha).
+     Cubre todos los creditos pendientes, desde el primero hasta el dia anterior a la fecha de pago. */
+  function datosEstado(c) {
     const pend = db().sales
       .filter((s) => s.cliente_id === c.cid && s.metodo === "credito" && !s.pagada)
       .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
-    if (!pend.length) return toast("Este cliente no tiene creditos pendientes");
-    /* fecha de pago de referencia: la mas proxima entre los creditos pendientes */
     const pagos = pend.map((s) => s.fecha_pago).filter(Boolean).sort();
     const refPago = pagos[0] || "";
     let limite = null;
     if (refPago) { limite = new Date(refPago + "T00:00:00"); limite.setDate(limite.getDate() - 1); limite.setHours(23, 59, 59, 999); }
-    const incl = pend.filter((s) => !limite || new Date(s.fecha) <= limite);
-    if (!incl.length) return toast("No hay creditos dentro del periodo de corte");
-    const fmtF = (f) => new Date(f).toLocaleDateString("es-DO");
+    /* si el corte excluiria todo (p. ej. pago hoy o ya vencido), se muestra la situacion actual completa */
+    let incl = pend.filter((s) => !limite || new Date(s.fecha) <= limite);
+    if (!incl.length) { incl = pend; limite = null; }
     const total = incl.reduce((x, s) => x + (Number(s.total) || 0), 0);
+    return { pend, incl, refPago, limite, total };
+  }
+  const fmtF = (f) => new Date(f).toLocaleDateString("es-DO");
+  const arts = (s) => lineasDe2(s).map((l) => (Number(l.cant) % 1 ? Number(l.cant).toFixed(2) : Number(l.cant)) + " " + l.nombre).join(", ");
+
+  function textoEstado(c, d) {
     const neg = db().settings.negocio || "mi negocio";
-    const lineas = incl.map((s, i) => {
-      const art = lineasDe2(s).map((l) => (Number(l.cant) % 1 ? Number(l.cant).toFixed(2) : Number(l.cant)) + " " + l.nombre).join(", ");
-      return (i + 1) + ". " + fmtF(s.fecha) + " - " + money2(s.total) + (art ? "\n    " + art : "");
-    });
-    const txt = [
+    const lineas = d.incl.map((s, i) => (i + 1) + ". " + fmtF(s.fecha) + " - " + money2(s.total) + (arts(s) ? "\n    " + arts(s) : ""));
+    return [
       "*ESTADO DE CUENTA*",
       "*" + neg + "*",
       "",
       "Cliente: " + c.nombre,
-      "Periodo: " + fmtF(incl[0].fecha) + " al " + fmtF(limite || new Date()),
-      refPago ? "Fecha de pago: " + new Date(refPago + "T12:00:00").toLocaleDateString("es-DO") : "",
+      "Fecha: " + fmtF(new Date()),
+      d.incl.length ? "Periodo: " + fmtF(d.incl[0].fecha) + " al " + fmtF(d.limite || new Date()) : "",
+      d.refPago ? "Fecha de pago: " + new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO") : "",
       "",
-      "*Pedidos a credito:*",
+      d.incl.length ? "*Pedidos a credito:*" : "Sin creditos pendientes.",
       ...lineas,
       "",
-      "*TOTAL A PAGAR: " + money2(total) + "*",
+      "*TOTAL A PAGAR: " + money2(d.total) + "*",
       "",
-      "Este monto corresponde a " + incl.length + " pedido" + (incl.length === 1 ? "" : "s") + " a credito pendiente" + (incl.length === 1 ? "" : "s") + " de pago. Gracias por su preferencia.",
+      d.incl.length ? "Este monto corresponde a " + d.incl.length + " pedido" + (d.incl.length === 1 ? "" : "s") + " a credito pendiente" + (d.incl.length === 1 ? "" : "s") + " de pago. Gracias por su preferencia." : "Esta al dia. Gracias por su preferencia.",
     ].filter((x, i, arr) => !(x === "" && arr[i - 1] === "")).join("\n");
-    window.PPUI.chatear(c.whatsapp || c.telefono, txt);
+  }
+
+  function estadoCuenta(c) {
+    const d = datosEstado(c);
+    const I = window.PPUI.I;
+    const neg = db().settings.negocio || "Mi negocio";
+    const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${esc(arts(s) || "Pedido a credito")}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
+    const s = sheetCliente(`<div class="sh-h compacta"><h2><span class="hi">${I.order}</span>Estado de cuenta</h2><button class="sh-x" data-x>${I.x}</button></div>
+      <div class="ec-body">
+        <div class="ec-cab"><b>${esc(neg)}</b><span>${esc(c.nombre)}</span><span>${fmtF(new Date())}</span></div>
+        <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
+          ${d.refPago ? `<span>Fecha de pago: ${new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO")}</span>` : ""}</div>
+        ${d.incl.length ? `<p class="lbl" style="margin:14px 2px 8px">PEDIDOS A CREDITO (${d.incl.length})</p><div class="ec-lista">${filas}</div>
+          ${d.incl.length ? `<p class="ec-per">Periodo: ${fmtF(d.incl[0].fecha)} al ${fmtF(d.limite || new Date())}</p>` : ""}`
+          : `<div class="ec-ok">${I.ok}<b>Cliente al dia</b><span>No tiene creditos pendientes.</span></div>`}
+      </div>
+      <div class="sh-f fijo ec-pie"><button class="big slim" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>`);
+    s.classList.add("ec");
+    s.querySelector("[data-x]").onclick = closeSheet;
+    s.querySelector("#ecWa").onclick = () => {
+      if (!d.incl.length) return toast("No hay creditos pendientes para informar");
+      window.PPUI.chatear(c.whatsapp || c.telefono, textoEstado(c, d));
+    };
   }
 
   function lineasDe2(v) {
@@ -229,7 +253,7 @@
   }
 
   function abonar(c) {
-    const s = sheetCliente(`<div class="sh-h"><h2>Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>✕</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2 class="h-chico">Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>✕</button></div>
       <label class="field"><span>Monto (RD$)</span><input id="ab" inputmode="decimal" placeholder="${deudaDe(c.cid)}"></label>
       <button class="btn" id="oka">Registrar abono</button>`);
     s.querySelector("[data-x]").onclick = closeSheet;
@@ -310,7 +334,7 @@
     fb.classList.toggle("on", !!provFiltro);
     const marcar = () => $$("[data-e]", pop).forEach((b) => b.classList.toggle("on", b.dataset.e === provFiltro));
     marcar();
-    fb.onclick = () => { pop.hidden = !pop.hidden; };
+    fb.onclick = () => window.PPUI_alternarFiltro(fb, pop);
     $$("[data-e]", pop).forEach((b) => (b.onclick = () => {
       provFiltro = b.dataset.e; fb.classList.toggle("on", !!provFiltro);
       pop.hidden = true; marcar(); draw(inp.value);
@@ -356,8 +380,8 @@
         <div class="kpi"><small>Debe</small><b style="color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
       <div class="subv-duo">
-        <button class="btn mini2" id="svCompra">Nueva compra</button>
-        ${s0.debe > 0 ? '<button class="btn sec mini2" id="svPago">Registrar pago</button>' : ""}
+        <button class="btn mini2 conic" id="svCompra">${window.PPUI.I.cart}<span>Nueva compra</span></button>
+        ${s0.debe > 0 ? `<button class="btn sec mini2 conic" id="svPago">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
       </div>
       <p class="lbl subv-lbl">MOVIMIENTOS (${mov.length})</p>
       ${mov.length ? mov.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin movimientos registrados.</p>'}
