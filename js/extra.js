@@ -198,7 +198,7 @@
     const I = window.PPUI.I;
     const neg = db().settings.negocio || "Mi negocio";
     const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${esc(arts(s) || "Pedido a credito")}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
-    const s = sheetCliente(`<div class="sh-h compacta"><h2><span class="hi">${I.order}</span>Estado de cuenta</h2><button class="sh-x" data-x>${I.x}</button></div>
+    const s = sheetCliente(`<div class="sh-h compacta"><h2><span class="hi">${I.ticket}</span>Estado de cuenta</h2><button class="sh-x" data-x>${I.x}</button></div>
       <div class="ec-body">
         <div class="ec-cab"><b>${esc(neg)}</b><span>${esc(c.nombre)}</span><span>${fmtF(new Date())}</span></div>
         <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
