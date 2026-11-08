@@ -1,7 +1,7 @@
 /* PediPOS service worker: red primero para tener siempre la ultima version, cache como respaldo sin internet. */
-const V = "pedipos-v45";
+const V = "pedipos-v46";
 const ASSETS = ["./", "index.html", "manifest.json", "img/logo-96.png", "img/logo-192.png", "img/logo-512.png", "img/logo-maskable-512.png",
-  "css/app.css?v=45", "js/store.js?v=45", "js/sync.js?v=45", "js/voice.js?v=45", "js/extra.js?v=45", "js/app.js?v=45"];
+  "css/app.css?v=46", "js/store.js?v=46", "js/sync.js?v=46", "js/voice.js?v=46", "js/extra.js?v=46", "js/app.js?v=46"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(V).then((c) => c.addAll(ASSETS).catch(() => {})).then(() => self.skipWaiting()));

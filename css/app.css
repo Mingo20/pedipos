@@ -1158,3 +1158,8 @@ body.focus #view{overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 /* 6) animacion breve al abrir el panel de venta desde el dock */
 .splash{transition:opacity .2s ease}
+
+/* v46: la tarjeta de compra es un contenedor (no un boton, para no romper el HTML) */
+div.hrow{display:flex;width:auto;background:#fff;border:1px solid #EEF1F4;box-sizing:border-box;cursor:pointer}
+div.hrow:active{transform:scale(.985)}
+.subv > div.hrow{margin:0 14px 9px}
