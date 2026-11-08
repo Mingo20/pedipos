@@ -107,6 +107,24 @@
     pintarCliente(c);
   }
 
+  /* Pantalla de espera de 2 segundos: el icono del talonario gira dentro de un circulo. */
+  function animarTal(cfg) {
+    const prev = document.getElementById("cargaSplash");
+    if (prev) prev.remove();
+    const d = document.createElement("div");
+    d.id = "cargaSplash";
+    d.className = "splash";
+    d.innerHTML = `<div class="sp-c"><div class="sp-r"></div><div class="sp-i">${window.PPUI.I.ticket}</div></div>
+      <b>Aqui va la cuenta</b><span>Preparando el ticket...</span>`;
+    document.body.append(d);
+    requestAnimationFrame(() => d.classList.add("on"));
+    const cerrar = () => {
+      d.classList.remove("on");
+      setTimeout(() => d.remove(), 260);
+    };
+    setTimeout(() => { cerrar(); setTimeout(() => cfg && cfg.abrir && cfg.abrir(), 60); }, 2000);
+  }
+
   function pintarCliente(c) {
     const view = document.getElementById("view");
     const d = deudaDe(c.cid), vs = ventasDe(c.cid);
@@ -114,11 +132,12 @@
     const pagado = Math.max(0, Math.round((comprado - d) * 100) / 100);
     const fila = (v) => {
       const cred = v.metodo === "credito";
-      return `<div class="hrow" data-v="${esc(v.vid || "")}">
+      return `<button class="hrow tap" data-v="${esc(v.vid || "")}">
         <div class="hi"><b>${cred ? (v.pagada ? "Credito pagado" : "Credito pendiente") : "Contado"}</b>
           <span>${new Date(v.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${v.lineas ? " &middot; " + lineasDe2(v).length + " art." : ""}</span>
           ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
-        <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
+        <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>
+        <span class="hrow-go">${window.PPUI.I.chev}</span></button>`;
     };
     window.PPUI.clearFab();
     document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
@@ -135,7 +154,7 @@
       </div>
       <div class="subv-duo">
         ${d > 0 ? `<button class="btn mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
-        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Estado de cuenta</span></button>
+        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Estado de credito</span></button>
       </div>
       <p class="lbl subv-lbl">COMPRAS (${vs.length})</p>
       ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
@@ -149,6 +168,12 @@
     $("#svCorte").onclick = () => estadoCuenta(c);
     const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
+    /* cada compra abre su ticket, con una animacion de carga de 2 segundos */
+    $$(".hrow[data-v]", view).forEach((b) => (b.onclick = () => {
+      const v = (db().sales || []).find((x) => x.vid === b.dataset.v);
+      if (!v) return;
+      animarTal({ abrir: () => window.PPUI.detalle(v) });
+    }));
   }
 
   /* Estado de cuenta: situacion actual del cliente, siempre disponible (sin importar la fecha).

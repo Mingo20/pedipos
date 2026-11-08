@@ -1034,3 +1034,86 @@ body.has-dock #float .fab{pointer-events:auto;position:relative;right:0;bottom:0
 body.has-dock .bag-fab.fab2{right:20px;bottom:calc(env(safe-area-inset-bottom) + 212px);z-index:25}
 body.has-dock #view .bag-ind{bottom:calc(env(safe-area-inset-bottom) + 274px);z-index:25}
 body.has-dock #view .pgrid{padding-bottom:220px}
+
+
+/* ========== v44: modales premium (margen lateral, linea fina, gesto de cierre) ========== */
+.sheet{
+  left:50%;right:auto;bottom:calc(env(safe-area-inset-bottom) + 10px);
+  width:min(calc(100% - 24px),540px);
+  border-radius:30px;
+  padding:12px 20px 20px;
+  max-height:90dvh;
+  box-shadow:0 -8px 40px #0d1b1433, 0 2px 10px #00000014;
+  animation:upPremium .34s cubic-bezier(.22,1,.3,1);
+}
+@keyframes upPremium{from{transform:translate(-50%,100%);opacity:.6}to{transform:translate(-50%,0);opacity:1}}
+.sheet .grip{
+  width:44px;height:4px;border-radius:999px;
+  background:#D6DBE0;margin:2px auto 16px;
+  transition:width .2s,background .2s;
+}
+.sheet.arrastrando .grip{width:64px;background:#B9C0C7}
+.mask{background:#0d1b1466;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+/* el panel de catalogo sigue a pantalla completa */
+.sheet.alto{left:0;right:0;bottom:0;width:100%;max-width:100%;border-radius:0;padding:0;box-shadow:none}
+.sheet.alto .grip{display:none}
+/* hojas que entran desde el lado no llevan margen */
+.sheet.side{border-radius:26px 0 0 26px;margin:0}
+
+
+/* ========== v44: detalles de la interfaz ========== */
+
+/* candado que aparece al deslizar a la derecha y se apaga al completar el gesto */
+.act .recbar .rlock2{position:absolute;right:16px;top:50%;width:42px;height:42px;border-radius:50%;
+  background:#F1F4F6;color:#5b646d;display:grid;place-items:center;opacity:0;
+  transform:translateY(-50%) scale(.7);transition:background .15s,color .15s,opacity .15s;pointer-events:none;z-index:4}
+.act .recbar .rlock2 svg{width:20px;height:20px}
+.act .recbar .rlock2.on{background:var(--g);color:#fff;box-shadow:0 6px 16px #1f9d5c4d}
+.act .recbar .rlock2.off{opacity:0!important}
+
+/* indicador de la bolsa: pista para deslizar hacia arriba */
+.bag-ind{flex-direction:column;align-items:flex-start;gap:2px;padding:8px 13px;border-radius:16px;line-height:1.25}
+.bag-ind .fil{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700}
+.bag-ind em{font-style:normal;font-size:11px;font-weight:600;opacity:.72}
+
+/* tarjetas de compras: toda la tarjeta abre el ticket */
+.hrow{width:100%;text-align:left;display:flex;align-items:center;gap:10px;position:relative;
+  background:#fff;border:1px solid #EEF1F4;border-radius:18px;padding:13px 14px;
+  box-shadow:0 1px 2px #10182808;transition:transform .16s,border-color .2s,box-shadow .2s}
+.hrow + .hrow{margin-top:9px}
+.hrow.tap:active{transform:scale(.985);border-color:#DCE3E9;box-shadow:none}
+.hrow .hi{flex:1;min-width:0}
+.hrow .hrow-go{flex:none;color:#B6BFC7;display:grid;place-items:center}
+.hrow .hrow-go svg{width:18px;height:18px}
+
+/* pantalla de espera de 2 s con el talonario girando */
+.splash{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:#ffffffb8;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);opacity:0;transition:opacity .22s}
+.splash.on{opacity:1}
+.splash .sp-c{position:relative;width:96px;height:96px;display:grid;place-items:center;margin-bottom:10px}
+.splash .sp-r{position:absolute;inset:0;border-radius:50%;
+  border:3px solid #E6EBEF;border-top-color:var(--g);border-right-color:#57C08D;
+  animation:girar .85s linear infinite}
+.splash .sp-i{width:62px;height:62px;border-radius:50%;background:#fff;display:grid;place-items:center;
+  color:var(--g);box-shadow:0 8px 22px #1f9d5c26}
+.splash .sp-i svg{width:28px;height:28px}
+.splash b{font-size:15px;color:var(--ink);letter-spacing:.01em}
+.splash span{font-size:12.5px;color:var(--mut)}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+/* acabado premium en botones y campos */
+.btn,.big,.mini2,.conic{border-radius:16px}
+.btn{transition:transform .15s,box-shadow .2s,background .2s}
+.btn:active{transform:scale(.975)}
+.big{box-shadow:0 6px 18px #1f9d5c2e}
+.big:active{transform:scale(.985)}
+.sh-x{border-radius:50%;transition:background .18s,transform .15s}
+.sh-x:active{background:#F1F4F6;transform:scale(.92)}
+.field input,.field select{border-radius:14px;border:1px solid #E8ECF0;background:#fff;transition:border-color .18s,box-shadow .18s}
+.field input:focus,.field select:focus{border-color:#CFD8DF;box-shadow:0 0 0 4px #eef1f44d}
+
+/* el asa de la hoja se ve mas fina y elegante */
+.grip{background:#D6DBE0}
+/* la tarjeta de compra es un boton: hereda tipografia y no hereda estilos del navegador */
+.hrow{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button.hrow{font:inherit;color:inherit;background:#fff;border:1px solid #EEF1F4}

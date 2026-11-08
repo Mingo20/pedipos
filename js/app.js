@@ -470,7 +470,7 @@
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => {
-      if (cart().lines.length + (manual ? 1 : 0) >= MAX_FILAS) { vibrar(30); return toast("El talonario admite hasta " + MAX_FILAS + " productos"); }
+      /* siempre se puede agregar a mano: el talonario muestra 5 y el resto se desliza */
       manual = true; render(); const f = $("#mnm"); f && f.focus();
     };
     if (manual) bindManual();
@@ -572,6 +572,7 @@
     $("#layer").append(m, s);
     decorar(s);
     if (lado) bindCerrarLado(s);
+    else if (!alto) bindCerrarAbajo(s);
     const t0 = Date.now();
     /* el mismo toque que abre la hoja no debe cerrarla */
     m.onclick = () => { if (Date.now() - t0 < 320) return; closeSheet(); onClose && onClose(); };
@@ -602,6 +603,43 @@
   }
 
   /* Cerrar una hoja deslizandola hacia la derecha (solo gestos horizontales). */
+  /* Cerrar la hoja deslizando hacia abajo: sigue el dedo y, al soltar, se decide
+     si vuelve a su sitio o se cierra, con una curva suave. Se puede tomar desde
+     el asa o desde cualquier parte de la hoja que no sea un campo o un boton. */
+  function bindCerrarAbajo(s) {
+    let y0 = 0, dy = 0, activo = false, ignorar = false;
+    const esControl = (el) => !!(el && el.closest && el.closest("input,textarea,select,button,.fopt,.pcard,.ec-f,.dl,.aviso,img"));
+    s.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      if (esControl(e.target)) { activo = false; ignorar = true; return; }
+      ignorar = false; activo = true; y0 = e.touches[0].clientY; dy = 0;
+    }, { passive: true });
+    s.addEventListener("touchmove", (e) => {
+      if (!activo || ignorar) return;
+      const t = e.touches[0];
+      const my = t.clientY - y0;
+      if (my <= 0) { dy = 0; s.style.transform = ""; s.style.opacity = ""; return; }
+      dy = my;
+      /* resistente al principio, fluido despues */
+      const k = dy < 120 ? dy : 120 + (dy - 120) * 0.35;
+      s.style.transition = "none";
+      s.classList.add("arrastrando");
+      s.style.transform = "translate(-50%," + k + "px)";
+      s.style.opacity = String(Math.max(0.55, 1 - k / 460));
+    }, { passive: true });
+    const soltar = () => {
+      if (!activo || ignorar) { activo = false; return; }
+      activo = false;
+      s.style.transition = "transform .34s cubic-bezier(.22,1,.3,1), opacity .24s ease";
+      s.classList.remove("arrastrando");
+      if (dy > 110) { closeSheet(); }
+      else { s.style.transform = ""; s.style.opacity = ""; }
+      dy = 0;
+    };
+    s.addEventListener("touchend", soltar);
+    s.addEventListener("touchcancel", soltar);
+  }
+
   function bindCerrarDerecha(s, handle) {
     const zona = handle || s;
     let x0 = 0, y0 = 0, dx = 0, activo = false, vertical = false;
@@ -657,22 +695,20 @@
         <div class="invrow">
           <div class="search inv-search">
             ${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off">
-            <button class="mic-in" id="invMic" aria-label="Agregar por voz">${I.mic}</button>
           </div>
           <button class="inv-b rnd" id="invFil" aria-label="Filtrar por categoria">${I.filtro}</button>
         </div>
         <div class="inv-filtro" id="invCatList" hidden></div>
       </div>
       <div class="inv-lista"><div class="pgrid" id="res"></div></div>
-      <div class="bag-ind" id="bagInd" hidden><span class="dotp"></span><span id="bagIndTx">Grabando</span></div>
+      <div class="bag-ind" id="bagInd" hidden><span class="fil"><span class="dotp"></span><span id="bagIndTx">Escuchando el pedido</span></span><em id="bagIndHint">Desliza hacia arriba para manos libres</em></div>
       <button class="bag-fab" id="bagFab" aria-label="Pedido por voz"><i>${I.bag}</i></button>
-      <button class="sel-bar" id="selBar" hidden><span class="sb-n" id="sbN">0</span>
-        <span class="sb-tx">productos seleccionados</span><span class="sb-go">${I.check}</span></button>
+
     </div>`, () => { window.PPVoice.stopDictation(); invRec = false; }, { alto: true });
     decorar(s);
     bindCerrarDerecha(s, $(".inv-h", s));
 
-    const q = $("#q", s), res = $("#res", s), mic = $("#invMic", s);
+    const q = $("#q", s), res = $("#res", s);
     const cats = () => [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
 
     const enCarrito = (pid) => cart().lines.filter((l) => l.pid === pid).reduce((x, l) => x + l.cant, 0);
@@ -692,18 +728,6 @@
         && (!t || window.PPVoice.norm(p.nombre).includes(t)));
     };
 
-    /* barra inferior: cuantas unidades hay en la bolsa y cierre directo del catalogo */
-    function pintarSeleccion() {
-      const barra = $("#selBar", s);
-      if (!barra) return;
-      const n = cart().lines.length;
-      barra.hidden = n === 0;
-      const nn = $("#sbN", s);
-      if (nn) nn.textContent = num(n);
-      const tx = $(".sb-tx", s);
-      if (tx) tx.textContent = n === 1 ? "producto en la bolsa" : "productos en la bolsa";
-    }
-
     const marcar = () => {
       $$(".pcard", res).forEach((el) => {
         const n = enCarrito(el.dataset.p);
@@ -713,7 +737,6 @@
           b.textContent = num(n); el.classList.add("in");
         } else { if (b) b.remove(); el.classList.remove("in"); }
       });
-      pintarSeleccion();
     };
 
     const pintar = (animar) => {
@@ -765,12 +788,10 @@
     $("#invFil", s).onclick = () => alternarFiltro($("#invFil", s), panel);
     q.oninput = () => pintar(false);
     $("#x", s).onclick = () => closeSheet();
-    mic.onclick = () => vozInventario(mic, () => pintar(true));
     pintar(false);
     bindBolsa(s, () => pintar(true));
 
-    const selBar = $("#selBar", s);
-    if (selBar) selBar.onclick = () => { tap(); closeSheet(); };
+
   }
 
   /* ---------- Bolsa por voz: se mantiene pulsada 0.5 s, se habla y al soltar se agrega ----------
@@ -795,7 +816,9 @@
         ind.hidden = !modo;
         ind.className = "bag-ind " + (modo || "");
       }
+      const hint = $("#bagIndHint", sheetEl);
       if (tx) tx.textContent = modo === "libre" ? "Manos libres, toca para terminar" : "Escuchando el pedido";
+      if (hint) hint.textContent = modo === "libre" ? "Suelta y toca la bolsa para terminar" : "Desliza hacia arriba para manos libres";
     };
 
     const iniciar = () => {
@@ -1028,7 +1051,7 @@
     const fin = () => {
       if (!down) return;
       down = false; clearTimeout(tmr);
-      if (!largo) { /* toque corto */ toggleVoice(); return; }
+      if (!largo) return;          /* un toque corto ya no activa nada */
       if (MIC.bloqueado) return;
       /* soltar: segun hacia donde quedo el dedo */
       if (MIC.dx < -70) cancelarGrabacionGesto(true);
@@ -1074,6 +1097,7 @@
       rb.innerHTML = `<span class="rdot"></span><b id="recT">0:00</b>
         <span class="rhint" id="recH"><i>‹</i> Cancela <em>·</em> Manos libres <i>›</i></span>
         <span class="rtrash" id="recX" aria-hidden="true">${I.trash}</span>
+        <span class="rlock2" id="recLock" aria-hidden="true">${I.lock}</span>
 
         <div class="rfree" id="recF" hidden>
           <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
@@ -1105,6 +1129,17 @@
       X.classList.toggle("on", dx < -50);
     }
     if (bar) bar.classList.toggle("izq", dx < -6);           /* oculta tiempo e indicaciones mientras se desliza a la izquierda */
+    /* candado en la esquina derecha: aparece al empezar a deslizar a la derecha y
+       desaparece justo cuando el gesto se completa para pasar a manos libres */
+    const L2 = $("#recLock");
+    if (L2) {
+      const k = Math.min(1, Math.max(0, dx / 70));
+      const lleno = dx >= 70;
+      L2.style.opacity = lleno ? "0" : String(k);
+      L2.style.transform = "translateY(-50%) scale(" + (0.7 + 0.45 * k) + ")";
+      L2.classList.toggle("on", k > 0.6 && !lleno);
+      L2.classList.toggle("off", lleno);
+    }
   }
 
   /* pausar / continuar la grabacion a manos libres */
@@ -1352,10 +1387,7 @@
         </div>
       </div>
       <div class="pgrid" id="cl"></div>
-      <div class="bag-ind" id="bagInd2" hidden><span class="dotp"></span><span id="bagIndTx2">Escuchando el pedido</span></div>
-      <button class="bag-fab fab2" id="bagFab2" aria-label="Pedido por voz"><i>${I.bag}</i></button>
-      <button class="sel-bar bar2" id="selBar2" hidden><span class="sb-n" id="sbN2">0</span>
-        <span class="sb-tx">productos en la bolsa</span><span class="sb-go">${I.check}</span></button>`;
+      `;
     const draw = () => {
       const t = window.PPVoice.norm(catQ);
       const l = db().products.filter((p) => p.activo !== false && (!catCat || p.categoria === catCat) && (!t || window.PPVoice.norm(p.nombre).includes(t)));
@@ -1368,18 +1400,6 @@
     $$("[data-cat]", pop).forEach((b) => (b.onclick = () => { catCat = b.dataset.cat; renderCatalogo(); }));
     setFab(I.plus, () => editProduct(null), "Crear producto");
     draw();
-    bindBolsa($("#view"), () => { renderCatalogo(); }, { fab: "bagFab2", ind: "bagInd2", tx: "bagIndTx2" });
-    (function pintarBolsa() {
-      const b = $("#selBar2");
-      if (!b) return;
-      const n = cart().lines.length;
-      b.hidden = n === 0;
-      const nn = $("#sbN2");
-      if (nn) nn.textContent = num(n);
-      const tx = $(".sb-tx", b);
-      if (tx) tx.textContent = n === 1 ? "producto en la bolsa" : "productos en la bolsa";
-      b.onclick = () => { tap(); go("panel"); };
-    })();
   }
   /* Hoja con las categorias para elegir con un toque. */
   function abrirFiltroCategorias(cats) {
@@ -1887,7 +1907,7 @@
   });
   window.addEventListener("resize", () => ajustarAltoTalonario());
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
-  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab };
+  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle };
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => { marcarLeidos(); go("avisos"); };
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
