@@ -135,12 +135,12 @@
     const pagado = Math.max(0, Math.round((comprado - d) * 100) / 100);
     const fila = (v) => {
       const cred = v.metodo === "credito";
-      return `<div class="hrow tap" role="button" tabindex="0" data-v="${esc(v.vid || "")}">
+      return `<div class="cx" role="button" tabindex="0" data-v="${esc(v.vid || "")}">
         <div class="hi"><b>${cred ? (v.pagada ? "Credito pagado" : "Credito pendiente") : "Contado"}</b>
           <span>${new Date(v.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${v.lineas ? " &middot; " + lineasDe2(v).length + " art." : ""}</span>
           ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
         <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>
-        <span class="hrow-go">${window.PPUI.I.chev}</span></div>`;
+        </div>`;
     };
     window.PPUI.clearFab();
     document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
@@ -172,7 +172,7 @@
     const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
     /* cada compra abre su ticket directamente, sin animacion */
-    $$(".hrow[data-v]", view).forEach((b) => (b.onclick = () => {
+    $$(".cx[data-v]", view).forEach((b) => (b.onclick = () => {
       const v = (db().sales || []).find((x) => x.vid === b.dataset.v);
       if (v) window.PPUI.detalle(v);
     }));
