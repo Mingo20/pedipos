@@ -151,7 +151,15 @@
     d.innerHTML = TABS.map(([k, lb, ic]) => k === "panel"
       ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
       : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("");
-    $$("#dock button").forEach((b) => (b.onclick = () => go(b.dataset.t)));
+    $$("#dock button").forEach((b) => (b.onclick = () => {
+      /* el icono central abre el panel de venta con una animacion breve */
+      if (b.dataset.t === "panel" && window.animarTal) {
+        if (tab === "panel") { tap(); return; }
+        window.animarTal({ ms: 1000, titulo: "Panel de venta", texto: "Abriendo el talonario...", abrir: () => go("panel") });
+        return;
+      }
+      go(b.dataset.t);
+    }));
   }
   const TITULOS = { panel: "PANEL", catalogo: "CATALOGO", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
   /* ----- Avisos de pagos a credito ----- */
@@ -316,6 +324,38 @@
   function bindManual() {
     const f = ["#mnm", "#mq", "#mp"].map((s) => $(s));
     const upd = () => { const q = parseFloat(String(f[1].value).replace(",", ".")) || 0, p = parseFloat(String(f[2].value).replace(",", ".")) || 0; $("#mt").textContent = money(q * p); };
+    /* si el nombre escrito ya existe en el catalogo, se toma su precio y su unidad:
+       asi no se crean productos duplicados ni se escribe el precio dos veces */
+    const buscar = (texto) => {
+      const t = window.PPVoice.norm(texto);
+      if (!t) return null;
+      const prods = (db().products || []).filter((p) => p.activo !== false);
+      const exacto = prods.find((p) => window.PPVoice.norm(p.nombre) === t);
+      if (exacto) return exacto;
+      if (t.length < 3) return null;
+      const empieza = prods.filter((p) => window.PPVoice.norm(p.nombre).startsWith(t));
+      return empieza.length === 1 ? empieza[0] : null;
+    };
+    const sugerir = () => {
+      const p = buscar(f[0].value || "");
+      const et = $("#mnm").parentElement && $("#mnm").parentElement.querySelector(".auto-p");
+      if (!p) { if (et) et.remove(); return; }
+      const precio = String(Number(p.precio) || 0);
+      const yaTiene = ($("#mp").value || "").trim();
+      if (!yaTiene || yaTiene !== precio) { $("#mp").value = precio; upd(); }
+      if (!et) {
+        const s = document.createElement("span");
+        s.className = "auto-p";
+        s.textContent = "Precio del catalogo";
+        f[0].parentElement && f[0].parentElement.appendChild(s);
+      }
+    };
+    f[0].addEventListener("input", sugerir);
+    /* al salir del nombre se confirma la coincidencia */
+    f[0].addEventListener("blur", () => setTimeout(() => {
+      const p = buscar(f[0].value || "");
+      if (p && !($("#mp").value || "").trim()) { $("#mp").value = String(Number(p.precio) || 0); upd(); }
+    }, 120));
     f.forEach((el, i) => {
       el.oninput = upd;
       el.onkeydown = (e) => { if (e.key !== "Enter") return; e.preventDefault(); if (i < 2) f[i + 1].focus(); else commitManual(); };
@@ -460,13 +500,13 @@
         <div class="tools">
           <button class="plus tl" id="bList" aria-label="Lista de pedido">${I.list}</button>
           <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}</button>
-          <button class="plus tl" id="bSearch" aria-label="Bolsa de pedido">${I.bag}</button>
+          <button class="plus tl" id="bSearch" aria-label="Productos">${I.box}</button>
         </div>
       </section>
       <div class="act ${n ? "hay" : ""}" id="actbar">
         <button class="n" id="bNew">NUEVA</button>
         <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
-        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
+        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.bag}</i></div>
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => {
@@ -579,6 +619,48 @@
     return s;
   }
   /* La barra lateral se oculta deslizandola hacia la derecha. */
+  /* El panel de productos se cierra arrastrandolo hacia la derecha: sigue el dedo
+     y, si no se completa, vuelve a su sitio con una curva suave. */
+  function bindCerrarPanel(s) {
+    let x0 = 0, dx = 0, activo = false, ignorar = false;
+    const ancho = () => s.getBoundingClientRect().width || 360;
+    s.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      const t = e.target;
+      if (t && t.closest && t.closest("input,textarea,button,.pcard,.fopt")) { ignorar = true; activo = false; return; }
+      ignorar = false; activo = true; x0 = e.touches[0].clientX; dx = 0;
+    }, { passive: true });
+    s.addEventListener("touchmove", (e) => {
+      if (!activo || ignorar) return;
+      const mx = e.touches[0].clientX - x0;
+      if (mx <= 0) { dx = 0; s.style.transform = ""; s.style.opacity = ""; return; }
+      dx = mx;
+      const k = dx < 120 ? dx : 120 + (dx - 120) * 0.35;
+      s.style.transition = "none";
+      s.classList.add("arrastrando");
+      s.style.transform = "translateX(" + k + "px)";
+      s.style.opacity = String(Math.max(0.5, 1 - k / ancho()));
+    }, { passive: true });
+    const soltar = () => {
+      if (!activo || ignorar) { activo = false; return; }
+      activo = false;
+      s.classList.remove("arrastrando");
+      if (dx > ancho() * 0.28) {
+        /* sale de la pantalla sin saltos y solo entonces se cierra */
+        s.style.transition = "transform .28s cubic-bezier(.4,0,.7,.3), opacity .24s ease";
+        s.style.transform = "translateX(105%)";
+        s.style.opacity = "0.4";
+        setTimeout(() => closeSheet(), 250);
+      } else {
+        s.style.transition = "transform .32s cubic-bezier(.22,1,.3,1), opacity .2s ease";
+        s.style.transform = ""; s.style.opacity = "";
+      }
+      dx = 0;
+    };
+    s.addEventListener("touchend", soltar);
+    s.addEventListener("touchcancel", soltar);
+  }
+
   function bindCerrarLado(s) {
     let x0 = 0, dx = 0, activo = false;
     s.addEventListener("touchstart", (e) => {
@@ -607,33 +689,42 @@
      si vuelve a su sitio o se cierra, con una curva suave. Se puede tomar desde
      el asa o desde cualquier parte de la hoja que no sea un campo o un boton. */
   function bindCerrarAbajo(s) {
-    let y0 = 0, dy = 0, activo = false, ignorar = false;
-    const esControl = (el) => !!(el && el.closest && el.closest("input,textarea,select,button,.fopt,.pcard,.ec-f,.dl,.aviso,img"));
+    let y0 = 0, dy = 0, activo = false, ignorar = false, alto = 0;
+    const esControl = (el) => !!(el && el.closest && el.closest("input,textarea,select,button,.fopt,.pcard,.ec-f,.dl,.aviso,img,a"));
     s.addEventListener("touchstart", (e) => {
       if (e.touches.length !== 1) return;
       if (esControl(e.target)) { activo = false; ignorar = true; return; }
-      ignorar = false; activo = true; y0 = e.touches[0].clientY; dy = 0;
+      ignorar = false; activo = true;
+      y0 = e.touches[0].clientY; dy = 0;
+      alto = s.getBoundingClientRect().height || 420;
     }, { passive: true });
     s.addEventListener("touchmove", (e) => {
       if (!activo || ignorar) return;
-      const t = e.touches[0];
-      const my = t.clientY - y0;
+      const my = e.touches[0].clientY - y0;
+      /* si sube por encima del punto inicial, la hoja vuelve sola a su sitio */
       if (my <= 0) { dy = 0; s.style.transform = ""; s.style.opacity = ""; return; }
       dy = my;
-      /* resistente al principio, fluido despues */
-      const k = dy < 120 ? dy : 120 + (dy - 120) * 0.35;
+      const k = dy < 140 ? dy : 140 + (dy - 140) * 0.5;   /* resistencia suave */
       s.style.transition = "none";
       s.classList.add("arrastrando");
       s.style.transform = "translate(-50%," + k + "px)";
-      s.style.opacity = String(Math.max(0.55, 1 - k / 460));
+      s.style.opacity = String(Math.max(0.45, 1 - k / (alto * 1.15)));
     }, { passive: true });
     const soltar = () => {
       if (!activo || ignorar) { activo = false; return; }
       activo = false;
-      s.style.transition = "transform .34s cubic-bezier(.22,1,.3,1), opacity .24s ease";
       s.classList.remove("arrastrando");
-      if (dy > 110) { closeSheet(); }
-      else { s.style.transform = ""; s.style.opacity = ""; }
+      /* solo se cierra si se arrastro casi hasta el final */
+      if (dy > alto * 0.45) {
+        s.style.transition = "transform .26s cubic-bezier(.4,0,.75,.35), opacity .22s ease";
+        s.style.transform = "translate(-50%," + (alto + 40) + "px)";
+        s.style.opacity = "0";
+        const capa = $("#layer");
+        setTimeout(() => { if (capa && $("#sheet") === s) capa.innerHTML = ""; }, 250);
+      } else {
+        s.style.transition = "transform .34s cubic-bezier(.22,1,.3,1), opacity .24s ease";
+        s.style.transform = ""; s.style.opacity = "";
+      }
       dy = 0;
     };
     s.addEventListener("touchend", soltar);
@@ -673,6 +764,10 @@
     if (ya === true || !layer.firstChild) { layer.innerHTML = ""; return; }
     const sh = $("#sheet"), mk = $("#mask");
     if (!sh || sh.classList.contains("out")) return;
+    /* si viene de un arrastre, ya salio de la pantalla: no se vuelve a animar */
+    if (sh.classList.contains("arrastrando") || (sh.style.transform || "").includes("-50%,")) {
+      layer.innerHTML = ""; return;
+    }
     sh.classList.add("out"); mk && mk.classList.add("out");
     /* solo se limpia si esa hoja sigue siendo la actual: asi una hoja nueva no desaparece */
     setTimeout(() => { if ($("#sheet") === sh) layer.innerHTML = ""; }, 230);
@@ -688,7 +783,7 @@
   function openSearch() {
     const s = sheet(`<div class="inv">
       <div class="inv-h">
-        <div class="inv-tt"><span class="hi">${I.box}</span><h2>Catalogo</h2></div>
+        <div class="inv-tt"><span class="hi">${I.box}</span><h2>Productos</h2></div>
         <button class="inv-b rnd" id="x" aria-label="Cerrar">${I.x}</button>
       </div>
       <div class="inv-c">
@@ -701,12 +796,11 @@
         <div class="inv-filtro" id="invCatList" hidden></div>
       </div>
       <div class="inv-lista"><div class="pgrid" id="res"></div></div>
-      <div class="bag-ind" id="bagInd" hidden><span class="fil"><span class="dotp"></span><span id="bagIndTx">Escuchando el pedido</span></span><em id="bagIndHint">Desliza hacia arriba para manos libres</em></div>
-      <button class="bag-fab" id="bagFab" aria-label="Pedido por voz"><i>${I.bag}</i></button>
+      <button class="bag-fab" id="bagFab" aria-label="Ver el talonario"><i>${I.bag}</i><b class="bag-n" id="bagN" hidden>0</b></button>
 
     </div>`, () => { window.PPVoice.stopDictation(); invRec = false; }, { alto: true });
     decorar(s);
-    bindCerrarDerecha(s, $(".inv-h", s));
+    bindCerrarPanel(s);
 
     const q = $("#q", s), res = $("#res", s);
     const cats = () => [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
@@ -789,7 +883,16 @@
     q.oninput = () => pintar(false);
     $("#x", s).onclick = () => closeSheet();
     pintar(false);
-    bindBolsa(s, () => pintar(true));
+    /* La bolsa ya no graba: muestra cuantos productos hay y cierra la barra */
+    (function bolsa() {
+      const fab = $("#bagFab", s);
+      if (!fab) return;
+      const n = cart().lines.length;
+      const b = $("#bagN", s);
+      if (b) { b.hidden = n === 0; b.textContent = n > 99 ? "99+" : String(n); }
+      fab.classList.toggle("vacia", n === 0);
+      fab.onclick = () => { tap(); closeSheet(); };
+    })();
 
 
   }
@@ -1099,6 +1202,7 @@
         <span class="rtrash" id="recX" aria-hidden="true">${I.trash}</span>
         <span class="rlock2" id="recLock" aria-hidden="true">${I.lock}</span>
 
+
         <div class="rfree" id="recF" hidden>
           <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
           <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1111,6 +1215,10 @@
       $("#recP").onclick = alternarPausa;
     }
     const m = $("#bMic"); m && m.classList.add("grab");
+    /* los dos avisos aparecen desde el primer instante, en modo suave */
+    const X0 = $("#recX"), L0 = $("#recLock");
+    if (X0) { X0.style.opacity = "0.45"; X0.classList.add("sutil"); }
+    if (L0) { L0.style.opacity = "0.45"; L0.classList.add("sutil"); }
   }
 
   function actualizarArrastre() {
@@ -1124,9 +1232,10 @@
     const X = $("#recX"), bar = $("#actbar");
     if (X) {
       const k = Math.min(1, Math.max(0, -dx / 70));          /* 0 a 1 segun lo que se desliza */
-      X.style.opacity = String(k);
-      X.style.transform = "translateY(-50%) scale(" + (0.6 + 0.5 * k) + ")";
-      X.classList.toggle("on", dx < -50);
+      X.style.opacity = String(0.45 + 0.55 * k);
+      X.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * k) + ")";
+      X.classList.toggle("on", dx < -34);
+      if (dx < -6) X.classList.remove("sutil");
     }
     if (bar) bar.classList.toggle("izq", dx < -6);           /* oculta tiempo e indicaciones mientras se desliza a la izquierda */
     /* candado en la esquina derecha: aparece al empezar a deslizar a la derecha y
@@ -1135,10 +1244,11 @@
     if (L2) {
       const k = Math.min(1, Math.max(0, dx / 70));
       const lleno = dx >= 70;
-      L2.style.opacity = lleno ? "0" : String(k);
-      L2.style.transform = "translateY(-50%) scale(" + (0.7 + 0.45 * k) + ")";
-      L2.classList.toggle("on", k > 0.6 && !lleno);
+      L2.style.opacity = lleno ? "0" : String(0.45 + 0.55 * k);
+      L2.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * k) + ")";
+      L2.classList.toggle("on", k > 0.38 && !lleno);
       L2.classList.toggle("off", lleno);
+      if (dx > 6) L2.classList.remove("sutil");
     }
   }
 
@@ -1687,7 +1797,7 @@
       <div class="tk-body">
       <div class="mch grande"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
       <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${fechaCorta(s.fecha)}</span></div>
-      <div class="dsum"><div class="r"><span>Cliente</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
+      <div class="dsum"><div class="r"><span>CLIENTE</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
       <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
       <div class="dls">${lineas}</div>
       <div class="dsum">
@@ -1907,7 +2017,7 @@
   });
   window.addEventListener("resize", () => ajustarAltoTalonario());
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
-  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle };
+  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => { marcarLeidos(); go("avisos"); };
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();

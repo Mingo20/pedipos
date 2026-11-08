@@ -115,15 +115,18 @@
     d.id = "cargaSplash";
     d.className = "splash";
     d.innerHTML = `<div class="sp-c"><div class="sp-r"></div><div class="sp-i">${window.PPUI.I.ticket}</div></div>
-      <b>Aqui va la cuenta</b><span>Preparando el ticket...</span>`;
+      <b>${cfg && cfg.titulo ? cfg.titulo : "Aqui va la cuenta"}</b><span>${cfg && cfg.texto ? cfg.texto : "Preparando el ticket..."}</span>`;
     document.body.append(d);
     requestAnimationFrame(() => d.classList.add("on"));
     const cerrar = () => {
       d.classList.remove("on");
       setTimeout(() => d.remove(), 260);
     };
-    setTimeout(() => { cerrar(); setTimeout(() => cfg && cfg.abrir && cfg.abrir(), 60); }, 2000);
+    const ms = (cfg && cfg.ms) || 1000;
+    setTimeout(() => { cerrar(); setTimeout(() => cfg && cfg.abrir && cfg.abrir(), 60); }, ms);
   }
+
+  window.animarTal = animarTal;
 
   function pintarCliente(c) {
     const view = document.getElementById("view");
@@ -168,11 +171,10 @@
     $("#svCorte").onclick = () => estadoCuenta(c);
     const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
-    /* cada compra abre su ticket, con una animacion de carga de 2 segundos */
+    /* cada compra abre su ticket directamente, sin animacion */
     $$(".hrow[data-v]", view).forEach((b) => (b.onclick = () => {
       const v = (db().sales || []).find((x) => x.vid === b.dataset.v);
-      if (!v) return;
-      animarTal({ abrir: () => window.PPUI.detalle(v) });
+      if (v) window.PPUI.detalle(v);
     }));
   }
 
@@ -198,9 +200,10 @@
 
   function textoEstado(c, d) {
     const neg = db().settings.negocio || "mi negocio";
-    const lineas = d.incl.map((s, i) => (i + 1) + ". " + fmtF(s.fecha) + " - " + money2(s.total) + (arts(s) ? "\n    " + arts(s) : ""));
+    const hora = (f) => new Date(f).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
+    const lineas = d.incl.map((s, i) => (i + 1) + ". " + fmtF(s.fecha) + " " + hora(s.fecha) + " - " + money2(s.total));
     return [
-      "*ESTADO DE CUENTA*",
+      "*ESTADO DE CREDITO*",
       "*" + neg + "*",
       "",
       "Cliente: " + c.nombre,
@@ -221,8 +224,9 @@
     const d = datosEstado(c);
     const I = window.PPUI.I;
     const neg = db().settings.negocio || "Mi negocio";
-    const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${esc(arts(s) || "Pedido a credito")}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
-    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Estado de cuenta</h2><button class="sh-x" data-x>${I.x}</button></div>
+    const hora = (f) => new Date(f).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
+    const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${hora(s.fecha)}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
+    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Estado de credito</h2><button class="sh-x" data-x>${I.x}</button></div>
       <div class="ec-body">
         <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
           ${d.refPago ? `<span>Fecha de pago: ${new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO")}</span>` : ""}</div>
@@ -398,9 +402,8 @@
         <div class="subv-tt"><b>${esc(p.nombre)}</b><span>${esc(contacto)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="kpis kpi3">
+      <div class="kpis kpi2">
         <div class="kpi"><small>Comprado</small><b>${money(s0.comprado)}</b></div>
-        <div class="kpi"><small>Pagado</small><b style="color:#0B6B45">${money(s0.pagado)}</b></div>
         <div class="kpi"><small>Debe</small><b style="color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
       <div class="subv-duo">

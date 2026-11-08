@@ -1117,3 +1117,44 @@ body.has-dock #view .pgrid{padding-bottom:220px}
 /* la tarjeta de compra es un boton: hereda tipografia y no hereda estilos del navegador */
 .hrow{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 button.hrow{font:inherit;color:inherit;background:#fff;border:1px solid #EEF1F4}
+
+
+/* ========== v45 ========== */
+
+/* 7) sin barra gris de scroll en ninguna ventana modal */
+.sheet,.sheet *,.tk-body,.inv-lista,.ec-body{scrollbar-width:none;-ms-overflow-style:none}
+.sheet::-webkit-scrollbar,.sheet *::-webkit-scrollbar,
+.tk-body::-webkit-scrollbar,.inv-lista::-webkit-scrollbar,.ec-body::-webkit-scrollbar{width:0;height:0;display:none}
+
+/* 2) bolsa del panel de productos: burbuja con el numero de productos */
+.bag-fab .bag-n{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 6px;
+  border-radius:999px;background:#111417;color:#fff;border:2px solid #fff;
+  font-size:11.5px;font-weight:800;display:grid;place-items:center;box-sizing:border-box}
+.bag-fab .bag-n[hidden]{display:none}
+.bag-fab.vacia{background:linear-gradient(160deg,#8E9AA5,#6B7883);box-shadow:0 8px 20px #0000001f}
+.bag-fab{position:relative}
+
+/* 1) avisos sutiles en la barra de venta */
+.act .recbar .rtrash.sutil,.act .recbar .rlock2.sutil{opacity:.45;box-shadow:none!important}
+.act .recbar .rtrash,.act .recbar .rlock2{transition:opacity .18s ease,background .18s ease,color .18s ease,transform .18s ease}
+
+/* 3) detalle del cliente: las compras en una sola lista, sin huecos */
+.subv > .hrow{display:flex;width:auto;margin:0 14px 9px}
+.subv > .hrow:first-of-type{margin-top:0}
+.subv.conbarra .subv > .hrow{margin-left:14px;margin-right:14px}
+.subv-lbl{margin-bottom:10px!important}
+body.focus #view{overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* 5) proveedor: dos tarjetas centradas */
+.kpis.kpi2{grid-template-columns:1fr 1fr}
+
+/* tarjetas del estado de credito: fecha, hora y monto */
+.ec-f{align-items:flex-start}
+.ec-f > div span{font-variant-numeric:tabular-nums}
+
+/* 4) etiqueta de WhatsApp del ticket, un poco mas compacta */
+.sh-f.fijo .big.miniwa{font-size:13.5px;padding:0 14px;gap:6px}
+.sh-f.fijo .big.miniwa svg{width:17px;height:17px}
+
+/* 6) animacion breve al abrir el panel de venta desde el dock */
+.splash{transition:opacity .2s ease}
