@@ -804,7 +804,7 @@
     const s = sheet(`<div class="inv">
       <div class="inv-h">
         <div class="inv-tt"><span class="hi">${I.box}</span><h2>Productos</h2></div>
-        <button class="inv-b rnd" id="x" aria-label="Cerrar">${I.x}</button>
+        <button class="inv-b rnd" id="x" aria-label="Cerrar">${I.chev}</button>
       </div>
       <div class="inv-c">
         <div class="invrow">

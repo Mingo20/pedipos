@@ -1248,3 +1248,12 @@ div.hrow:active{transform:scale(.985)}
 .subv{display:block}
 .cx-list{display:grid;gap:8px;margin:0 14px 6px;align-content:start}
 .cx-list .cx{margin:0;width:auto}
+
+/* v51: flechas fuera de los iconos, sin solaparse */
+.act .recbar .rarr.l{left:3px;width:16px;text-align:center}
+.act .recbar .rarr.r{right:3px;width:16px;text-align:center}
+.act .recbar .rtrash{left:21px}
+.act .recbar .rlock2{right:21px}
+.act .recbar #recT{margin-left:2px}
+/* el tiempo queda centrado con la onda a su lado */
+.act .recbar{padding:0 76px 0 16px}
