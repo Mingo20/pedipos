@@ -160,7 +160,7 @@
         <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Estado de credito</span></button>
       </div>
       <p class="lbl subv-lbl">COMPRAS (${vs.length})</p>
-      ${vs.length ? vs.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
+      ${vs.length ? `<div class="cx-list">${vs.map(fila).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar cliente</button></div>`;
     animarSub = false; view.scrollTop = 0;
@@ -226,7 +226,7 @@
     const neg = db().settings.negocio || "Mi negocio";
     const hora = (f) => new Date(f).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
     const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${hora(s.fecha)}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
-    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Estado de credito</h2><button class="sh-x" data-x>${I.x}</button></div>
+    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Estado de credito</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <div class="ec-body">
         <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
           ${d.refPago ? `<span>Fecha de pago: ${new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO")}</span>` : ""}</div>
@@ -252,7 +252,7 @@
   function editarCliente(c) {
     const n = !c;
     c = c || { cid: S.uid("C"), nombre: "", whatsapp: "", direccion: "", nota: "", limite_credito: 0, activo: true };
-    const s = sheetCliente(`<div class="sh-h"><h2>${n ? "Nuevo cliente" : "Editar cliente"}</h2><button class="sh-x" data-x>✕</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2>${n ? "Nuevo cliente" : "Editar cliente"}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <label class="field"><span>Nombre</span><input id="cn2" value="${esc(c.nombre)}"></label>
       <label class="field"><span>Numero de WhatsApp</span><input id="cw" inputmode="tel" placeholder="8090000000" value="${esc(c.whatsapp || c.telefono || "")}"></label>
       <label class="field"><span>Direccion</span><input id="cd" value="${esc(c.direccion || "")}"></label>
@@ -281,7 +281,7 @@
   }
 
   function abonar(c) {
-    const s = sheetCliente(`<div class="sh-h"><h2 class="h-chico">Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>✕</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2 class="h-chico">Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <label class="field"><span>Monto (RD$)</span><input id="ab" inputmode="decimal" placeholder="${deudaDe(c.cid)}"></label>
       <button class="btn" id="oka">Registrar abono</button>`);
     s.querySelector("[data-x]").onclick = closeSheet;
@@ -425,7 +425,7 @@
 
   function registrarCompra(p) {
     const pend = saldoProv(p).debe;
-    const s = sheetCliente(`<div class="sh-h"><h2>Compra a ${esc(p.nombre)}</h2><button class="sh-x" data-x>✕</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2>Compra a ${esc(p.nombre)}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <label class="field"><span>Concepto</span><input id="cc" placeholder="Ej. Mercancia de la semana"></label>
       <label class="field"><span>Monto (RD$)</span><input id="ct2" inputmode="decimal" placeholder="0"></label>
       <label class="field"><span>Tipo de compra</span><select id="ck">
@@ -452,7 +452,7 @@
 
   function registrarPago(p) {
     const s0 = saldoProv(p);
-    const s = sheetCliente(`<div class="sh-h"><h2>Pago a ${esc(p.nombre)}</h2><button class="sh-x" data-x>✕</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2>Pago a ${esc(p.nombre)}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <p class="cnt" style="margin-top:-6px">Saldo pendiente: <b>${money(s0.debe)}</b></p>
       <label class="field"><span>Monto (RD$)</span><input id="gm" inputmode="decimal" placeholder="${s0.debe}"></label>
       <label class="field"><span>Nota (opcional)</span><input id="gn" placeholder="Efectivo, transferencia..."></label>
@@ -483,7 +483,7 @@
   function editarProveedor(p) {
     const n = !p;
     p = p || { prid: S.uid("PR"), nombre: "", contacto: "", whatsapp: "", nota: "", activo: true, compras: [], pagos: [] };
-    const s = sheetCliente(`<div class="sh-h"><h2>${n ? "Nuevo proveedor" : "Editar proveedor"}</h2><button class="sh-x" data-x>✕</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2>${n ? "Nuevo proveedor" : "Editar proveedor"}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <label class="field"><span>Nombre</span><input id="pn" value="${esc(p.nombre)}"></label>
       <label class="field"><span>Persona de contacto</span><input id="pc" value="${esc(p.contacto || "")}"></label>
       <label class="field"><span>Numero de WhatsApp</span><input id="pw" inputmode="tel" placeholder="8090000000" value="${esc(p.whatsapp || p.telefono || "")}"></label>

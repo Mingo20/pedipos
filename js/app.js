@@ -26,9 +26,12 @@
     seguir: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5.500v13a1 1 0 0 0 1.500.860l10.500-6.500a1 1 0 0 0 0-1.720L9.500 4.640A1 1 0 0 0 8 5.500z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>',
     lock: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    trashAnim: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5l.85 11.6A2 2 0 0 0 9.34 21h5.32a2 2 0 0 0 1.99-1.9l.85-11.6"/><g class="tapa"><path d="M4.4 7.2h15.2"/><path d="M9.4 7.2V4.9h5.2v2.3"/></g></svg>',
+    lockAnim: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.6" width="14" height="9.4" rx="2.6"/><path class="arco" d="M8.2 10.6V7.9a3.8 3.8 0 0 1 7.6 0v2.7"/></svg>',
     sendarrow: '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg>',
     bag: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    xDown: '<svg class="chev-down" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>',
     back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
     spark: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
@@ -52,6 +55,7 @@
     cart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.500"/><circle cx="18" cy="20" r="1.500"/><path d="M2 3h3l2.500 12h11l2-8H6"/></svg>',
     users: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.500"/><path d="M2.500 20a6.500 6.500 0 0 1 13 0M16 4.500a3.500 3.500 0 0 1 0 7M18 14.500a6.500 6.500 0 0 1 3.500 5.500"/></svg>',
     cam: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h3l2-2h8l2 2h3v11H3z"/><circle cx="12" cy="13" r="3.2"/></svg>',
+    image: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="3"/><circle cx="8.6" cy="10" r="1.7"/><path d="M3.5 17.5l4.6-4.2a2 2 0 0 1 2.7 0l2.2 2 2.1-1.9a2 2 0 0 1 2.7 0l2.7 2.4"/></svg>',
     card: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2.500"/><path d="M3 10h18"/></svg>',
     truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h11v10H2zM13 9h4l3 3v4h-7"/><circle cx="6.500" cy="18" r="1.800"/><circle cx="16.500" cy="18" r="1.800"/></svg>',
     gear: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.400 15a1.700 1.700 0 0 0 .3 1.800l.1.1a2 2 0 1 1-2.800 2.800l-.1-.1a1.700 1.700 0 0 0-1.800-.3 1.700 1.700 0 0 0-1 1.500V21a2 2 0 1 1-4 0v-.1a1.700 1.700 0 0 0-1.100-1.500 1.700 1.700 0 0 0-1.800.3l-.1.1a2 2 0 1 1-2.800-2.800l.1-.1a1.700 1.700 0 0 0 .3-1.800 1.700 1.700 0 0 0-1.500-1H3a2 2 0 1 1 0-4h.1a1.700 1.700 0 0 0 1.500-1.100 1.700 1.700 0 0 0-.3-1.800l-.1-.1a2 2 0 1 1 2.800-2.800l.1.1a1.700 1.700 0 0 0 1.800.3H9a1.700 1.700 0 0 0 1-1.500V3a2 2 0 1 1 4 0v.1a1.700 1.700 0 0 0 1 1.500 1.700 1.700 0 0 0 1.800-.3l.1-.1a2 2 0 1 1 2.800 2.800l-.1.1a1.700 1.700 0 0 0-.3 1.800V9a1.700 1.700 0 0 0 1.500 1H21a2 2 0 1 1 0 4h-.1a1.700 1.700 0 0 0-1.500 1z"/></svg>',
@@ -469,7 +473,7 @@
   function abrirEditorFila(i) {
     const l = cart().lines[i];
     if (!l) return;
-    const s = sheet(`<div class="sh-h compacta"><h2>Editar nombre</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h compacta"><h2>Editar nombre</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <label class="field"><span>Nombre del producto</span><input id="en" value="${esc(l.nombre)}" autocomplete="off"></label>
       <div class="sh-f solo"><button class="big" id="eok">${I.check} <span class="bl">Listo</span></button></div>`);
     $("#x", s).onclick = closeSheet;
@@ -621,38 +625,54 @@
   /* La barra lateral se oculta deslizandola hacia la derecha. */
   /* El panel de productos se cierra arrastrandolo hacia la derecha: sigue el dedo
      y, si no se completa, vuelve a su sitio con una curva suave. */
+  /* El panel de productos se cierra arrastrandolo hacia la derecha desde cualquier
+     punto: sigue el dedo, se atenua mientras sale y, si no se completa, vuelve. */
   function bindCerrarPanel(s) {
-    let x0 = 0, dx = 0, activo = false, ignorar = false;
+    let x0 = 0, y0 = 0, dx = 0, dy = 0;
+    let activo = false, decidido = false, horizontal = false;
     const ancho = () => s.getBoundingClientRect().width || 360;
+
     s.addEventListener("touchstart", (e) => {
       if (e.touches.length !== 1) return;
       const t = e.target;
-      if (t && t.closest && t.closest("input,textarea,button,.pcard,.fopt")) { ignorar = true; activo = false; return; }
-      ignorar = false; activo = true; x0 = e.touches[0].clientX; dx = 0;
+      if (t && t.closest && t.closest("input,textarea")) { activo = false; return; }
+      activo = true; decidido = false; horizontal = false;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; dy = 0;
     }, { passive: true });
+
     s.addEventListener("touchmove", (e) => {
-      if (!activo || ignorar) return;
-      const mx = e.touches[0].clientX - x0;
-      if (mx <= 0) { dx = 0; s.style.transform = ""; s.style.opacity = ""; return; }
-      dx = mx;
-      const k = dx < 120 ? dx : 120 + (dx - 120) * 0.35;
+      if (!activo) return;
+      const t = e.touches[0];
+      const mx = t.clientX - x0, my = t.clientY - y0;
+      if (!decidido) {
+        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+        decidido = true;
+        horizontal = Math.abs(mx) > Math.abs(my) * 1.25 && mx > 0;
+        if (!horizontal) { activo = false; return; }   /* es un scroll: se deja pasar */
+      }
+      if (!horizontal) return;
+      e.preventDefault();
+      dx = Math.max(0, mx);
+      const k = dx < 140 ? dx : 140 + (dx - 140) * 0.45;
       s.style.transition = "none";
       s.classList.add("arrastrando");
       s.style.transform = "translateX(" + k + "px)";
-      s.style.opacity = String(Math.max(0.5, 1 - k / ancho()));
-    }, { passive: true });
+      s.style.opacity = String(Math.max(0.4, 1 - k / (ancho() * 1.1)));
+    }, { passive: false });
+
     const soltar = () => {
-      if (!activo || ignorar) { activo = false; return; }
+      if (!activo) { return; }
       activo = false;
+      if (!horizontal) return;
+      horizontal = false;
       s.classList.remove("arrastrando");
-      if (dx > ancho() * 0.28) {
-        /* sale de la pantalla sin saltos y solo entonces se cierra */
-        s.style.transition = "transform .28s cubic-bezier(.4,0,.7,.3), opacity .24s ease";
-        s.style.transform = "translateX(105%)";
-        s.style.opacity = "0.4";
-        setTimeout(() => closeSheet(), 250);
+      if (dx > Math.min(150, ancho() * 0.26)) {
+        s.style.transition = "transform .3s cubic-bezier(.4,0,.7,.3), opacity .26s ease";
+        s.style.transform = "translateX(106%)";
+        s.style.opacity = "0";
+        setTimeout(() => closeSheet(), 260);
       } else {
-        s.style.transition = "transform .32s cubic-bezier(.22,1,.3,1), opacity .2s ease";
+        s.style.transition = "transform .34s cubic-bezier(.22,1,.3,1), opacity .22s ease";
         s.style.transform = ""; s.style.opacity = "";
       }
       dx = 0;
@@ -1039,7 +1059,7 @@
   /* ----- Lista de pedido con IA ----- */
   let orderRec = false;
   function openOrder(initial) {
-    const s = sheet(`<div class="sh-h"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <textarea class="ta baja" id="ta" placeholder="Escribe el pedido: dos leches, media libra de arroz...">${esc(initial || "")}</textarea>
       <div class="sh-f solo"><button class="big" id="go">${I.spark} <span class="bl">Procesar pedido</span></button></div>`);
     $("#x", s).onclick = () => { window.PPVoice.stopDictation(); closeSheet(); };
@@ -1061,7 +1081,7 @@
 
   function confirmOrder(r) {
     const lines = r.lines.map((l) => ({ ...l }));
-    const s = sheet(`<div class="sh-h compacta"><button class="sh-x" id="b">${I.back}</button><h2>Confirmar pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h compacta"><button class="sh-x" id="b">${I.back}</button><h2>Confirmar pedido</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <div class="cnt">${lines.length} producto${lines.length === 1 ? "" : "s"} detectado${lines.length === 1 ? "" : "s"}</div>
       ${lines.map((l, i) => `<div class="item"><div class="nm"><b>${esc(l.nombre)}</b><span>${money(l.precio)} c/u &middot; ${esc(l.unidad)}</span></div><input class="qty" data-i="${i}" inputmode="decimal" value="${num(l.cant)}"></div>`).join("")}
       ${r.missing && r.missing.length ? `<div class="miss">No encontre: ${r.missing.map(esc).join(", ")}. Agregalo desde Catalogo.</div>` : ""}
@@ -1157,7 +1177,7 @@
       if (!largo) return;          /* un toque corto ya no activa nada */
       if (MIC.bloqueado) return;
       /* soltar: segun hacia donde quedo el dedo */
-      if (MIC.dx < -70) cancelarGrabacionGesto(true);
+      if (MIC.dx < -70) { micVibra([30, 20, 45]); cancelarGrabacionGesto(true); }
       else if (MIC.dx > 70) bloquearGrabacionGesto();
       else terminarGrabacionGesto();
     };
@@ -1197,17 +1217,18 @@
     let rb = bar.querySelector(".recbar");
     if (!rb) {
       rb = document.createElement("div"); rb.className = "recbar";
-      rb.innerHTML = `<span class="rdot"></span><b id="recT">0:00</b>
-        <span class="rhint" id="recH"><i>‹</i> Cancela <em>·</em> Manos libres <i>›</i></span>
-        <span class="rtrash" id="recX" aria-hidden="true">${I.trash}</span>
-        <span class="rlock2" id="recLock" aria-hidden="true">${I.lock}</span>
+      rb.innerHTML = `<b id="recT">0:00</b>
+        <span class="rarr l" aria-hidden="true">‹</span>
+        <span class="rtrash" id="recX" aria-hidden="true">${I.trashAnim}</span>
+        <span class="rlock2" id="recLock" aria-hidden="true">${I.lockAnim}</span>
+        <span class="rarr r" aria-hidden="true">›</span>
 
 
         <div class="rfree" id="recF" hidden>
           <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
           <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
           <button class="rpause" id="recP" aria-label="Pausar">${I.pausa}</button>
-          <button class="rsend" id="recSend" aria-label="Procesar audio">${I.sendarrow}</button>
+          <button class="rsend" id="recSend" aria-label="Guardar pedido">${I.bag}</button>
         </div>`;
       bar.append(rb);
       $("#recDel").onclick = () => cancelarGrabacionGesto(true);
@@ -1222,13 +1243,9 @@
   }
 
   function actualizarArrastre() {
-    const m = $("#bMic"), h = $("#recH"), L = $("#recL");
+    const m = $("#bMic");
     const dx = MIC.dx;
     if (m) m.style.transform = "translateX(" + Math.max(-110, Math.min(110, dx)) + "px) scale(1.18)";
-    if (h) h.style.opacity = dx < 0 ? String(Math.max(0.15, 1 + dx / 120)) : "1";
-    if (L) L.classList.toggle("on", dx > 40);
-    if (h) h.classList.toggle("warn", dx < -50);
-    if (h) h.classList.toggle("libre", dx > 40);   /* avisa que soltar activa manos libres */
     const X = $("#recX"), bar = $("#actbar");
     if (X) {
       const k = Math.min(1, Math.max(0, -dx / 70));          /* 0 a 1 segun lo que se desliza */
@@ -1237,9 +1254,8 @@
       X.classList.toggle("on", dx < -34);
       if (dx < -6) X.classList.remove("sutil");
     }
-    if (bar) bar.classList.toggle("izq", dx < -6);           /* oculta tiempo e indicaciones mientras se desliza a la izquierda */
-    /* candado en la esquina derecha: aparece al empezar a deslizar a la derecha y
-       desaparece justo cuando el gesto se completa para pasar a manos libres */
+    if (bar) bar.classList.toggle("izq", dx < -6);
+    /* candado: aparece al empezar a deslizar a la derecha y se apaga al completar */
     const L2 = $("#recLock");
     if (L2) {
       const k = Math.min(1, Math.max(0, dx / 70));
@@ -1250,6 +1266,10 @@
       L2.classList.toggle("off", lleno);
       if (dx > 6) L2.classList.remove("sutil");
     }
+    /* las flechas acompanan el gesto */
+    const AL = $(".rarr.l"), AR = $(".rarr.r");
+    if (AL) AL.style.opacity = String(Math.min(1, 0.35 + Math.max(0, -dx) / 70));
+    if (AR) AR.style.opacity = String(Math.min(1, 0.35 + Math.max(0, dx) / 70));
   }
 
   /* pausar / continuar la grabacion a manos libres */
@@ -1292,9 +1312,12 @@
     if (!MIC.activo) return;
     MIC.bloqueado = true; MIC.dx = 0;
     micVibra(40);
+    /* el icono de la barra se retira: el boton de guardar ya es una bolsa verde */
     const m = $("#bMic"); if (m) { m.style.transform = ""; m.style.display = "none"; }
     const hh = $("#recH"); if (hh) hh.hidden = true;
     const ll = $("#recL"); if (ll) ll.hidden = true;
+    const l2 = $("#recLock"); if (l2) l2.hidden = true;
+    const rr = $(".rarr");   if (rr) $$(".rarr").forEach((e) => (e.hidden = true));
     $("#recF").hidden = false;
     $("#actbar").classList.add("lock");
   }
@@ -1387,7 +1410,7 @@
   }
   function openPay() {
     const t = tot();
-    const s = sheet(`<div class="sh-h"><h2>Cobrar</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Cobrar</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <div class="receipt"><div class="r"><span>Subtotal</span><span>${money2(t.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(t.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(t.total)}</span></div></div>
       <label class="field"><span>Metodo de pago</span><select id="met"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="credito">A credito (fiado)</option></select></label>
       <label class="field" id="recw"><span>Efectivo recibido</span><input id="rec" inputmode="decimal" placeholder="${num(t.total)}"></label>
@@ -1513,7 +1536,7 @@
   }
   /* Hoja con las categorias para elegir con un toque. */
   function abrirFiltroCategorias(cats) {
-    const s = sheet(`<div class="sh-h compacta"><h2>Categorias</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h compacta"><h2>Categorias</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <div class="fopts">
         <button class="fopt ${catCat ? "" : "on"}" data-cat="">Todas las categorias ${I.check}</button>
         ${cats.map((c) => `<button class="fopt ${catCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${I.check}</button>`).join("")}
@@ -1524,7 +1547,7 @@
 
   function editProduct(p) {
     const n = !p; p = p || { pid: S.uid("P"), nombre: "", precio: 0, unidad: "unidad", categoria: "", stock: 0, itbis: true, activo: true };
-    const s = sheet(`<div class="sh-h"><h2>${n ? "Crear producto" : "Editar producto"}</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>${n ? "Crear producto" : "Editar producto"}</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <label class="field"><span>Nombre</span><input id="fn" value="${esc(p.nombre)}"></label>
       <div class="duo">
         <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
@@ -1536,8 +1559,8 @@
       </div>
       <div class="field"><span>Foto del producto</span>
         <div class="upimg"><span class="pv" id="pv">${fotoDe(p)}</span>
-          <label class="btn gris" style="margin:0">Subir foto<input type="file" accept="image/*" id="fi" hidden></label>
-          <label class="btn gris" style="margin:0">Tomar foto<input type="file" accept="image/*" capture="environment" id="fcam" hidden></label>
+          <label class="btn gris fbtn2" style="margin:0">${I.image}<span>Subir</span><input type="file" accept="image/*" id="fi" hidden></label>
+          <label class="btn gris fbtn2" style="margin:0">${I.cam}<span>Tomar</span><input type="file" accept="image/*" capture="environment" id="fcam" hidden></label>
         </div>
       </div>
       <button class="btn" id="sv">Guardar</button>${n ? "" : '<button class="btn red" id="dl" style="margin-top:10px">Eliminar</button>'}`);
@@ -1702,7 +1725,7 @@
   function openMenu() {
     const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes y creditos", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
-    const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
     $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(true); go(b.dataset.g); }));
@@ -1760,7 +1783,7 @@
 
   /* Hoja de filtros: tipo de venta y rango. */
   function abrirFiltroPedidos() {
-    const s = sheet(`<div class="sh-h compacta"><h2>Filtrar pedidos</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h compacta"><h2>Filtrar pedidos</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <p class="lbl" style="margin:2px 2px 8px">TIPO DE VENTA</p>
       <div class="fopts">
         <button class="fopt ${pedTipo === "" ? "on" : ""}" data-t="">Todos ${I.check}</button>
@@ -1793,7 +1816,7 @@
     const st = db().settings;
     const lineas = lineasDe(s).map((l) => `<div class="dl"><div><b>${esc(l.nombre)}</b><span>${num(l.cant)} ${esc(l.unidad || "unid.")} &middot; ${money(l.precio)} c/u</span></div><b>${money(l.cant * l.precio)}</b></div>`).join("");
     const pagado = s.metodo !== "credito";
-    const sh = sheet(`<div class="sh-h"><h2><span class="hi">${I.ticket}</span>Ticket del pedido</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const sh = sheet(`<div class="sh-h"><h2><span class="hi">${I.ticket}</span>Ticket del pedido</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <div class="tk-body">
       <div class="mch grande"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
       <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${fechaCorta(s.fecha)}</span></div>
@@ -1809,7 +1832,7 @@
       </div>
       ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}
       </div>
-      <div class="sh-f fijo"><button class="big slim miniwa" id="send">${I.wa} <span class="bl">Enviar por WhatsApp</span></button>
+      <div class="sh-f fijo"><button class="big slim miniwa" id="send">${I.wa} <span class="bl">Enviar Ticket</span></button>
         <button class="m negro" id="prt" aria-label="Imprimir">${I.print}</button>
         <button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button></div>`);
     $("#x", sh).onclick = closeSheet;
@@ -1973,7 +1996,7 @@
       : esAndroid()
         ? ["Abre el menu del navegador (los tres puntos arriba a la derecha).", "Toca Instalar aplicacion o Anadir a pantalla principal.", "Confirma con Instalar."]
         : ["Abre el menu del navegador.", "Busca Instalar aplicacion o Anadir a pantalla principal.", "Confirma con Instalar."];
-    const s = sheet(`<div class="sh-h"><h2>Instalar PediPOS</h2><button class="sh-x" id="x">${I.x}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Instalar PediPOS</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <p class="cnt" style="margin:0 0 12px">Queda como una app en tu telefono y abre sin internet.</p>
       <div class="iguide">${pasos.map((t, i) => `<div class="st"><span class="n">${i + 1}</span><p>${esc(t)}</p></div>`).join("")}</div>
       <button class="big" id="iok" style="width:100%;margin-top:16px">${I.check} Entendido</button>`);

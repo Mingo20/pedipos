@@ -1179,3 +1179,72 @@ div.hrow:active{transform:scale(.985)}
 .cx > b{font-size:14.5px;white-space:nowrap;flex:none}
 .cx b.red{color:#B3261E}
 .cx b.green{color:#0B6B45}
+
+
+/* ========== v48 ========== */
+
+/* barra de grabacion: sin punto rojo parpadeante */
+.act .recbar .rdot{display:none!important}
+
+/* etiqueta de ayuda fuera: solo quedan los iconos y sus flechas */
+.act .recbar .rhint{display:none!important}
+
+/* flechas a cada lado marcando que se puede deslizar a izquierda o derecha */
+.act .recbar .rarr{position:absolute;top:50%;transform:translateY(-50%);
+  font-style:normal;font-size:19px;line-height:1;color:#9AA4AD;opacity:.35;
+  transition:opacity .16s ease,color .16s ease;pointer-events:none}
+.act .recbar .rarr.l{left:8px}
+.act .recbar .rarr.r{right:8px}
+
+/* zafacon: la tapa se levanta y baja sola */
+.act .recbar .rtrash .tapa{transform-origin:6px 7px;animation:tapaTrash 2.1s cubic-bezier(.45,0,.3,1) infinite}
+@keyframes tapaTrash{
+  0%,42%{transform:rotate(0deg)}
+  58%,74%{transform:rotate(-26deg) translateY(-1px)}
+  88%,100%{transform:rotate(0deg)}
+}
+/* candado: el arco se abre y se cierra */
+.act .recbar .rlock2 .arco{transform-origin:12px 10.6px;animation:arcoLock 2.1s cubic-bezier(.45,0,.3,1) infinite}
+@keyframes arcoLock{
+  0%,42%{transform:rotate(0deg) translateY(0)}
+  58%,74%{transform:rotate(-16deg) translateY(-2.4px)}
+  88%,100%{transform:rotate(0deg) translateY(0)}
+}
+
+/* play y pausa con el mismo fondo (sin amarillo) */
+.act .recbar .rpause.on{background:#F1F4F6;color:var(--ink)}
+
+/* el icono de la barra queda como bolsa verde al pasar a manos libres */
+.act .mic.mini-bolsa{background:var(--g);color:#fff;box-shadow:0 6px 18px #1f9d5c4d}
+.act .mic.mini-bolsa i svg{stroke:#fff}
+.act .rsend{background:var(--g)}
+
+/* la onda se corre un poco a la derecha para quedar centrada */
+.act .recbar .rwave{margin:0 8px 0 16px}
+
+/* el panel de productos se cierra arrastrando desde cualquier punto */
+.sheet.alto{will-change:transform}
+.inv-lista{touch-action:pan-y}
+
+
+/* ========== v49 ========== */
+
+/* 6) el cierre de las modales es un chevron que gira al arrastrar */
+.sh-x .chev-down{transition:transform .3s cubic-bezier(.34,1.4,.5,1),opacity .2s ease;transform:rotate(0deg)}
+.sheet.arrastrando .sh-x .chev-down{transform:rotate(180deg)}
+.sh-x{color:#7C878F}
+.sh-x:active{background:#F1F4F6;border-radius:50%}
+
+/* 2) bolsa del panel de productos, mas pegada a la esquina y un poco mas arriba */
+.sheet.alto .bag-fab{right:12px;bottom:calc(env(safe-area-inset-bottom) + 56px);z-index:62;
+  box-shadow:0 12px 26px #1b7c4f4d,0 2px 6px #0000001f}
+
+/* 5) botones de foto con icono y etiqueta corta */
+.fbtn2{display:inline-flex;align-items:center;gap:7px;justify-content:center;padding:0 14px!important}
+.fbtn2 svg{width:18px;height:18px;flex:none}
+.fbtn2 span{font-weight:700;font-size:13.5px}
+
+/* 4) compras del cliente: una lista compacta, sin margen entre tarjetas */
+.subv{display:block}
+.cx-list{display:grid;gap:8px;margin:0 14px 6px;align-content:start}
+.cx-list .cx{margin:0;width:auto}
