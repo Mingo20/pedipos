@@ -508,7 +508,7 @@
         </div>
       </section>
       <div class="act ${n ? "hay" : ""}" id="actbar">
-        <button class="n" id="bNew">NUEVA</button>
+        <button class="n ${n ? "on" : ""}" id="bNew">NUEVA</button>
         <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
         <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.bag}</i></div>
       </div>`;
@@ -816,7 +816,6 @@
         <div class="inv-filtro" id="invCatList" hidden></div>
       </div>
       <div class="inv-lista"><div class="pgrid" id="res"></div></div>
-      <button class="bag-fab" id="bagFab" aria-label="Ver el talonario"><i>${I.bag}</i><b class="bag-n" id="bagN" hidden>0</b></button>
 
     </div>`, () => { window.PPVoice.stopDictation(); invRec = false; }, { alto: true });
     decorar(s);
@@ -903,16 +902,7 @@
     q.oninput = () => pintar(false);
     $("#x", s).onclick = () => closeSheet();
     pintar(false);
-    /* La bolsa ya no graba: muestra cuantos productos hay y cierra la barra */
-    (function bolsa() {
-      const fab = $("#bagFab", s);
-      if (!fab) return;
-      const n = cart().lines.length;
-      const b = $("#bagN", s);
-      if (b) { b.hidden = n === 0; b.textContent = n > 99 ? "99+" : String(n); }
-      fab.classList.toggle("vacia", n === 0);
-      fab.onclick = () => { tap(); closeSheet(); };
-    })();
+
 
 
   }
@@ -1218,10 +1208,8 @@
     if (!rb) {
       rb = document.createElement("div"); rb.className = "recbar";
       rb.innerHTML = `<b id="recT">0:00</b>
-        <span class="rarr l" aria-hidden="true">‹</span>
         <span class="rtrash" id="recX" aria-hidden="true">${I.trashAnim}</span>
         <span class="rlock2" id="recLock" aria-hidden="true">${I.lockAnim}</span>
-        <span class="rarr r" aria-hidden="true">›</span>
 
 
         <div class="rfree" id="recF" hidden>
@@ -1259,17 +1247,11 @@
     const L2 = $("#recLock");
     if (L2) {
       const k = Math.min(1, Math.max(0, dx / 70));
-      const lleno = dx >= 70;
-      L2.style.opacity = lleno ? "0" : String(0.45 + 0.55 * k);
+      L2.style.opacity = String(0.45 + 0.55 * k);
       L2.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * k) + ")";
-      L2.classList.toggle("on", k > 0.38 && !lleno);
-      L2.classList.toggle("off", lleno);
+      L2.classList.toggle("on", k > 0.38);
       if (dx > 6) L2.classList.remove("sutil");
     }
-    /* las flechas acompanan el gesto */
-    const AL = $(".rarr.l"), AR = $(".rarr.r");
-    if (AL) AL.style.opacity = String(Math.min(1, 0.35 + Math.max(0, -dx) / 70));
-    if (AR) AR.style.opacity = String(Math.min(1, 0.35 + Math.max(0, dx) / 70));
   }
 
   /* pausar / continuar la grabacion a manos libres */
@@ -1317,7 +1299,7 @@
     const hh = $("#recH"); if (hh) hh.hidden = true;
     const ll = $("#recL"); if (ll) ll.hidden = true;
     const l2 = $("#recLock"); if (l2) l2.hidden = true;
-    const rr = $(".rarr");   if (rr) $$(".rarr").forEach((e) => (e.hidden = true));
+
     $("#recF").hidden = false;
     $("#actbar").classList.add("lock");
   }
@@ -1412,7 +1394,7 @@
     const t = tot();
     const s = sheet(`<div class="sh-h"><h2>Cobrar</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <div class="receipt"><div class="r"><span>Subtotal</span><span>${money2(t.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(t.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(t.total)}</span></div></div>
-      <label class="field"><span>Metodo de pago</span><select id="met"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="credito">A credito (fiado)</option></select></label>
+      <label class="field"><span>Metodo de pago</span><select id="met"><option value="efectivo">Efectivo</option><option value="credito">Credito</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option></select></label>
       <label class="field" id="recw"><span>Efectivo recibido</span><input id="rec" inputmode="decimal" placeholder="${num(t.total)}"></label>
       <div class="field"><span id="clilbl">Cliente (opcional)</span>
         <div class="cliwrap"><select id="cli2"><option value="">Sin cliente</option>${clientOpts("")}</select>
@@ -1490,17 +1472,25 @@
     const s = sheet(`<div class="ok-big"><div class="tk">${I.ok}</div><h2>Venta registrada</h2><div class="cnt">${new Date(sale.fecha).toLocaleString("es-DO")}</div></div>
       <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
-      <div class="sh-f rcp"><button class="big" id="wa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button><button class="m negro" id="pr" aria-label="Imprimir">${I.print}</button></div>
+      <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro" id="pr" aria-label="Imprimir por Bluetooth">${I.print}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = async () => {
       try {
-        const via = await window.PPExtra.imprimir(sale);
-        toast(via === "bt" ? "Enviado a la impresora" : "Abriendo impresion");
+        const neg = db().settings.negocio || "Mi negocio";
+        const dir = db().settings.direccion || "";
+        await window.PPTicket.imprimir(window.PPTicket.lineasVenta(sale, neg, dir));
+        toast("Ticket enviado a la impresora");
       } catch (e) { toast(String(e.message || e)); }
     };
-    $("#wa", s).onclick = () => {
-      const txt = ["*" + db().settings.negocio + "*", ...lineasDe(sale).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)), "Subtotal: " + money2(sale.subtotal), "ITBIS: " + money2(sale.itbis), "*TOTAL: " + money2(sale.total) + "*"].join("\n");
-      window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
+    /* 4 y 5) el ticket sale como imagen vertical por WhatsApp */
+    $("#wa", s).onclick = async () => {
+      try {
+        const neg = db().settings.negocio || "Mi negocio";
+        const c = window.PPTicket.lienzoVenta(sale, { negocio: neg, direccion: db().settings.direccion || "" });
+        const r = await window.PPTicket.compartir(c, "ticket-" + (sale.vid || "pedido") + ".png");
+        if (r === "descargado") toast("Imagen guardada. Adjuntala en WhatsApp");
+        else if (r === "compartido") toast("Ticket compartido");
+      } catch (e) { toast("No se pudo enviar el ticket"); }
     };
     $("#nw", s).onclick = () => { closeSheet(); render(); };
   }
@@ -1836,23 +1826,18 @@
         <button class="m negro" id="prt" aria-label="Imprimir">${I.print}</button>
         <button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button></div>`);
     $("#x", sh).onclick = closeSheet;
-    $("#send", sh).onclick = () => {
-      const txt = ["*" + (db().settings.negocio || "Mi negocio") + "*", ...lineasDe(s).map((l) => num(l.cant) + " x " + l.nombre + " = " + money(l.cant * l.precio)),
-        "Subtotal: " + money2(s.subtotal), "ITBIS: " + money2(s.itbis), "TOTAL: " + money2(s.total)].join("\n");
-      window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
+    $("#send", sh).onclick = async () => {
+      try {
+        const c = window.PPTicket.lienzoVenta(s, { negocio: db().settings.negocio || "Mi negocio", direccion: db().settings.direccion || "" });
+        const r = await window.PPTicket.compartir(c, "ticket-" + (s.vid || "pedido") + ".png");
+        if (r === "descargado") toast("Imagen guardada. Adjuntala en WhatsApp");
+        else if (r === "compartido") toast("Ticket compartido");
+      } catch (e) { toast("No se pudo enviar el ticket"); }
     };
     $("#prt", sh).onclick = async () => {
-      const P = window.PPExtra.PRINTER;
       try {
-        /* sin impresora vinculada se ofrece conectarla y luego imprime directo */
-        if (!P.char && navigator.bluetooth) {
-          if (confirm("No hay impresora vinculada. ¿Conectar una impresora termica por Bluetooth ahora?")) {
-            const nombre = await window.PPExtra.btConectar();
-            toast("Impresora " + nombre + " conectada");
-          }
-        }
-        const via = await window.PPExtra.imprimir(s);
-        toast(via === "bt" ? "Ticket enviado a " + (P.name || "la impresora") : "Abriendo impresion del sistema");
+        await window.PPTicket.imprimir(window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || ""));
+        toast("Ticket enviado a la impresora");
       } catch (e) { toast("No se pudo imprimir: " + String(e.message || e)); }
     };
     $("#cam", sh).onclick = () => window.PPExtra.adjuntarComprobante(s, openDetalle);

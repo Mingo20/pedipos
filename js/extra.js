@@ -13,6 +13,9 @@
   /* utilidades que viven en app.js (se enganchan cuando ya cargo) */
   const toast = (m) => (window.PPUI && window.PPUI.toast ? window.PPUI.toast(m) : console.log(m));
   const render = () => (window.PPUI && window.PPUI.render ? window.PPUI.render() : null);
+  /* iconos y cierre de hojas: viven en app.js, se toman cuando ya cargaron */
+  const I = new Proxy({}, { get: (t, k) => (window.PPUI && window.PPUI.I ? window.PPUI.I[k] : "") });
+
 
   /* ---------- Cuentas por cobrar ---------- */
   function deudaDe(cid) {
@@ -222,7 +225,6 @@
 
   function estadoCuenta(c) {
     const d = datosEstado(c);
-    const I = window.PPUI.I;
     const neg = db().settings.negocio || "Mi negocio";
     const hora = (f) => new Date(f).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
     const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${hora(s.fecha)}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
@@ -234,12 +236,37 @@
           ${d.incl.length ? `<p class="ec-per">Periodo: ${fmtF(d.incl[0].fecha)} al ${fmtF(d.limite || new Date())}</p>` : ""}`
           : `<div class="ec-ok">${I.ok}<b>Cliente al dia</b><span>No tiene creditos pendientes.</span></div>`}
       </div>
-      <div class="sh-f fijo ec-pie"><button class="big slim" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>`);
+      <div class="sh-f fijo ec-pie ec-pie2"><button class="big slim miniwa" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.wa} <span class="bl">Enviar estado</span></button><button class="m negro" id="ecPrint" aria-label="Imprimir por Bluetooth">${I.print}</button></div>`);
     s.classList.add("ec");
     s.querySelector("[data-x]").onclick = closeSheet;
-    s.querySelector("#ecWa").onclick = () => {
+    /* 8) el estado sale como imagen vertical; la impresora va justo al lado */
+    const datosImg = () => ({
+      negocio: db().settings.negocio || "Mi negocio",
+      cliente: c.nombre,
+      total: d.total,
+      fechaPago: d.refPago ? new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO") : "",
+      periodo: d.incl.length ? fmtF(d.incl[0].fecha) + " al " + fmtF(d.limite || new Date()) : "",
+      pedidos: d.incl.map((x) => ({
+        fecha: fmtF(x.fecha),
+        hora: new Date(x.fecha).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" }),
+        total: x.total,
+      })),
+    });
+    s.querySelector("#ecWa").onclick = async () => {
       if (!d.incl.length) return toast("No hay creditos pendientes para informar");
-      window.PPUI.chatear(c.whatsapp || c.telefono, textoEstado(c, d));
+      try {
+        const lienzo = window.PPTicket.lienzoEstado(datosImg());
+        const r = await window.PPTicket.compartir(lienzo, "estado-" + String(c.nombre || "cliente").replace(/\s+/g, "-").toLowerCase() + ".png");
+        if (r === "descargado") toast("Imagen guardada. Adjuntala en WhatsApp");
+        else if (r === "compartido") toast("Estado compartido");
+      } catch (_) { toast("No se pudo enviar el estado"); }
+    };
+    const ep = s.querySelector("#ecPrint");
+    if (ep) ep.onclick = async () => {
+      try {
+        await window.PPTicket.imprimir(window.PPTicket.lineasEstado(datosImg()));
+        toast("Estado enviado a la impresora");
+      } catch (err) { toast("No se pudo imprimir: " + String(err.message || err)); }
     };
   }
 

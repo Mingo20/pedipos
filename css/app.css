@@ -1257,3 +1257,37 @@ div.hrow:active{transform:scale(.985)}
 .act .recbar #recT{margin-left:2px}
 /* el tiempo queda centrado con la onda a su lado */
 .act .recbar{padding:0 76px 0 16px}
+
+/* ========== v52 ========== */
+
+/* 1) reloj a la derecha del zafacon, sin flechas */
+.act .recbar #recT{margin-left:52px;margin-right:auto}
+.act .recbar{padding:0 78px 0 16px;justify-content:flex-start}
+.act .recbar .rtrash{left:14px}
+.act .recbar .rlock2{right:16px}
+.act .recbar .rarr{display:none!important}
+
+/* NUEVA con el mismo peso que COBRAR cuando el talonario esta vacio */
+.act .n{font-weight:600;opacity:.62;letter-spacing:.02em}
+.act .n.on{font-weight:800;opacity:1}
+
+/* 2) el panel de productos ya no lleva bolsa flotante */
+.sheet.alto .bag-fab{display:none!important}
+
+/* 3) opciones del metodo de pago con aire */
+.field select#met{padding-right:36px}
+
+/* 9) sin margen entre ninguna tarjeta de compras */
+.cx-list{gap:0!important}
+.cx-list .cx{border-radius:14px;margin:0!important}
+.cx-list .cx + .cx{margin-top:-1px!important;border-top-left-radius:0;border-top-right-radius:0}
+.cx-list .cx:not(:last-child){border-bottom-left-radius:0;border-bottom-right-radius:0}
+
+/* 8) pie del estado de credito con impresora al lado */
+.ec-pie2{display:flex;align-items:center;gap:10px}
+.ec-pie2 .big{flex:1;margin:0}
+.ec-pie2 .m.negro{flex:none;width:52px;height:48px}
+
+/* botones de accion de las subpantallas siempre clicables */
+.subv-duo .btn,.subv-foot .btn{position:relative;z-index:2;pointer-events:auto}
+.subv-foot{z-index:20}
