@@ -133,12 +133,15 @@
 
   /* Pagos del cliente: los registrados al abonar y, si es historico, las ventas ya pagadas. */
   function pagosDeCliente(c) {
-    let lista = Array.isArray(c.pagos) ? c.pagos.slice() : [];
-    if (!lista.length) {
-      lista = ventasDe(c.cid).filter((v) => v.metodo === "credito" && v.pagada)
-        .map((v) => ({ id: v.vid, fecha: v.fecha, monto: Number(v.total) || 0, historico: true }));
-    }
-    return lista.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    const reg = Array.isArray(c.pagos) ? c.pagos.slice() : [];
+    const vs = ventasDe(c.cid);
+    /* toda compra al contado ya es un pago hecho */
+    const contado = vs.filter((v) => v.metodo !== "credito")
+      .map((v) => ({ id: "V:" + (v.vid || ""), fecha: v.fecha, monto: Number(v.total) || 0, historico: true, contado: true }));
+    /* creditos saldados: solo si no hay abonos registrados a mano (evita contarlos dos veces) */
+    const saldadas = reg.length ? [] : vs.filter((v) => v.metodo === "credito" && v.pagada)
+      .map((v) => ({ id: "V:" + (v.vid || ""), fecha: v.fecha, monto: Number(v.total) || 0, historico: true }));
+    return [...reg, ...contado, ...saldadas].sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
   }
 
   let cliVista = "compras";   /* compras | pagos */
@@ -158,7 +161,7 @@
     };
     const pagos = pagosDeCliente(c);
     const filaPago = (g) => `<div class="cx pago" role="button" tabindex="0" data-p="${esc(g.id)}">
-        <div class="hi"><b>${g.historico ? "Pago (venta saldada)" : "Pago registrado"}</b>
+        <div class="hi"><b>${g.contado ? "Compra al contado" : g.historico ? "Credito saldado" : "Pago registrado"}</b>
           <span>${new Date(g.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span></div>
         <b class="green">-${money(g.monto)}</b></div>`;
     window.PPUI.clearFab();
