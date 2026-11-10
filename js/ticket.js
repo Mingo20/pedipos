@@ -8,6 +8,13 @@
 
   const esc = (s) => String(s == null ? "" : s);
 
+  /* Las ventas guardadas pueden traer las lineas como texto JSON: se normalizan siempre. */
+  function lineasDe(v) {
+    let l = v && (v.lineas != null ? v.lineas : v.items);
+    if (typeof l === "string") { try { l = JSON.parse(l); } catch (_) { l = []; } }
+    return Array.isArray(l) ? l : [];
+  }
+
   function crearLienzo(alto) {
     const c = document.createElement("canvas");
     const dpr = 2;
@@ -55,7 +62,7 @@
   /* ---------- ticket de una venta ---------- */
   function lienzoVenta(v, opts) {
     opts = opts || {};
-    const prod = v.lineas || v.items || [];
+    const prod = lineasDe(v);
     const filas = prod.length;
     const alto = 470 + filas * 62 + (v.cliente ? 34 : 0) + 120;
     const { c, x } = crearLienzo(alto);
@@ -260,7 +267,7 @@
   }
 
   function lineasVenta(v, negocio, direccion) {
-    const prod = (v.lineas || []).map((l) => izq(cant(l) + " " + (l.unidad || "u") + " " + String(l.nombre || "").slice(0, 18), money(l.total != null ? l.total : (l.cant || 0) * (l.precio || 0))));
+    const prod = lineasDe(v).map((l) => izq(cant(l) + " " + (l.unidad || "u") + " " + String(l.nombre || "").slice(0, 18), money(l.total != null ? l.total : (l.cant || 0) * (l.precio || 0))));
     return {
       titulo: [negocio || "Mi negocio"],
       sub: [direccion || "", fecha(v.fecha), v.cliente ? "Cliente: " + v.cliente : "", v.metodo === "credito" ? "A CREDITO" : "PAGADO"],
