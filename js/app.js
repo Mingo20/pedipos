@@ -1207,8 +1207,7 @@
     let rb = bar.querySelector(".recbar");
     if (!rb) {
       rb = document.createElement("div"); rb.className = "recbar";
-      rb.innerHTML = `<b id="recT">0:00</b>
-        <span class="rtrash" id="recX" aria-hidden="true">${I.trashAnim}</span>
+      rb.innerHTML = `<span class="rtrash" id="recX" aria-hidden="true">${I.trashAnim}</span>
         <span class="rlock2" id="recLock" aria-hidden="true">${I.lockAnim}</span>
 
 
@@ -1298,7 +1297,19 @@
     const m = $("#bMic"); if (m) { m.style.transform = ""; m.style.display = "none"; }
     const hh = $("#recH"); if (hh) hh.hidden = true;
     const ll = $("#recL"); if (ll) ll.hidden = true;
-    const l2 = $("#recLock"); if (l2) l2.hidden = true;
+    /* el candado se transforma en enviar: ya quedo bloqueado y se puede mandar */
+    const l2 = $("#recLock");
+    if (l2) {
+      l2.hidden = false;
+      l2.classList.remove("sutil", "on");
+      l2.classList.add("enviar");
+      l2.innerHTML = I.sendarrow;
+      l2.setAttribute("aria-label", "Enviar pedido");
+      l2.setAttribute("role", "button");
+      l2.style.opacity = "1";
+      l2.style.transform = "translateY(-50%) scale(1)";
+      l2.onclick = (ev) => { ev.stopPropagation(); terminarGrabacionGesto(); };
+    }
 
     $("#recF").hidden = false;
     $("#actbar").classList.add("lock");
@@ -1468,24 +1479,43 @@
       receipt(sale);
     };
   }
+  /* WhatsApp del cliente de la venta: para abrir el chat directo */
+  function waDeVenta(s) {
+    if (!s) return "";
+    if (s.cliente_whatsapp) return s.cliente_whatsapp;
+    const c = (db().clients || []).find((x) => x.cid === s.cliente_id) ||
+      (db().clients || []).find((x) => x.nombre && s.cliente && x.nombre.toLowerCase() === String(s.cliente).toLowerCase());
+    return c ? (c.whatsapp || c.telefono || "") : "";
+  }
+
+  /* ticket en texto para WhatsApp: abre el chat directo, nunca el menu de Android */
+  function enviarTicketWa(v, telefono) {
+    const neg = db().settings.negocio || "Mi negocio";
+    const L = window.PPTicket.lineasVenta(v, neg, db().settings.direccion || "", db().settings.telefono || "");
+    const texto = "```\n" + window.PPTicket.textoPlano(L) + "\n```";
+    const r = window.PPTicket.enviarWhatsApp(texto, telefono);
+    toast(r === "chat" ? "Abriendo el chat del cliente" : "Elige el contacto en WhatsApp");
+  }
+
   function receipt(sale) {
     const s = sheet(`<div class="ok-big"><div class="tk">${I.ok}</div><h2>Venta registrada</h2><div class="cnt">${new Date(sale.fecha).toLocaleString("es-DO")}</div></div>
       <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
-      <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro" id="pr" aria-label="Imprimir por Bluetooth">${I.print}</button></div>
+      <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro" id="pr" aria-label="Imprimir por Bluetooth">${I.print}</button><button class="m" id="img" aria-label="Ticket en imagen">${I.ticket}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = () => {
       window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(sale, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || ""), "ticket");
     };
-    /* 4 y 5) el ticket sale como imagen vertical por WhatsApp */
-    $("#wa", s).onclick = async () => {
+    $("#wa", s).onclick = () => enviarTicketWa(sale, waDeVenta(sale));
+    const im = $("#img", s);
+    if (im) im.onclick = async () => {
       try {
         const neg = db().settings.negocio || "Mi negocio";
         const c = window.PPTicket.lienzoVenta(sale, { negocio: neg, direccion: db().settings.direccion || "", telefono: db().settings.telefono || "" });
         const r = await window.PPTicket.compartir(c, "ticket-" + (sale.vid || "pedido") + ".png");
         if (r === "descargado") toast("Imagen guardada. Adjuntala en WhatsApp");
         else if (r === "compartido") toast("Ticket compartido");
-      } catch (e) { toast("No se pudo enviar el ticket"); }
+      } catch (e) { toast("No se pudo generar la imagen"); }
     };
     $("#nw", s).onclick = () => { closeSheet(); render(); };
   }
@@ -1819,20 +1849,21 @@
       </div>
       <div class="sh-f fijo"><button class="big slim miniwa" id="send">${I.wa} <span class="bl">Enviar Ticket</span></button>
         <button class="m negro" id="prt" aria-label="Imprimir">${I.print}</button>
-        <button class="m" id="cam" aria-label="Adjuntar comprobante">${I.cam}</button></div>`);
+        <button class="m" id="img" aria-label="Ticket en imagen">${I.ticket}</button></div>`);
     $("#x", sh).onclick = closeSheet;
-    $("#send", sh).onclick = async () => {
+    $("#send", sh).onclick = () => enviarTicketWa(s, waDeVenta(s));
+    $("#img", sh).onclick = async () => {
       try {
         const c = window.PPTicket.lienzoVenta(s, { negocio: db().settings.negocio || "Mi negocio", direccion: db().settings.direccion || "", telefono: db().settings.telefono || "" });
         const r = await window.PPTicket.compartir(c, "ticket-" + (s.vid || "pedido") + ".png");
         if (r === "descargado") toast("Imagen guardada. Adjuntala en WhatsApp");
         else if (r === "compartido") toast("Ticket compartido");
-      } catch (e) { toast("No se pudo enviar el ticket"); }
+      } catch (e) { toast("No se pudo generar la imagen"); }
     };
     $("#prt", sh).onclick = () => {
       window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || ""), "ticket");
     };
-    $("#cam", sh).onclick = () => window.PPExtra.adjuntarComprobante(s, openDetalle);
+
   }
   function renderConfig() {
     const st = db().settings;

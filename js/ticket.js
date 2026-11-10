@@ -16,6 +16,8 @@
   }
 
   function crearLienzo(alto) {
+    /* el documento siempre tiene proporcion de celular: nunca queda cuadrado ni tipo hoja */
+    alto = Math.max(Math.round(alto), Math.round(ancho * 16 / 9));
     const c = document.createElement("canvas");
     const dpr = 2;
     c.width = ancho * dpr;
@@ -180,40 +182,101 @@
     return c;
   }
 
-  /* ---------- estado de credito de un cliente ---------- */
+  /* ---------- estado de credito: mismo formato de recibo ---------- */
   function lienzoEstado(cfg) {
-    /* cfg: { negocio, cliente, total, fechaPago, pedidos:[{fecha,total}] } */
-    const n = (cfg.pedidos || []).length;
-    const alto = 470 + n * 66 + 130;
+    /* cfg: { negocio, direccion, telefono, cliente, total, fechaPago, periodo, pedidos:[{fecha,hora,total}] } */
+    const pedidos = cfg.pedidos || [];
+    const alto = 900 + pedidos.length * 74;
     const { c, x } = crearLienzo(alto);
-    texto(x, String(cfg.negocio || "Mi negocio").toUpperCase(), 62, { alinea: "center", tam: 30, peso: 800, color: NEGRO });
-    texto(x, "ESTADO DE CREDITO", 90, { alinea: "center", tam: 16, peso: 700, color: GRIS });
+    const centro = ancho / 2;
 
-    let y = 158;
-    texto(x, "TOTAL A PAGAR", y, { tam: 15, peso: 800, color: "#8B949C" });
-    y += 44;
-    texto(x, money2(cfg.total), y, { tam: 40, peso: 800 });
-    y += 32;
-    if (cfg.fechaPago) texto(x, "Fecha de pago: " + cfg.fechaPago, y, { tam: 16, color: "#7B848C" });
-    y += 26;
-    if (cfg.cliente) texto(x, "Cliente: " + cfg.cliente, y, { tam: 16, color: "#5B646C" });
-    y += 28;
-    linea(x, y); y += 30;
+    let y = 64;
+    x.font = "800 32px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    x.fillStyle = NEGRO;
+    x.textAlign = "center";
+    partir(x, String(cfg.negocio || "Mi negocio").toUpperCase(), ancho - pad * 2).slice(0, 2).forEach((l) => { x.fillText(l, centro, y); y += 36; });
+    x.font = "400 19px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    if (cfg.direccion) partir(x, cfg.direccion, ancho - pad * 2).slice(0, 2).forEach((l) => { x.fillText(l, centro, y); y += 24; });
+    if (cfg.telefono) { x.fillText(cfg.telefono, centro, y); y += 24; }
 
-    texto(x, "PEDIDOS A CREDITO (" + n + ")", y, { tam: 14, peso: 800, color: "#8B949C" });
-    (cfg.pedidos || []).forEach((p) => {
-      y += 34;
-      texto(x, p.fecha, y, { tam: 19, peso: 700 });
-      texto(x, money2(p.total), y, { alinea: "right", tam: 19, peso: 700, color: "#B3261E" });
-      y += 24;
-      texto(x, p.hora || "", y, { tam: 15, color: "#7B848C" });
-      y += 4;
+    texto(x, "ESTADO DE CREDITO", y + 8, { alinea: "center", tam: 17, peso: 800, color: NEGRO });
+    y += 34;
+    texto(x, fechaRecibo(new Date().toISOString()), y + 4, { alinea: "center", tam: 15, color: GRIS });
+    y += 30;
+
+    /* total a pagar, en grande y centrado como el recibo */
+    y += 14;
+    linea(x, y, LINEA); y += 44;
+    texto(x, "TOTAL A PAGAR", y, { alinea: "center", tam: 14, peso: 800, color: TENUE });
+    y += 46;
+    texto(x, money2(cfg.total), y, { alinea: "center", tam: 44, peso: 800, color: NEGRO });
+    y += 34;
+    linea(x, y, LINEA); y += 36;
+
+    const filas = [];
+    if (cfg.cliente) filas.push(["Cliente", cfg.cliente]);
+    if (cfg.fechaPago) filas.push(["Pago prometido", cfg.fechaPago]);
+    if (cfg.periodo) filas.push(["Periodo", cfg.periodo]);
+    filas.push(["Pedidos", String(pedidos.length)]);
+    filas.forEach(([k, val]) => {
+      texto(x, k, y, { tam: 18, color: GRIS });
+      texto(x, val, y, { alinea: "right", tam: 18, peso: 600, color: NEGRO });
+      y += 28;
     });
-    y += 26;
-    linea(x, y); y += 30;
-    texto(x, "Periodo: " + (cfg.periodo || ""), y, { tam: 15, color: "#7B848C" });
-    texto(x, "Gracias por su preferencia", alto - 44, { alinea: "center", tam: 15, color: "#9AA3AA" });
+
+    /* tabla de pedidos */
+    y += 10;
+    linea(x, y, LINEA); y += 28;
+    texto(x, "FECHA", y, { tam: 13, peso: 700, color: TENUE });
+    texto(x, "MONTO", y, { alinea: "right", tam: 13, peso: 700, color: TENUE });
+    pedidos.forEach((p) => {
+      y += 32;
+      texto(x, p.fecha, y, { tam: 18, peso: 600, color: NEGRO });
+      texto(x, money2(p.total), y, { alinea: "right", tam: 18, peso: 600, color: NEGRO });
+      y += 21;
+      texto(x, p.hora || "", y, { tam: 14, color: TENUE });
+      y += 12;
+    });
+
+    y += 12;
+    linea(x, y, LINEA); y += 34;
+    texto(x, "TOTAL", y, { tam: 22, peso: 800 });
+    texto(x, money2(cfg.total), y, { alinea: "right", tam: 22, peso: 800 });
+
+    /* firma y pie */
+    y += 40;
+    linea(x, y, LINEA, 1.2); y += 30;
+    texto(x, "FIRMA", y, { tam: 13, peso: 700, color: TENUE }); y += 26;
+    texto(x, "Acepto pagar el total indicado conforme", y, { alinea: "center", tam: 15, color: GRIS }); y += 21;
+    texto(x, "al acuerdo comercial del negocio.", y, { alinea: "center", tam: 15, color: GRIS }); y += 34;
+    texto(x, "Gracias por su preferencia", y, { alinea: "center", tam: 19, peso: 700, color: NEGRO }); y += 26;
+    texto(x, "Este documento no es un comprobante fiscal", y, { alinea: "center", tam: 13, color: TENUE });
     return c;
+  }
+
+  /* ---------- envio directo por WhatsApp (abre el chat, sin menu de Android) ---------- */
+  /* numero dominicano de 10 digitos -> 1 + numero; si viene con + o 1 se respeta */
+  function waNumero(tel) {
+    let n = String(tel || "").replace(/[^0-9]/g, "");
+    if (!n) return "";
+    if (n.length === 11 && n.charAt(0) === "1") return n;
+    if (n.length === 10) return "1" + n;
+    return n;
+  }
+
+  /* arma el texto del ticket en 32 columnas para pegarlo en WhatsApp */
+  function textoPlano(bloque) {
+    const L = [].concat(bloque.titulo || [], bloque.sub || [], ["-".repeat(32)], bloque.cuerpo || [], ["-".repeat(32)], bloque.total || []);
+    if (bloque.pie && bloque.pie.length) L.push("", ...bloque.pie);
+    return L.map((l) => String(l).replace(/\s+$/, "")).join("\n");
+  }
+
+  function enviarWhatsApp(texto, telefono) {
+    const num = waNumero(telefono);
+    const url = "https://wa.me/" + (num ? num : "") + "?text=" + encodeURIComponent(texto);
+    const v = window.open(url, "_blank");
+    if (!v) window.location.href = url;
+    return num ? "chat" : "lista";
   }
 
   /* ---------- envío como imagen por WhatsApp ---------- */
@@ -372,13 +435,27 @@
   }
 
   function lineasEstado(cfg) {
+    const centrar = (s) => { s = String(s || "").slice(0, 32); const h = Math.max(0, 32 - s.length); return " ".repeat(Math.floor(h / 2)) + s; };
+    const sub = [];
+    if (cfg.direccion) sub.push(centrar(cfg.direccion));
+    if (cfg.telefono) sub.push(centrar(cfg.telefono));
+    sub.push(centrar(new Date().toLocaleDateString("es-DO")));
+    const cuerpo = ["ESTADO DE CREDITO", ""];
+    if (cfg.cliente) cuerpo.push(izq("Cliente:", String(cfg.cliente).slice(0, 20)));
+    if (cfg.fechaPago) cuerpo.push(izq("Pago:", cfg.fechaPago));
+    if (cfg.periodo) cuerpo.push(izq("Periodo:", String(cfg.periodo).slice(0, 20)));
+    cuerpo.push("");
+    cuerpo.push("FECHA                   MONTO");
+    (cfg.pedidos || []).forEach((p) => cuerpo.push(izq(p.fecha, money2(p.total))));
     return {
-      titulo: [cfg.negocio || "Mi negocio"],
-      sub: ["ESTADO DE CREDITO", cfg.cliente ? "Cliente: " + cfg.cliente : "", cfg.fechaPago ? "Pago: " + cfg.fechaPago : ""],
-      cuerpo: (cfg.pedidos || []).map((p) => izq(p.fecha, money2(p.total))),
-      total: [izq("TOTAL A PAGAR", money2(cfg.total))],
+      titulo: [centrar(String(cfg.negocio || "Mi negocio").toUpperCase())],
+      sub,
+      cuerpo,
+      total: [izq("TOTAL A PAGAR:", money2(cfg.total))],
+      pie: ["FIRMA: ______________________", "Acepto pagar el total indicado", "conforme al acuerdo comercial.", "  Gracias por su preferencia"],
     };
   }
+
 
   const cant = (l) => {
     const n = Number(l.cant != null ? l.cant : l.cantidad || 0);
@@ -486,5 +563,5 @@
     });
   }
 
-  window.PPTicket = { lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, conectar, imprimirConVentana };
+  window.PPTicket = { waNumero, textoPlano, enviarWhatsApp, lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, conectar, imprimirConVentana };
 })();

@@ -242,6 +242,8 @@
     /* 8) el estado sale como imagen vertical; la impresora va justo al lado */
     const datosImg = () => ({
       negocio: db().settings.negocio || "Mi negocio",
+      direccion: db().settings.direccion || "",
+      telefono: db().settings.telefono || "",
       cliente: c.nombre,
       total: d.total,
       fechaPago: d.refPago ? new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO") : "",
@@ -407,10 +409,10 @@
       ...comprasDe(p).map((c) => ({ t: c.fecha, tipo: "compra", x: c })),
       ...pagosDe(p).map((g) => ({ t: g.fecha, tipo: "pago", x: g })),
     ].sort((a, b) => String(b.t).localeCompare(String(a.t)));
-    const fila = (m) => {
+    const fila = (m, i) => {
       const compra = m.tipo === "compra";
       const pend = compra ? Math.max(0, (Number(m.x.total) || 0) - (Number(m.x.pagado) || 0)) : 0;
-      return `<div class="hrow">
+      return `<div class="hrow mov" data-mov="${i}" role="button" tabindex="0">
         <div class="hi"><b>${compra ? esc(m.x.concepto || "Compra") : "Pago"}</b>
           <span>${new Date(m.t).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${compra ? (pend > 0 ? " &middot; debe " + money(pend) : " &middot; pagada") : ""}</span></div>
         <b class="${compra ? (pend > 0 ? "red" : "") : "green"}">${compra ? "-" + money(m.x.total) : "+" + money(m.x.monto)}</b></div>`;
@@ -439,10 +441,64 @@
     animarSub = false; view.scrollTop = 0;
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
+    $(".hrow.mov").forEach((el) => {
+      el.onclick = () => verMovimiento(p, mov[Number(el.dataset.mov)]);
+    });
     $("#svCompra").onclick = () => registrarCompra(p);
     $("#svEdit").onclick = () => editarProveedor(p);
     const pg = $("#svPago");
     if (pg) pg.onclick = () => registrarPago(p);
+  }
+
+  /* Detalle de un movimiento de proveedor, con envio directo por WhatsApp. */
+  function verMovimiento(p, m) {
+    if (!m) return;
+    const compra = m.tipo === "compra";
+    const total = compra ? (Number(m.x.total) || 0) : (Number(m.x.monto) || 0);
+    const pagado = compra ? (Number(m.x.pagado) || 0) : 0;
+    const debe = compra ? Math.max(0, total - pagado) : 0;
+    const saldo = saldoProv(p).debe;
+    const fecha = new Date(m.t).toLocaleString("es-DO", { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
+    const neg = db().settings.negocio || "Mi negocio";
+    const nota = compra ? (m.x.concepto || "Compra") : (m.x.nota || "Pago");
+
+    const filas = [
+      ["Tipo", compra ? "Compra" : "Pago"],
+      ["Fecha", fecha],
+      [compra ? "Concepto" : "Nota", nota],
+      ["Monto", money2(total)],
+    ];
+    if (compra) { filas.push(["Pagado", money2(pagado)]); filas.push(["Pendiente", money2(debe)]); }
+    filas.push(["Saldo actual", money2(saldo)]);
+
+    const s = sheetCliente(`<div class="sh-h"><h2>${compra ? "Detalle de la compra" : "Detalle del pago"}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+      <div class="mov-h"><span class="mov-badge ${compra ? (debe > 0 ? "red" : "green") : "green"}">${compra ? "-" : "+"}${money(total)}</span>
+        <div class="mov-tt"><b>${esc(p.nombre)}</b><span>${esc(fecha)}</span></div></div>
+      <div class="mov-tabla">
+        ${filas.map(([k, v]) => `<div class="r"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
+      </div>
+      <div class="sh-f fijo"><button class="big slim miniwa" id="mvWa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>`);
+
+    s.querySelector("[data-x]").onclick = closeSheet;
+    s.querySelector("#mvWa").onclick = () => {
+      const msg = [
+        "*" + (compra ? "COMPRA" : "PAGO") + " A PROVEEDOR*",
+        "*" + neg + "*",
+        "",
+        "Proveedor: " + p.nombre,
+        "Fecha: " + fecha,
+        (compra ? "Concepto: " : "Nota: ") + nota,
+        "Monto: " + money2(total),
+        compra ? "Pagado: " + money2(pagado) : "",
+        compra ? "Pendiente: " + money2(debe) : "",
+        "Saldo con usted: " + money2(saldo),
+        "",
+        "Gracias.",
+      ].filter((x) => x !== "").join("\n");
+      const tel = p.whatsapp || p.telefono || "";
+      if (!tel) return toast("Este proveedor no tiene WhatsApp registrado");
+      window.PPUI.chatear(tel, msg);
+    };
   }
 
   function registrarCompra(p) {
