@@ -500,7 +500,12 @@
         '<button class="pw-btn ' + (b.tipo || "") + '" data-i="' + i + '">' + b.texto + "</button>").join("") + "</div></div>";
     document.body.append(d);
     requestAnimationFrame(() => d.classList.add("on"));
-    d.querySelector(".pw-m").onclick = () => { if (cfg.cerrable !== false) cerrarVentana(); };
+    /* el toque que abre la ventana no debe cerrarla: se ignora el primer instante */
+    const abierta = Date.now();
+    d.querySelector(".pw-m").onclick = () => {
+      if (Date.now() - abierta < 320) return;
+      if (cfg.cerrable !== false) cerrarVentana();
+    };
     (cfg.botones || []).forEach((b, i) => {
       const el = d.querySelector('[data-i="' + i + '"]');
       if (el) el.onclick = () => b.alHacer && b.alHacer();
