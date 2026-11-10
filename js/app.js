@@ -1502,9 +1502,7 @@
 
   /* ticket en texto para WhatsApp: abre el chat directo, nunca el menu de Android */
   function enviarTicketWa(v, telefono) {
-    const neg = db().settings.negocio || "Mi negocio";
-    const L = window.PPTicket.lineasVenta(v, neg, db().settings.direccion || "", db().settings.telefono || "");
-    const texto = "```\n" + window.PPTicket.textoPlano(L) + "\n```";
+    const texto = window.PPTicket.waTicket(v);
     const r = window.PPTicket.enviarWhatsApp(texto, telefono);
     toast(r === "chat" ? "Abriendo el chat del cliente" : "Elige el contacto en WhatsApp");
   }

@@ -1409,3 +1409,40 @@ body.focus .subv.conbarra{padding-top:calc(env(safe-area-inset-top) + 84px)}
 body.focus main#view{scroll-padding-top:90px}
 /* la etiqueta de la lista no se pega al encabezado fijo */
 body.focus .subv.conbarra .seg2{margin-top:14px}
+
+/* ========== v65 ========== */
+
+/* 1 y 5) encabezado principal y cabecera del talonario siempre visibles */
+.top{position:sticky;top:0;z-index:30}
+.tick-h{position:sticky;top:calc(env(safe-area-inset-top) + 54px);z-index:6;
+  background:var(--card);border-top-left-radius:var(--r);border-top-right-radius:var(--r)}
+@media(max-height:700px){.tick-h{top:0}}
+
+/* 2) el icono de productos del talonario vuelve a verde */
+.tools .plus.tl#bSearch{color:var(--g)}
+.actbar-prod{color:var(--g)}
+
+/* 2) en el encabezado de Productos (inventario) el icono va en negro */
+.inv-tt .hi{background:#F1F4F6;color:#14191E}
+.inv-tt h2{color:#14191E}
+
+/* 4) filtros sin fondo: solo texto y una linea verde debajo del activo */
+.seg2{display:flex;gap:0;margin:14px 14px 8px;border-bottom:1px solid #E9EEF1}
+.seg2 .sg{flex:1;height:auto;padding:0 0 11px;border:0;border-radius:0;background:transparent!important;
+  box-shadow:none!important;color:#8A939A;font-size:13px;font-weight:800;letter-spacing:.07em;
+  position:relative;transition:color .18s ease}
+.seg2 .sg::after{content:"";position:absolute;left:50%;bottom:-1px;transform:translateX(-50%) scaleX(0);
+  width:64%;height:3px;border-radius:3px 3px 0 0;background:var(--g);transition:transform .22s cubic-bezier(.22,.9,.3,1)}
+.seg2 .sg.on{color:#14191E;background:transparent!important}
+.seg2 .sg.on::after{transform:translateX(-50%) scaleX(1)}
+.seg2 .sg:active{transform:none}
+
+/* ventana de impresora: subtitulo y nota del aviso del sistema */
+.pw-c{padding:32px 22px 22px;border-radius:32px}
+.pw-sub{display:inline-block;margin:0 0 10px;padding:5px 12px;border-radius:999px;
+  background:#EEF7F2;color:#0B6B45;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.pw-nota{display:flex;gap:9px;align-items:flex-start;margin-top:14px;padding:11px 13px;border-radius:16px;
+  background:#FFF8E9;border:1px solid #F2E2BC;color:#7A5A16;font-size:12px;line-height:1.42;text-align:left;font-weight:600}
+.pw-pasos li{font-size:13px;line-height:1.35}
+.pw-pasos li b{color:#0B6B45}
+.pw-c h3{font-size:20px}

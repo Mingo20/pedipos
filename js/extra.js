@@ -163,7 +163,7 @@
     const fila = (v) => {
       const cred = v.metodo === "credito";
       return `<div class="cx" role="button" tabindex="0" data-v="${esc(v.vid || "")}">
-        <div class="hi"><b>${cred ? (v.pagada ? "Credito pagado" : "Credito pendiente") : "Contado"}</b>
+        <div class="hi"><b>${cred ? (v.pagada ? "Compra a crédito pagada" : "Compra a crédito") : "Venta de contado"}</b>
           <span>${new Date(v.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${v.lineas ? " &middot; " + lineasDe2(v).length + " art." : ""}</span>
           ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
         <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
@@ -188,7 +188,7 @@
       </div>
       <div class="subv-duo">
         ${d > 0 ? `<button class="btn mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
-        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Estado de credito</span></button>
+        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Resumen de deuda</span></button>
       </div>
       <div class="seg2" id="segCli">
         <button class="sg ${cliVista === "compras" ? "on" : ""}" data-t="compras">COMPRAS (${vs.length})</button>
@@ -256,17 +256,7 @@
     s.querySelector("#pgWa").onclick = () => {
       const tel = c.whatsapp || c.telefono || "";
       if (!tel) return toast("Este cliente no tiene WhatsApp registrado");
-      const msg = [
-        "*PAGO REGISTRADO*",
-        "*" + neg + "*",
-        "",
-        "Cliente: " + c.nombre,
-        "Fecha: " + fecha,
-        "Monto pagado: " + money2(g.monto),
-        "Saldo actual: " + money2(saldo),
-        "",
-        saldo > 0 ? "Gracias por su abono." : "Su cuenta quedo al dia. Gracias por su preferencia.",
-      ].join("\n");
+      const msg = window.PPTicket.waPagoCliente(neg, c, g, saldo);
       window.PPUI.chatear(tel, msg);
     };
   }
@@ -318,7 +308,7 @@
     const neg = db().settings.negocio || "Mi negocio";
     const hora = (f) => new Date(f).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
     const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${hora(s.fecha)}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
-    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Estado de credito</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Resumen de venta</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <div class="ec-body">
         <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
           ${d.refPago ? `<span>Fecha de pago: ${new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO")}</span>` : ""}</div>
@@ -326,7 +316,7 @@
           ${d.incl.length ? `<p class="ec-per">Periodo: ${fmtF(d.incl[0].fecha)} al ${fmtF(d.limite || new Date())}</p>` : ""}`
           : `<div class="ec-ok">${I.ok}<b>Cliente al dia</b><span>No tiene creditos pendientes.</span></div>`}
       </div>
-      <div class="sh-f fijo ec-pie ec-pie2"><button class="big slim" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.share} <span class="bl">Resumen de deuda</span></button><button class="m negro" id="ecPrint" aria-label="Imprimir por Bluetooth">${I.print}</button></div>`);
+      <div class="sh-f fijo ec-pie ec-pie2"><button class="big slim" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.share} <span class="bl">Compartir resumen</span></button><button class="m negro" id="ecPrint" aria-label="Imprimir por Bluetooth">${I.print}</button></div>`);
     s.classList.add("ec");
     s.querySelector("[data-x]").onclick = closeSheet;
     /* 8) el estado sale como imagen vertical; la impresora va justo al lado */
@@ -533,7 +523,7 @@
         ${s0.debe > 0 ? `<button class="btn sec mini2 conic" id="svPago">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
       </div>
       <div class="seg2" id="segProv">
-        <button class="sg ${provVista === "compra" ? "on" : ""}" data-t="compra">COMPRA (${nCompras})</button>
+        <button class="sg ${provVista === "compra" ? "on" : ""}" data-t="compra">COMPRAS (${nCompras})</button>
         <button class="sg ${provVista === "pago" ? "on" : ""}" data-t="pago">PAGOS (${nPagos})</button>
       </div>
       <div id="movCaja">
@@ -594,20 +584,9 @@
 
     s.querySelector("[data-x]").onclick = closeSheet;
     s.querySelector("#mvWa").onclick = () => {
-      const msg = [
-        "*" + (compra ? "COMPRA" : "PAGO") + " A PROVEEDOR*",
-        "*" + neg + "*",
-        "",
-        "Proveedor: " + p.nombre,
-        "Fecha: " + fecha,
-        (compra ? "Concepto: " : "Nota: ") + nota,
-        "Monto: " + money2(total),
-        compra ? "Pagado: " + money2(pagado) : "",
-        compra ? "Pendiente: " + money2(debe) : "",
-        "Saldo con usted: " + money2(saldo),
-        "",
-        "Gracias.",
-      ].filter((x) => x !== "").join("\n");
+      const msg = compra
+        ? window.PPTicket.waCompraProveedor(neg, p, m.x, saldo)
+        : window.PPTicket.waPagoProveedor(neg, p, m.x, saldo);
       const tel = p.whatsapp || p.telefono || "";
       if (!tel) return toast("Este proveedor no tiene WhatsApp registrado");
       window.PPUI.chatear(tel, msg);

@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="img/logo-96.png" type="image/png">
 <link rel="apple-touch-icon" href="img/logo-192.png">
-<link rel="stylesheet" href="css/app.css?v=64">
+<link rel="stylesheet" href="css/app.css?v=65">
 </head>
 <body>
 <div id="app">
@@ -34,16 +34,16 @@
 <div class="toast" id="toast" hidden></div>
 <script>/* captura temprana: el aviso de instalacion puede llegar antes que la app */window.__ppInstallPrompt=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__ppInstallPrompt=e;dispatchEvent(new Event("pp:installable"))});addEventListener("appinstalled",function(){window.__ppInstallPrompt=null;dispatchEvent(new Event("pp:installed"))});</script>
 <script src="https://js.puter.com/v2/"></script>
-<script src="js/store.js?v=64"></script>
-<script src="js/sync.js?v=64"></script>
-<script src="js/voice.js?v=64"></script>
-<script src="js/ticket.js?v=64"></script>
-<script src="js/extra.js?v=64"></script>
-<script src="js/app.js?v=64"></script>
+<script src="js/store.js?v=65"></script>
+<script src="js/sync.js?v=65"></script>
+<script src="js/voice.js?v=65"></script>
+<script src="js/ticket.js?v=65"></script>
+<script src="js/extra.js?v=65"></script>
+<script src="js/app.js?v=65"></script>
 <script>
 /* Siempre la ultima version: el service worker se revisa al abrir y cada vez que se vuelve a la app. */
 (function(){
-  var VERSION="64";
+  var VERSION="65";
   if(!("serviceWorker"in navigator))return;
   var recargando=false;
   navigator.serviceWorker.addEventListener("controllerchange",function(){

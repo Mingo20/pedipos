@@ -492,7 +492,9 @@
     d.innerHTML = '<div class="pw-m"></div><div class="pw-c" role="dialog" aria-modal="true">' +
       '<div class="pw-i ' + (cfg.tono || "") + '"><span class="pw-ring"></span>' + cfg.icono + "</div>" +
       "<h3>" + cfg.titulo + "</h3>" +
+      (cfg.sub ? '<div class="pw-sub">' + cfg.sub + "</div>" : "") +
       "<p>" + (cfg.texto || "") + "</p>" +
+      (cfg.nota ? '<div class="pw-nota">' + cfg.nota + "</div>" : "") +
       (cfg.pasos ? '<ol class="pw-pasos">' + cfg.pasos.map((x) => "<li>" + x + "</li>").join("") + "</ol>" : "") +
       '<div class="pw-b">' + (cfg.botones || []).map((b, i) =>
         '<button class="pw-btn ' + (b.tipo || "") + '" data-i="' + i + '">' + b.texto + "</button>").join("") + "</div></div>";
@@ -512,8 +514,9 @@
     const conectada = aparato && aparato.gatt && aparato.gatt.connected && caract;
     const lanzar = async () => {
       ventana({
-        icono: ICO.bt, tono: "carga", titulo: "Conectando",
-        texto: "Elige tu impresora en la lista que se abre.", cerrable: false, botones: [],
+        icono: ICO.bt, tono: "carga", titulo: "Buscando impresoras", sub: "Paso 1 de 2",
+        texto: "Elige tu impresora en la lista. Si el telefono pide activar Bluetooth, toca Permitir.",
+        cerrable: false, botones: [],
       });
       try {
         await conectar();
@@ -553,15 +556,131 @@
       return;
     }
     ventana({
-      icono: ICO.print, titulo: "Conectar impresora",
-      texto: "Todavia no hay una impresora termica vinculada.",
-      pasos: ["Enciende la impresora", "Activa el Bluetooth del telefono", "Toca Buscar y elige tu impresora"],
+      icono: ICO.print, titulo: "Conectar impresora", sub: "Bluetooth · 58 mm",
+      texto: "Vincula tu impresora termica una sola vez y despues imprime con un toque.",
+      pasos: [
+        "Enciende la impresora y activa su Bluetooth.",
+        "Toca <b>Buscar impresora</b> y elige la tuya en la lista.",
+        "Acepta el aviso de Bluetooth del telefono.",
+      ],
+      nota: "El aviso de activar Bluetooth lo muestra el navegador: es normal y hay que tocar Permitir. Ninguna pagina web puede cambiar ese mensaje.",
       botones: [
         { texto: "Ahora no", alHacer: cerrarVentana },
-        { texto: "Buscar", tipo: "prim", alHacer: lanzar },
+        { texto: "Buscar impresora", tipo: "prim", alHacer: lanzar },
       ],
     });
   }
 
-  window.PPTicket = { waNumero, textoPlano, enviarWhatsApp, lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, conectar, imprimirConVentana };
+  /* ================= Mensajes de WhatsApp =================
+     Mismo ancho que la impresora (32 columnas) y mismas estructuras:
+     titulo centrado, separadores, etiqueta con valor a la derecha, tabla y despedida. */
+
+  const W32 = 32;
+  const raya = "-".repeat(W32);
+  const centrar32 = (s) => {
+    s = String(s || "").slice(0, W32);
+    return " ".repeat(Math.max(0, Math.floor((W32 - s.length) / 2))) + s;
+  };
+  const fila32 = (etiqueta, valor) => {
+    const izq = etiqueta + ":";
+    const der = String(valor == null ? "" : valor);
+    if (izq.length + der.length + 1 > W32) return izq + " " + der;
+    return izq + " ".repeat(W32 - izq.length - der.length) + der;
+  };
+  const corto32 = (s, n) => { s = String(s || ""); return s.length > n ? s.slice(0, n - 1) + "." : s; };
+
+  function fechaCorta(f) {
+    const d = new Date(f || Date.now());
+    const h = d.getHours();
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear() +
+      " | " + hh + ":" + String(d.getMinutes()).padStart(2, "0") + " " + (h < 12 ? "a. m." : "p. m.");
+  }
+
+  const pagos32 = (m) => {
+    if (m === "credito") return "Crédito";
+    if (m === "tarjeta") return "Tarjeta";
+    if (m === "transferencia") return "Transferencia";
+    return "Efectivo";
+  };
+
+  /* envuelve el mensaje para que WhatsApp lo muestre monoespaciado */
+  const enBloque = (lineas) => "```\n" + lineas.join("\n").replace(/\s+$/, "") + "\n```";
+
+  /* ---- 1) TICKET DEL PEDIDO ---- */
+  function waTicket(v) {
+    const L = [centrar32("TICKET DEL PEDIDO"), raya];
+    L.push(fila32("FECHA", fechaCorta(v.fecha)));
+    L.push("");
+    if (v.cliente) L.push(fila32("Cliente", corto32(v.cliente, 20)));
+    L.push(fila32("Pago", pagos32(v.metodo)));
+    L.push("");
+    L.push("CANT PRODUCTO            TOTAL");
+    lineasDe(v).forEach((l) => {
+      const cnt = String(cant(l)).padEnd(4);
+      const nom = corto32(l.nombre || l.producto || "Producto", 17).padEnd(17);
+      const monto = money(l.total != null ? l.total : (cant(l) * (l.precio || 0)));
+      L.push((cnt + nom).slice(0, W32 - monto.length).padEnd(W32 - monto.length) + monto);
+    });
+    L.push(raya);
+    L.push(fila32("Subtotal", money2(v.subtotal)));
+    L.push(fila32("ITBIS", money2(v.itbis || 0)));
+    L.push(fila32("TOTAL", money2(v.total)));
+    L.push("");
+    L.push(raya);
+    L.push("");
+    L.push(centrar32("Gracias por su compra"));
+    return enBloque(L);
+  }
+
+  /* ---- 2) PAGO A PROVEEDOR ---- */
+  function waPagoProveedor(negocio, p, g, saldo) {
+    const L = [centrar32("PAGO A PROVEEDOR"), raya];
+    L.push(fila32("Proveedor", corto32(p.nombre, 20)));
+    L.push(fila32("Fecha", fechaCorta(g.fecha)));
+    L.push("");
+    L.push(fila32("Nota", corto32(g.nota || "Pago", 22)));
+    L.push(fila32("Monto", money2(g.monto)));
+    L.push("");
+    L.push(raya);
+    L.push(centrar32("Gracias por su confianza"));
+    return enBloque(L);
+  }
+
+  /* ---- 3) COMPRA A PROVEEDOR ---- */
+  function waCompraProveedor(negocio, p, c, saldo) {
+    const total = Number(c.total) || 0;
+    const pagado = Number(c.pagado) || 0;
+    const pend = Math.max(0, total - pagado);
+    const L = [centrar32("COMPRA A PROVEEDOR"), raya];
+    L.push(fila32("Proveedor", corto32(p.nombre, 20)));
+    L.push(fila32("Fecha", fechaCorta(c.fecha)));
+    L.push(fila32("Concepto", corto32(c.concepto || "Compra", 22)));
+    L.push("");
+    L.push(fila32("Monto", money2(total)));
+    L.push(fila32("Pagado", money2(pagado)));
+    L.push(fila32("Pendiente", money2(pend)));
+    L.push(fila32("Saldo con usted", money2(saldo)));
+    L.push("");
+    L.push(raya);
+    L.push(centrar32("Gracias por su confianza"));
+    return enBloque(L);
+  }
+
+  /* ---- 4) PAGO REGISTRADO DEL CLIENTE ---- */
+  function waPagoCliente(negocio, c, g, saldo) {
+    const L = [centrar32("PAGO REGISTRADO"), raya];
+    L.push(fila32("Cliente", corto32(c.nombre, 20)));
+    L.push(fila32("Fecha", fechaCorta(g.fecha)));
+    L.push("");
+    L.push(fila32("Monto", money2(g.monto)));
+    L.push("");
+    L.push(fila32("Saldo actual", money2(saldo)));
+    L.push("");
+    L.push(raya);
+    L.push(centrar32(saldo > 0 ? "Gracias por su abono" : "Su cuenta está al día"));
+    return enBloque(L);
+  }
+
+  window.PPTicket = { waTicket, waPagoProveedor, waCompraProveedor, waPagoCliente, waNumero, textoPlano, enviarWhatsApp, lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, conectar, imprimirConVentana };
 })();
