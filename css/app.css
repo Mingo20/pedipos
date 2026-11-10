@@ -1395,3 +1395,17 @@ body.focus main#view{scroll-padding-top:96px}
 
 /* el sello de mensajes del estado de credito no lleva verde */
 .ec-pie2 .m.negro{background:#14191E}
+
+/* ========== v63: encabezado del cliente y del proveedor realmente fijo ========== */
+body.focus .subv.conbarra .subv-h{
+  position:fixed;left:0;right:0;top:0;margin:0 auto;
+  max-width:560px;width:100%;
+  padding:calc(env(safe-area-inset-top) + 14px) 18px 12px;
+  background:#fff;border-bottom:1px solid var(--line);
+  z-index:40;box-shadow:0 8px 22px -18px #0b141c99
+}
+body.focus .subv.conbarra{padding-top:calc(env(safe-area-inset-top) + 84px)}
+/* el contenido no se esconde detras del encabezado */
+body.focus main#view{scroll-padding-top:90px}
+/* la etiqueta de la lista no se pega al encabezado fijo */
+body.focus .subv.conbarra .seg2{margin-top:14px}
