@@ -141,16 +141,10 @@
   window.animarTal = animarTal;
 
   /* Pagos del cliente: los registrados al abonar y, si es historico, las ventas ya pagadas. */
+  /* Solo los pagos que el negocio registro como abono. Nada derivado de ventas. */
   function pagosDeCliente(c) {
     const reg = Array.isArray(c.pagos) ? c.pagos.slice() : [];
-    const vs = ventasDe(c.cid);
-    /* toda compra al contado ya es un pago hecho */
-    const contado = vs.filter((v) => v.metodo !== "credito")
-      .map((v) => ({ id: "V:" + (v.vid || ""), fecha: v.fecha, monto: Number(v.total) || 0, historico: true, contado: true }));
-    /* creditos saldados: solo si no hay abonos registrados a mano (evita contarlos dos veces) */
-    const saldadas = reg.length ? [] : vs.filter((v) => v.metodo === "credito" && v.pagada)
-      .map((v) => ({ id: "V:" + (v.vid || ""), fecha: v.fecha, monto: Number(v.total) || 0, historico: true }));
-    return [...reg, ...contado, ...saldadas].sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    return reg.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
   }
 
   let cliVista = "compras";   /* compras | pagos */
@@ -170,7 +164,7 @@
     };
     const pagos = pagosDeCliente(c);
     const filaPago = (g) => `<div class="cx pago" role="button" tabindex="0" data-p="${esc(g.id)}">
-        <div class="hi"><b>${g.contado ? "Compra al contado" : g.historico ? "Credito saldado" : "Pago registrado"}</b>
+        <div class="hi"><b>Pago registrado</b>
           <span>${new Date(g.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span></div>
         <b class="green">-${money(g.monto)}</b></div>`;
     window.PPUI.clearFab();
@@ -187,11 +181,11 @@
         <div class="kpi"><small>Pagado</small><b style="color:#0B6B45">${money(pagado)}</b></div>
       </div>
       <div class="subv-duo">
-        ${d > 0 ? `<button class="btn mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
-        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Resumen de deuda</span></button>
+        ${d > 0 ? `<button class="btn sec mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
+        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.chart}<span>Estado de deuda</span></button>
       </div>
       <div class="seg2" id="segCli">
-        <button class="sg ${cliVista === "compras" ? "on" : ""}" data-t="compras">COMPRAS (${vs.length})</button>
+        <button class="sg ${cliVista === "compras" ? "on" : ""}" data-t="compras">VENTAS (${vs.length})</button>
         <button class="sg ${cliVista === "pagos" ? "on" : ""}" data-t="pagos">PAGOS (${pagos.length})</button>
       </div>
       <div id="cxCaja">
@@ -308,7 +302,7 @@
     const neg = db().settings.negocio || "Mi negocio";
     const hora = (f) => new Date(f).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
     const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${hora(s.fecha)}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
-    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.ticket}</span>Resumen de venta</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.chart}</span>Estado de deuda</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <div class="ec-body">
         <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
           ${d.refPago ? `<span>Fecha de pago: ${new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO")}</span>` : ""}</div>
@@ -316,7 +310,7 @@
           ${d.incl.length ? `<p class="ec-per">Periodo: ${fmtF(d.incl[0].fecha)} al ${fmtF(d.limite || new Date())}</p>` : ""}`
           : `<div class="ec-ok">${I.ok}<b>Cliente al dia</b><span>No tiene creditos pendientes.</span></div>`}
       </div>
-      <div class="sh-f fijo ec-pie ec-pie2"><button class="big slim" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.share} <span class="bl">Compartir resumen</span></button><button class="m negro" id="ecPrint" aria-label="Imprimir por Bluetooth">${I.print}</button></div>`);
+      <div class="sh-f fijo ec-pie ec-pie2"><button class="big slim" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.share} <span class="bl">Compartir estado</span></button><button class="m negro" id="ecPrint" aria-label="Imprimir por Bluetooth">${I.print}</button></div>`);
     s.classList.add("ec");
     s.querySelector("[data-x]").onclick = closeSheet;
     /* 8) el estado sale como imagen vertical; la impresora va justo al lado */
@@ -519,7 +513,7 @@
         <div class="kpi"><small>Debe</small><b style="color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
       <div class="subv-duo">
-        <button class="btn mini2 conic" id="svCompra">${window.PPUI.I.cart}<span>Nueva compra</span></button>
+        <button class="btn sec mini2 conic" id="svCompra">${window.PPUI.I.cart}<span>Nueva compra</span></button>
         ${s0.debe > 0 ? `<button class="btn sec mini2 conic" id="svPago">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
       </div>
       <div class="seg2" id="segProv">
@@ -751,12 +745,21 @@
         return "bt";
       } catch (_) { /* cae a impresion del sistema */ }
     }
-    const v = window.open("", "_blank", "width=380,height=600");
-    if (!v) throw new Error("Permite las ventanas emergentes para imprimir");
-    v.document.write('<pre style="font:12px/1.35 monospace;width:300px;margin:0 auto;white-space:pre-wrap">' + esc(t) + "</pre>");
-    v.document.close();
-    v.focus();
-    setTimeout(() => v.print(), 350);
+    /* sin ventanas emergentes: se imprime desde un iframe oculto */
+    const prev = document.getElementById("prtFrame");
+    if (prev) prev.remove();
+    const f = document.createElement("iframe");
+    f.id = "prtFrame";
+    f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0";
+    document.body.append(f);
+    const d2 = f.contentWindow.document;
+    d2.open();
+    d2.write('<!doctype html><meta charset="utf-8"><style>@page{margin:4mm}body{margin:0}pre{font:12px/1.35 "Courier New",monospace;white-space:pre-wrap;width:72mm}</style><pre>' + esc(t) + "</pre>");
+    d2.close();
+    setTimeout(() => {
+      try { f.contentWindow.focus(); f.contentWindow.print(); } catch (_) {}
+      setTimeout(() => f.remove(), 1500);
+    }, 260);
     return "sistema";
   }
 

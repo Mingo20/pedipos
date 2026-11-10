@@ -1446,3 +1446,30 @@ body.focus .subv.conbarra .seg2{margin-top:14px}
 .pw-pasos li{font-size:13px;line-height:1.35}
 .pw-pasos li b{color:#0B6B45}
 .pw-c h3{font-size:20px}
+
+/* ========== v67 ========== */
+
+/* 1) la cabecera del talonario vuelve a pegarse arriba: sin hueco y con el
+      primer producto siempre visible */
+.tick-h{position:static!important;top:auto!important;z-index:auto!important;
+  border-top-left-radius:var(--r);border-top-right-radius:var(--r);background:var(--card)}
+.tick{overflow:hidden}
+
+/* 3) la flecha del menu lateral avisa hacia donde se oculta */
+.sh-x.flecha-lado svg{transition:transform .2s cubic-bezier(.22,.9,.3,1)}
+.sheet.side.arrastrando .flecha-lado svg{transition:none}
+
+/* 4 y 5) cliente y proveedor: kpis, botones y filtros quietos,
+   solo se desliza la lista de tarjetas */
+body.focus .subv.conbarra{display:flex;flex-direction:column;
+  height:100dvh;box-sizing:border-box;overflow:hidden;
+  padding-top:calc(env(safe-area-inset-top) + 82px);padding-bottom:0}
+body.focus .subv.conbarra > .kpis{margin:0 14px 10px!important;flex:none}
+body.focus .subv.conbarra > .subv-duo{margin:0 14px 4px;flex:none}
+body.focus .subv.conbarra > .seg2{margin:8px 14px 6px!important;flex:none}
+body.focus .subv.conbarra > #cxCaja,
+body.focus .subv.conbarra > #movCaja{
+  flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;padding:2px 0 86px}
+body.focus .subv.conbarra > #movCaja > .hrow.mov{margin:0 14px 7px}
+.tick-b{scroll-margin-top:0}

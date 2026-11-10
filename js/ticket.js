@@ -378,6 +378,27 @@
     return a + (hueco > 0 ? " ".repeat(hueco) : " ") + b;
   };
 
+  /* Imprime por el telefono usando un iframe: no depende de ventanas emergentes. */
+  function imprimirSistema(texto) {
+    const prev = document.getElementById("prtFrame");
+    if (prev) prev.remove();
+    const f = document.createElement("iframe");
+    f.id = "prtFrame";
+    f.setAttribute("aria-hidden", "true");
+    f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0";
+    document.body.append(f);
+    const doc = f.contentWindow.document;
+    doc.open();
+    doc.write('<!doctype html><meta charset="utf-8"><title>Ticket</title>' +
+      '<style>@page{margin:4mm}body{margin:0}pre{font:12px/1.35 "Courier New",monospace;white-space:pre-wrap;width:72mm}</style>' +
+      "<pre>" + esc(texto) + "</pre>");
+    doc.close();
+    setTimeout(() => {
+      try { f.contentWindow.focus(); f.contentWindow.print(); } catch (_) {}
+      setTimeout(() => f.remove(), 1500);
+    }, 260);
+  }
+
   async function imprimir(lineas) {
     const c = await conectar();
     const data = escpos(lineas);
@@ -570,7 +591,7 @@
       ],
       nota: "El aviso de activar Bluetooth lo muestra el navegador: es normal y hay que tocar Permitir. Ninguna pagina web puede cambiar ese mensaje.",
       botones: [
-        { texto: "Ahora no", alHacer: cerrarVentana },
+        { texto: "Imprimir ahora", alHacer: () => { cerrarVentana(); imprimirSistema(window.PPTicket.textoPlano(lineas)); } },
         { texto: "Buscar impresora", tipo: "prim", alHacer: lanzar },
       ],
     });

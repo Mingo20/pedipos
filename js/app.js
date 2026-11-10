@@ -693,10 +693,15 @@
       if (!activo) return;
       dx = Math.max(0, e.touches[0].clientX - x0);
       s.style.transform = "translateX(" + dx + "px)";
+      /* la flecha avisa: a la derecha se oculta, al arrastrar apunta a la izquierda */
+      const fl = s.querySelector(".flecha-lado svg");
+      if (fl) fl.style.transform = "rotate(" + Math.min(180, Math.round(dx * 1.8)) + "deg)";
     }, { passive: true });
     const soltar = () => {
       if (!activo) return;
       activo = false; s.classList.remove("arrastrando");
+      const fl = s.querySelector(".flecha-lado svg");
+      if (fl) fl.style.transform = "";
       if (dx > 62) { s.style.transform = ""; closeSheet(); }
       else { s.style.transform = ""; }
       dx = 0;
@@ -1748,9 +1753,9 @@
 
   /* ---------- Menu lateral ---------- */
   function openMenu() {
-    const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes y creditos", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
+    const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
-    const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x" id="x">${I.xDown}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
     $$("[data-g]", s).forEach((b) => (b.onclick = () => { closeSheet(true); go(b.dataset.g); }));
