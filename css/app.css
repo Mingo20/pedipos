@@ -1473,3 +1473,8 @@ body.focus .subv.conbarra > #movCaja{
   overscroll-behavior:contain;padding:2px 0 86px}
 body.focus .subv.conbarra > #movCaja > .hrow.mov{margin:0 14px 7px}
 .tick-b{scroll-margin-top:0}
+
+/* 1) el talonario crece con sus productos: nunca esconde la primera fila */
+.tick .tick-b{max-height:none!important;overflow:visible!important;min-height:64px}
+.tick{overflow:visible}
+.tick-h{background:var(--card)}
