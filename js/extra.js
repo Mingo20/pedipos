@@ -441,9 +441,13 @@
     animarSub = false; view.scrollTop = 0;
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
-    $(".hrow.mov").forEach((el) => {
-      el.onclick = () => verMovimiento(p, mov[Number(el.dataset.mov)]);
-    });
+    /* un solo manejador para todas las tarjetas: mas robusto que fila por fila */
+    view.onclick = (ev) => {
+      const el = ev.target && ev.target.closest ? ev.target.closest(".hrow.mov") : null;
+      if (!el) return;
+      const m = mov[Number(el.dataset.mov)];
+      if (m) verMovimiento(p, m);
+    };
     $("#svCompra").onclick = () => registrarCompra(p);
     $("#svEdit").onclick = () => editarProveedor(p);
     const pg = $("#svPago");
@@ -453,6 +457,10 @@
   /* Detalle de un movimiento de proveedor, con envio directo por WhatsApp. */
   function verMovimiento(p, m) {
     if (!m) return;
+    try { abrirMovimiento(p, m); } catch (e) { toast("No se pudo abrir: " + (e && e.message ? e.message : e)); }
+  }
+
+  function abrirMovimiento(p, m) {
     const compra = m.tipo === "compra";
     const total = compra ? (Number(m.x.total) || 0) : (Number(m.x.monto) || 0);
     const pagado = compra ? (Number(m.x.pagado) || 0) : 0;
