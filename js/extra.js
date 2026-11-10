@@ -211,7 +211,7 @@
         if (g) verPagoCliente(c, g);
       }
     };
-    $("#segCli .sg").forEach((b) => (b.onclick = () => {
+    $$("#segCli .sg").forEach((b) => (b.onclick = () => {
       cliVista = b.dataset.t;
       pintarCliente(c);
     }));
@@ -538,7 +538,7 @@
       const m = mov[Number(el.dataset.mov)];
       if (m) verMovimiento(p, m);
     };
-    $("#segProv .sg").forEach((b) => (b.onclick = () => { provVista = b.dataset.t; pintarProveedor(p); }));
+    $$("#segProv .sg").forEach((b) => (b.onclick = () => { provVista = b.dataset.t; pintarProveedor(p); }));
     $("#svCompra").onclick = () => registrarCompra(p);
     $("#svEdit").onclick = () => editarProveedor(p);
     const pg = $("#svPago");
