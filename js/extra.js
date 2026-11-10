@@ -103,6 +103,15 @@
   }
 
   let animarSub = false;
+
+  /* La animacion de entrada deja un transform aplicado, y eso impide que el
+     encabezado quede fijo. Se retira en cuanto termina. */
+  function limpiarEntrada(view) {
+    setTimeout(() => {
+      const el = view && view.querySelector ? view.querySelector(".subv.entra") : null;
+      if (el) el.classList.remove("entra");
+    }, 340);
+  }
   function verCliente(c) {
     if (!c) return;
     sub = { tipo: "cliente", id: c.cid };
@@ -193,6 +202,7 @@
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar cliente</button></div>`;
     animarSub = false; view.scrollTop = 0;
+    limpiarEntrada(view);
     const wa = c.whatsapp || c.telefono;
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
@@ -532,6 +542,7 @@
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar proveedor</button></div>`;
     animarSub = false; view.scrollTop = 0;
+    limpiarEntrada(view);
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     /* un solo manejador para todas las tarjetas: mas robusto que fila por fila */
