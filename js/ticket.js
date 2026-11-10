@@ -59,67 +59,124 @@
     return out.length ? out : [""];
   }
 
-  /* ---------- ticket de una venta ---------- */
+  /* ---------- ticket de una venta: recibo monocromo ---------- */
+  const NEGRO = "#111417";
+  const GRIS = "#5A636A";
+  const TENUE = "#8A939A";
+  const LINEA = "#C9D0D6";
+
+  function fechaRecibo(f) {
+    const d = new Date(f || Date.now());
+    const M = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+    const h = d.getHours();
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return M[d.getMonth()] + " " + String(d.getDate()).padStart(2, "0") + " " + d.getFullYear() + " " + hh + ":" + mm + (h < 12 ? "AM" : "PM");
+  }
+
+  function nombrePago(m) {
+    if (m === "credito") return "CREDITO";
+    if (m === "tarjeta") return "TARJETA";
+    if (m === "transferencia") return "TRANSFERENCIA";
+    return "EFECTIVO";
+  }
+
   function lienzoVenta(v, opts) {
     opts = opts || {};
     const prod = lineasDe(v);
-    const filas = prod.length;
-    const alto = 470 + filas * 62 + (v.cliente ? 34 : 0) + 120;
+    const alto = 700 + prod.length * 64 + (v.cliente ? 34 : 0) + (v.recibido ? 70 : 0);
     const { c, x } = crearLienzo(alto);
 
-    /* banda superior */
-    x.fillStyle = "#0F7C4F";
-    x.fillRect(0, 0, ancho, 106);
-    texto(x, opts.negocio || "Mi negocio", 56, { alinea: "center", tam: 30, peso: 800, color: "#fff" });
-    texto(x, opts.direccion || "", 84, { alinea: "center", tam: 17, color: "#D6F0E2" });
+    /* cabecera: solo texto negro, sin fondos de color */
+    let y = 64;
+    const centro = ancho / 2;
+    x.font = "800 32px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    x.fillStyle = NEGRO;
+    x.textAlign = "center";
+    const neg = (opts.negocio || "Mi negocio");
+    const lineasNeg = partir(x, neg.toUpperCase(), ancho - pad * 2);
+    lineasNeg.slice(0, 2).forEach((l) => { x.fillText(l, centro, y); y += 36; });
 
-    let y = 150;
-    texto(x, v.metodo === "credito" ? "A CREDITO" : "PAGADO", y, { tam: 17, peso: 800, color: v.metodo === "credito" ? "#B8860B" : "#0F7C4F" });
-    texto(x, fecha(v.fecha), y, { alinea: "right", tam: 17, color: "#6B747C" });
-    y += 30;
-    if (v.cliente) {
-      texto(x, "CLIENTE", y, { tam: 15, peso: 700, color: "#8B949C" });
-      texto(x, v.cliente, y, { alinea: "right", tam: 17, peso: 600 });
-      y += 28;
+    if (opts.direccion) {
+      x.font = "400 19px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      partir(x, opts.direccion, ancho - pad * 2).slice(0, 2).forEach((l) => { x.fillText(l, centro, y); y += 24; });
     }
-    y += 8;
-    linea(x, y, "#E6EBEF");
-    y += 30;
-    texto(x, "PRODUCTO", y, { tam: 14, peso: 700, color: "#8B949C" });
-    texto(x, "TOTAL", y, { alinea: "right", tam: 14, peso: 700, color: "#8B949C" });
-    y += 12;
+    if (opts.telefono) {
+      x.fillText(opts.telefono, centro, y); y += 24;
+    }
+    if (opts.web) {
+      x.fillText(opts.web, centro, y); y += 24;
+    }
 
-    prod.forEach((l) => {
-      y += 30;
-      texto(x, l.nombre || l.producto || "Producto", y, { tam: 21, peso: 700 });
-      texto(x, money(l.total != null ? l.total : (l.cant || 0) * (l.precio || 0)), y, { alinea: "right", tam: 21, peso: 700 });
-      y += 22;
-      texto(x, cant(l) + " " + (l.unidad || "unidad") + " · " + money(l.precio) + " c/u", y, { tam: 15, color: "#7B848C" });
-      y += 8;
+    /* fecha grande centrada, como en el recibo termico */
+    x.font = "600 18px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    x.fillStyle = GRIS;
+    x.fillText(fechaRecibo(v.fecha), centro, y + 10);
+    y += 32;
+
+    /* datos de la operacion */
+    const filas = [];
+    filas.push(["Orden", String(v.vid || v.folio || "-")]);
+    filas.push(["Fecha", new Date(v.fecha || Date.now()).toLocaleString("es-DO", { day: "numeric", month: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })]);
+    if (v.cliente) filas.push(["Cliente", v.cliente]);
+    filas.push(["Pago", nombrePago(v.metodo)]);
+    if (v.cajero) filas.push(["Cajero", v.cajero]);
+    if (v.metodo === "credito" && v.fecha_pago) filas.push(["Vence", new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO")]);
+
+    y += 16;
+    linea(x, y, LINEA); y += 34;
+    filas.forEach(([k, val]) => {
+      texto(x, k, y, { tam: 18, color: GRIS });
+      texto(x, val, y, { alinea: "right", tam: 18, peso: 600, color: NEGRO });
+      y += 27;
     });
 
-    y += 22;
-    linea(x, y, "#E6EBEF");
-    y += 32;
-    texto(x, "Subtotal", y, { tam: 19, color: "#5B646C" });
-    texto(x, money2(v.subtotal), y, { alinea: "right", tam: 19, color: "#5B646C" });
-    y += 30;
-    texto(x, "ITBIS", y, { tam: 19, color: "#B8860B" });
-    texto(x, money2(v.itbis || 0), y, { alinea: "right", tam: 19, color: "#B8860B" });
-    y += 40;
-    texto(x, "TOTAL", y, { tam: 26, peso: 800 });
-    texto(x, money2(v.total), y, { alinea: "right", tam: 26, peso: 800 });
-    y += 34;
+    /* productos */
+    y += 8;
+    linea(x, y, LINEA); y += 28;
+    texto(x, "CANT", y, { tam: 13, peso: 700, color: TENUE });
+    texto(x, "PRODUCTO", y, { x: pad + 62, tam: 13, peso: 700, color: TENUE });
+    texto(x, "TOTAL", y, { alinea: "right", tam: 13, peso: 700, color: TENUE });
+    y += 10;
+
+    prod.forEach((l) => {
+      y += 32;
+      texto(x, cant(l), y, { tam: 18, peso: 600, color: GRIS });
+      const nom = String(l.nombre || l.producto || "Producto");
+      texto(x, nom.length > 26 ? nom.slice(0, 25) + "." : nom, y, { x: pad + 62, tam: 18, peso: 600, color: NEGRO });
+      texto(x, money(l.total != null ? l.total : (l.cant || 0) * (l.precio || 0)), y, { alinea: "right", tam: 18, peso: 600, color: NEGRO });
+      y += 21;
+      texto(x, (l.unidad ? l.unidad : "unidad") + " · " + money(l.precio) + " c/u", y, { x: pad + 62, tam: 14, color: TENUE });
+      y += 10;
+    });
+
+    /* totales */
+    y += 10;
+    linea(x, y, LINEA); y += 32;
+    const fila = (k, val, peso, color, tam) => {
+      texto(x, k, y, { tam: tam || 18, color: color || GRIS, peso: peso || 400 });
+      texto(x, val, y, { alinea: "right", tam: tam || 18, color: color || GRIS, peso: peso || 400 });
+      y += 28;
+    };
+    fila("Subtotal", money2(v.subtotal));
+    fila("ITBIS", money2(v.itbis || 0));
+    if (v.descuento) fila("Descuento", "-" + money2(v.descuento));
+    y += 4;
+    fila("TOTAL", money2(v.total), 800, NEGRO, 25);
     if (v.recibido) {
-      texto(x, "Recibido", y, { tam: 18, color: "#5B646C" });
-      texto(x, money2(v.recibido), y, { alinea: "right", tam: 18, color: "#5B646C" });
-      y += 26;
-      texto(x, "Cambio", y, { tam: 18, color: "#5B646C" });
-      texto(x, money2(v.cambio || 0), y, { alinea: "right", tam: 18, color: "#5B646C" });
+      fila("Recibido", money2(v.recibido));
+      fila("Cambio", money2(v.cambio || 0));
     }
 
-    /* pie */
-    texto(x, "Gracias por su compra", alto - 52, { alinea: "center", tam: 16, color: "#9AA3AA" });
+    /* firma y texto legal */
+    y += 18;
+    linea(x, y, LINEA, 1.2); y += 30;
+    texto(x, "FIRMA", y, { tam: 13, peso: 700, color: TENUE });
+    y += 26;
+    texto(x, "Acepto pagar el total indicado conforme", y, { alinea: "center", tam: 15, color: GRIS }); y += 21;
+    texto(x, "al acuerdo comercial del negocio.", y, { alinea: "center", tam: 15, color: GRIS }); y += 34;
+    texto(x, "Gracias por su compra", y, { alinea: "center", tam: 19, peso: 700, color: NEGRO }); y += 26;
+    texto(x, "Este documento no es un comprobante fiscal", y, { alinea: "center", tam: 13, color: TENUE });
     return c;
   }
 
@@ -129,9 +186,8 @@
     const n = (cfg.pedidos || []).length;
     const alto = 470 + n * 66 + 130;
     const { c, x } = crearLienzo(alto);
-    x.fillStyle = "#0F7C4F"; x.fillRect(0, 0, ancho, 106);
-    texto(x, cfg.negocio || "Mi negocio", 56, { alinea: "center", tam: 30, peso: 800, color: "#fff" });
-    texto(x, "ESTADO DE CREDITO", 84, { alinea: "center", tam: 16, peso: 700, color: "#D6F0E2" });
+    texto(x, String(cfg.negocio || "Mi negocio").toUpperCase(), 62, { alinea: "center", tam: 30, peso: 800, color: NEGRO });
+    texto(x, "ESTADO DE CREDITO", 90, { alinea: "center", tam: 16, peso: 700, color: GRIS });
 
     let y = 158;
     texto(x, "TOTAL A PAGAR", y, { tam: 15, peso: 800, color: "#8B949C" });
@@ -222,16 +278,22 @@
     out.push(0x1b, 0x40);                  /* inicializar */
     out.push(0x1b, 0x61, 0x01);            /* centrar */
     out.push(0x1b, 0x21, 0x10);            /* doble alto */
-    lineas.titulo.forEach((t) => out.push(...bytes(t + "\n")));
+    (lineas.titulo || []).forEach((t) => out.push(...bytes(t + "\n")));
     out.push(0x1b, 0x21, 0x00);            /* normal */
-    lineas.sub.forEach((t) => out.push(...bytes(t + "\n")));
+    (lineas.sub || []).forEach((t) => out.push(...bytes(t + "\n")));
     out.push(0x1b, 0x61, 0x00);            /* izquierda */
     out.push(...bytes("-".repeat(32) + "\n"));
-    lineas.cuerpo.forEach((t) => out.push(...bytes(t + "\n")));
+    (lineas.cuerpo || []).forEach((t) => out.push(...bytes(t + "\n")));
     out.push(...bytes("-".repeat(32) + "\n"));
     out.push(0x1b, 0x45, 0x01);            /* negrita */
-    lineas.total.forEach((t) => out.push(...bytes(t + "\n")));
+    (lineas.total || []).forEach((t) => out.push(...bytes(t + "\n")));
     out.push(0x1b, 0x45, 0x00);
+    if (lineas.pie && lineas.pie.length) {
+      out.push(...bytes("\n"));
+      out.push(0x1b, 0x61, 0x01);
+      lineas.pie.forEach((t) => out.push(...bytes(t + "\n")));
+      out.push(0x1b, 0x61, 0x00);
+    }
     out.push(...bytes("\n\n\n"));
     out.push(0x1d, 0x56, 0x42, 0x00);      /* cortar papel */
     return new Uint8Array(out);
@@ -266,14 +328,47 @@
     return true;
   }
 
-  function lineasVenta(v, negocio, direccion) {
-    const prod = lineasDe(v).map((l) => izq(cant(l) + " " + (l.unidad || "u") + " " + String(l.nombre || "").slice(0, 18), money(l.total != null ? l.total : (l.cant || 0) * (l.precio || 0))));
-    return {
-      titulo: [negocio || "Mi negocio"],
-      sub: [direccion || "", fecha(v.fecha), v.cliente ? "Cliente: " + v.cliente : "", v.metodo === "credito" ? "A CREDITO" : "PAGADO"],
-      cuerpo: prod,
-      total: [izq("Subtotal", money2(v.subtotal)), izq("ITBIS", money2(v.itbis || 0)), izq("TOTAL", money2(v.total))],
+  function lineasVenta(v, negocio, direccion, telefono) {
+    const W = 32;
+    const centrar = (s) => {
+      s = String(s || "").slice(0, W);
+      const hueco = Math.max(0, W - s.length);
+      return " ".repeat(Math.floor(hueco / 2)) + s;
     };
+    const corto = (s, n) => { s = String(s || ""); return s.length > n ? s.slice(0, n - 1) + "." : s; };
+
+    const titu = [centrar(String(negocio || "Mi negocio").toUpperCase())];
+    const sub = [];
+    if (direccion) sub.push(centrar(direccion));
+    if (telefono) sub.push(centrar(telefono));
+    sub.push(centrar(fechaRecibo(v.fecha)));
+
+    const cuerpo = [];
+    cuerpo.push(izq("Orden:", String(v.vid || v.folio || "-")));
+    const d = new Date(v.fecha || Date.now());
+    const hh = d.getHours() % 12 === 0 ? 12 : d.getHours() % 12;
+    cuerpo.push(izq("Fecha:", String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear() + " " + hh + ":" + String(d.getMinutes()).padStart(2, "0") + (d.getHours() < 12 ? "AM" : "PM")));
+    if (v.cliente) cuerpo.push(izq("Cliente:", corto(v.cliente, 18)));
+    cuerpo.push(izq("Pago:", nombrePago(v.metodo)));
+    cuerpo.push("");
+    cuerpo.push("CANT PRODUCTO              TOTAL");
+    lineasDe(v).forEach((l) => {
+      const n = corto(l.nombre || l.producto || "Producto", 17).padEnd(17);
+      const cantTxt = String(cant(l)).padEnd(4);
+      const tot = money(l.total != null ? l.total : (l.cant || 0) * (l.precio || 0));
+      cuerpo.push((cantTxt + n).slice(0, W - tot.length).padEnd(W - tot.length) + tot);
+    });
+    if (v.recibido) {
+      cuerpo.push(izq("Recibido:", money2(v.recibido)));
+      cuerpo.push(izq("Cambio:", money2(v.cambio || 0)));
+    }
+
+    const total = [];
+    total.push(izq("Subtotal:", money2(v.subtotal)));
+    total.push(izq("ITBIS:", money2(v.itbis || 0)));
+    total.push(izq("TOTAL:", money2(v.total)));
+
+    return { titulo: titu, sub, cuerpo, total, pie: ["FIRMA: ______________________", "Acepto pagar el total indicado", "conforme al acuerdo comercial.", "  Gracias por su compra"] };
   }
 
   function lineasEstado(cfg) {

@@ -1475,13 +1475,13 @@
       <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro" id="pr" aria-label="Imprimir por Bluetooth">${I.print}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = () => {
-      window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(sale, db().settings.negocio || "Mi negocio", db().settings.direccion || ""), "ticket");
+      window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(sale, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || ""), "ticket");
     };
     /* 4 y 5) el ticket sale como imagen vertical por WhatsApp */
     $("#wa", s).onclick = async () => {
       try {
         const neg = db().settings.negocio || "Mi negocio";
-        const c = window.PPTicket.lienzoVenta(sale, { negocio: neg, direccion: db().settings.direccion || "" });
+        const c = window.PPTicket.lienzoVenta(sale, { negocio: neg, direccion: db().settings.direccion || "", telefono: db().settings.telefono || "" });
         const r = await window.PPTicket.compartir(c, "ticket-" + (sale.vid || "pedido") + ".png");
         if (r === "descargado") toast("Imagen guardada. Adjuntala en WhatsApp");
         else if (r === "compartido") toast("Ticket compartido");
@@ -1823,14 +1823,14 @@
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = async () => {
       try {
-        const c = window.PPTicket.lienzoVenta(s, { negocio: db().settings.negocio || "Mi negocio", direccion: db().settings.direccion || "" });
+        const c = window.PPTicket.lienzoVenta(s, { negocio: db().settings.negocio || "Mi negocio", direccion: db().settings.direccion || "", telefono: db().settings.telefono || "" });
         const r = await window.PPTicket.compartir(c, "ticket-" + (s.vid || "pedido") + ".png");
         if (r === "descargado") toast("Imagen guardada. Adjuntala en WhatsApp");
         else if (r === "compartido") toast("Ticket compartido");
       } catch (e) { toast("No se pudo enviar el ticket"); }
     };
     $("#prt", sh).onclick = () => {
-      window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || ""), "ticket");
+      window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || ""), "ticket");
     };
     $("#cam", sh).onclick = () => window.PPExtra.adjuntarComprobante(s, openDetalle);
   }
