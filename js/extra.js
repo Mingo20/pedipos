@@ -479,7 +479,7 @@
     if (compra) { filas.push(["Pagado", money2(pagado)]); filas.push(["Pendiente", money2(debe)]); }
     filas.push(["Saldo actual", money2(saldo)]);
 
-    const s = sheetCliente(`<div class="sh-h"><h2>${compra ? "Detalle de la compra" : "Detalle del pago"}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2><span class="hi">${I.wallet}</span>${compra ? "Detalle de la compra" : "Detalle del pago"}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <div class="mov-h"><span class="mov-badge ${compra ? (debe > 0 ? "red" : "green") : "green"}">${compra ? "-" : "+"}${money(total)}</span>
         <div class="mov-tt"><b>${esc(p.nombre)}</b><span>${esc(fecha)}</span></div></div>
       <div class="mov-tabla">

@@ -1193,7 +1193,6 @@
     transformarBarra(true);
     MIC.tick = setInterval(() => {
       MIC.seg++;
-      const t = $("#recT"); if (t) t.textContent = fmtSeg(MIC.seg);
     }, 1000);
   }
 
@@ -1266,7 +1265,7 @@
     } else {
       if (!window.PPVoice.resumeRecording()) return;
       MIC.pausado = false; micVibra(20);
-      MIC.tick = setInterval(() => { MIC.seg++; const t = $("#recT"); if (t) t.textContent = fmtSeg(MIC.seg); }, 1000);
+      MIC.tick = setInterval(() => { MIC.seg++; }, 1000);
       if (b) { b.innerHTML = I.pausa; b.setAttribute("aria-label", "Pausar"); b.classList.remove("on"); }
       onda && onda.classList.remove("quieta"); dot && dot.classList.remove("quieto");
     }
