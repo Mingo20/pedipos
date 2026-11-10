@@ -28,6 +28,7 @@
     lock: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     trashAnim: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5l.85 11.6A2 2 0 0 0 9.34 21h5.32a2 2 0 0 0 1.99-1.9l.85-11.6"/><g class="tapa"><path d="M4.4 7.2h15.2"/><path d="M9.4 7.2V4.9h5.2v2.3"/></g></svg>',
     lockAnim: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.6" width="14" height="9.4" rx="2.6"/><path class="arco" d="M8.2 10.6V7.9a3.8 3.8 0 0 1 7.6 0v2.7"/></svg>',
+    share: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M8.5 6.5 12 3l3.5 3.5"/><path d="M6 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1"/></svg>',
     sendarrow: '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg>',
     bag: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -1048,16 +1049,27 @@
 
   /* ----- Lista de pedido con IA ----- */
   let orderRec = false;
+  /* El texto de la lista vive aparte: sobrevive a cerrar la hoja, salir o recargar la app.
+     Solo se borra al confirmar el cobro o si el usuario lo vacia a mano. */
+  const ORDER_KEY = "pedipos.listaPedido";
+  const orderTexto = () => { try { return localStorage.getItem(ORDER_KEY) || ""; } catch (_) { return ""; } };
+  const guardarOrderTexto = (v) => { try { localStorage.setItem(ORDER_KEY, v == null ? "" : v); } catch (_) {} };
+  window.PPOrder = { leer: orderTexto, borrar: () => guardarOrderTexto("") };
+
   function openOrder(initial) {
+    const arranque = (initial != null && initial !== "") ? initial : orderTexto();
     const s = sheet(`<div class="sh-h"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.xDown}</button></div>
-      <textarea class="ta baja" id="ta" placeholder="Escribe el pedido: dos leches, media libra de arroz...">${esc(initial || "")}</textarea>
+      <textarea class="ta baja" id="ta" placeholder="Escribe el pedido: dos leches, media libra de arroz...">${esc(arranque)}</textarea>
       <div class="sh-f solo"><button class="big" id="go">${I.spark} <span class="bl">Procesar pedido</span></button></div>`);
     $("#x", s).onclick = () => { window.PPVoice.stopDictation(); closeSheet(); };
     const ta = $("#ta", s), go = $("#go", s);
+    ta.value = arranque;
+    ta.oninput = () => guardarOrderTexto(ta.value);
     setTimeout(() => ta.focus(), 220);
     go.onclick = async () => {
       const text = ta.value.trim();
       if (!text) return toast("Escribe el pedido");
+      guardarOrderTexto(ta.value);
       go.disabled = true; go.innerHTML = '<span class="bar" id="bar" style="width:4%"></span><span class="spin" style="border-color:#fff;border-top-color:transparent"></span><span id="pc">Procesando... 4%</span>';
       let r = null;
       try {
@@ -1475,6 +1487,7 @@
       db().sales.push(sale);
       for (const l of lineasDe(sale)) { const p = db().products.find((x) => x.pid === l.pid); if (p && typeof p.stock === "number") { p.stock = S.round2(p.stock - l.cant); window.PPSync.saveProduct(p); } }
       cart().lines = []; S.save(); window.PPSync.saveSale(sale);
+      guardarOrderTexto("");   /* el cobro confirmado limpia la lista de pedido */
       receipt(sale);
     };
   }
@@ -1848,7 +1861,7 @@
       </div>
       <div class="sh-f fijo"><button class="big slim miniwa" id="send">${I.wa} <span class="bl">Enviar Ticket</span></button>
         <button class="m negro" id="prt" aria-label="Imprimir">${I.print}</button>
-        <button class="m" id="img" aria-label="Ticket en imagen">${I.ticket}</button></div>`);
+        </div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => enviarTicketWa(s, waDeVenta(s));
     $("#img", sh).onclick = async () => {

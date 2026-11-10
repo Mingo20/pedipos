@@ -1349,3 +1349,49 @@ div.hrow:active{transform:scale(.985)}
   border-bottom:1px solid #E9EEF1;color:#6B747C}
 .mov-tabla .r:last-child{border-bottom:none}
 .mov-tabla .r b{color:#20272D;font-weight:700;text-align:right}
+
+/* ========== v60 ========== */
+
+/* 1) icono enviar centrado en su fondo verde */
+.act .recbar .rlock2.enviar{display:grid!important;place-items:center;padding:0;line-height:0}
+.act .recbar .rlock2.enviar svg{width:19px;height:19px;margin:0 auto;transform:none}
+.act .recbar .rlock2.enviar svg path{transform:translateX(1.2px)}
+
+/* 1) el icono de productos del panel va en negro */
+.tools .plus.tl#bSearch{color:#14191E}
+
+/* 2a) titulo grande en las hojas de abono */
+.sh-h h2.h-gran{font-size:21px!important;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+
+/* 2b) boton de resumen con icono compartir */
+.ec-pie2 .big .bl{font-size:15px}
+.ec-pie2 .big svg{width:21px;height:21px;flex:none}
+
+/* 2c) tarjetas de compras y pagos: mismo margen minimo entre todas */
+.cx-list{display:flex!important;flex-direction:column;gap:7px!important;margin:0 14px 6px}
+.cx-list .cx{margin:0!important;border-radius:16px!important;width:auto}
+.cx-list .cx + .cx{margin-top:0!important}
+.cx-list .cx:not(:last-child){border-bottom-left-radius:16px!important;border-bottom-right-radius:16px!important}
+.cx-list .cx + .cx{border-top-left-radius:16px!important;border-top-right-radius:16px!important}
+.cx.pago .hi b{color:#0B6B45}
+.cx.pago > b{color:#0B6B45}
+
+/* filtros COMPRA / PAGOS */
+.seg2{display:flex;gap:8px;margin:16px 14px 10px}
+.seg2 .sg{flex:1;height:42px;border-radius:14px;border:1.5px solid #E4E9ED;background:#fff;
+  color:#6B747C;font:inherit;font-size:12.5px;font-weight:800;letter-spacing:.06em;
+  display:grid;place-items:center;transition:.18s ease}
+.seg2 .sg:active{transform:scale(.98)}
+.seg2 .sg.on{background:var(--g);border-color:var(--g);color:#fff;box-shadow:0 6px 16px #1f9d5c3d}
+
+/* 2d y 3c) encabezado del cliente y del proveedor siempre visible al deslizar */
+.subv.conbarra .subv-h{position:sticky;top:0;z-index:12}
+body.focus main#view{scroll-padding-top:96px}
+.subv.conbarra .subv-h{box-shadow:0 6px 18px -14px #10182866}
+
+/* la lista de movimientos del proveedor con el mismo margen */
+.subv.conbarra > .hrow.mov{margin:0 14px 7px}
+.subv.conbarra > .hrow.mov:last-child{margin-bottom:4px}
+
+/* el sello de mensajes del estado de credito no lleva verde */
+.ec-pie2 .m.negro{background:#14191E}

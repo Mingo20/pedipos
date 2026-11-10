@@ -131,6 +131,18 @@
 
   window.animarTal = animarTal;
 
+  /* Pagos del cliente: los registrados al abonar y, si es historico, las ventas ya pagadas. */
+  function pagosDeCliente(c) {
+    let lista = Array.isArray(c.pagos) ? c.pagos.slice() : [];
+    if (!lista.length) {
+      lista = ventasDe(c.cid).filter((v) => v.metodo === "credito" && v.pagada)
+        .map((v) => ({ id: v.vid, fecha: v.fecha, monto: Number(v.total) || 0, historico: true }));
+    }
+    return lista.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+  }
+
+  let cliVista = "compras";   /* compras | pagos */
+
   function pintarCliente(c) {
     const view = document.getElementById("view");
     const d = deudaDe(c.cid), vs = ventasDe(c.cid);
@@ -142,9 +154,13 @@
         <div class="hi"><b>${cred ? (v.pagada ? "Credito pagado" : "Credito pendiente") : "Contado"}</b>
           <span>${new Date(v.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${v.lineas ? " &middot; " + lineasDe2(v).length + " art." : ""}</span>
           ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
-        <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>
-        </div>`;
+        <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
     };
+    const pagos = pagosDeCliente(c);
+    const filaPago = (g) => `<div class="cx pago" role="button" tabindex="0" data-p="${esc(g.id)}">
+        <div class="hi"><b>${g.historico ? "Pago (venta saldada)" : "Pago registrado"}</b>
+          <span>${new Date(g.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span></div>
+        <b class="green">-${money(g.monto)}</b></div>`;
     window.PPUI.clearFab();
     document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
     const dir = c.direccion || "Sin direccion registrada";
@@ -162,8 +178,15 @@
         ${d > 0 ? `<button class="btn mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
         <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.order}<span>Estado de credito</span></button>
       </div>
-      <p class="lbl subv-lbl">COMPRAS (${vs.length})</p>
-      ${vs.length ? `<div class="cx-list">${vs.map(fila).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>'}
+      <div class="seg2" id="segCli">
+        <button class="sg ${cliVista === "compras" ? "on" : ""}" data-t="compras">COMPRAS (${vs.length})</button>
+        <button class="sg ${cliVista === "pagos" ? "on" : ""}" data-t="pagos">PAGOS (${pagos.length})</button>
+      </div>
+      <div id="cxCaja">
+      ${cliVista === "compras"
+        ? (vs.length ? `<div class="cx-list">${vs.map(fila).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>')
+        : (pagos.length ? `<div class="cx-list">${pagos.map(filaPago).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin pagos registrados.</p>')}
+      </div>
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar cliente</button></div>`;
     animarSub = false; view.scrollTop = 0;
@@ -174,11 +197,65 @@
     $("#svCorte").onclick = () => estadoCuenta(c);
     const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
-    /* cada compra abre su ticket directamente, sin animacion */
-    $$(".cx[data-v]", view).forEach((b) => (b.onclick = () => {
-      const v = (db().sales || []).find((x) => x.vid === b.dataset.v);
-      if (v) window.PPUI.detalle(v);
+    /* una sola escucha para compras y pagos */
+    view.onclick = (ev) => {
+      const compra = ev.target.closest ? ev.target.closest(".cx[data-v]") : null;
+      if (compra) {
+        const v = (db().sales || []).find((x) => x.vid === compra.dataset.v);
+        if (v) window.PPUI.detalle(v);
+        return;
+      }
+      const pago = ev.target.closest ? ev.target.closest(".cx[data-p]") : null;
+      if (pago) {
+        const g = pagosDeCliente(c).find((x) => String(x.id) === pago.dataset.p);
+        if (g) verPagoCliente(c, g);
+      }
+    };
+    $("#segCli .sg").forEach((b) => (b.onclick = () => {
+      cliVista = b.dataset.t;
+      pintarCliente(c);
     }));
+  }
+
+  /* Detalle de un pago del cliente, con aviso directo por WhatsApp. */
+  function verPagoCliente(c, g) {
+    try { abrirPagoCliente(c, g); } catch (e) { toast("No se pudo abrir: " + (e && e.message ? e.message : e)); }
+  }
+
+  function abrirPagoCliente(c, g) {
+    const neg = db().settings.negocio || "Mi negocio";
+    const saldo = deudaDe(c.cid);
+    const fecha = new Date(g.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
+    const filas = [
+      ["Cliente", c.nombre],
+      ["Fecha", fecha],
+      ["Monto pagado", money2(g.monto)],
+      ["Saldo actual", money2(saldo)],
+    ];
+    const s = sheetCliente(`<div class="sh-h"><h2><span class="hi">${I.wallet}</span>Detalle del pago</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+      <div class="mov-h"><span class="mov-badge green">-${money(g.monto)}</span>
+        <div class="mov-tt"><b>${esc(c.nombre)}</b><span>${esc(fecha)}</span></div></div>
+      <div class="mov-tabla">
+        ${filas.map(([k, v]) => `<div class="r"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
+      </div>
+      <div class="sh-f fijo"><button class="big slim miniwa" id="pgWa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>`);
+    s.querySelector("[data-x]").onclick = closeSheet;
+    s.querySelector("#pgWa").onclick = () => {
+      const tel = c.whatsapp || c.telefono || "";
+      if (!tel) return toast("Este cliente no tiene WhatsApp registrado");
+      const msg = [
+        "*PAGO REGISTRADO*",
+        "*" + neg + "*",
+        "",
+        "Cliente: " + c.nombre,
+        "Fecha: " + fecha,
+        "Monto pagado: " + money2(g.monto),
+        "Saldo actual: " + money2(saldo),
+        "",
+        saldo > 0 ? "Gracias por su abono." : "Su cuenta quedo al dia. Gracias por su preferencia.",
+      ].join("\n");
+      window.PPUI.chatear(tel, msg);
+    };
   }
 
   /* Estado de cuenta: situacion actual del cliente, siempre disponible (sin importar la fecha).
@@ -236,7 +313,7 @@
           ${d.incl.length ? `<p class="ec-per">Periodo: ${fmtF(d.incl[0].fecha)} al ${fmtF(d.limite || new Date())}</p>` : ""}`
           : `<div class="ec-ok">${I.ok}<b>Cliente al dia</b><span>No tiene creditos pendientes.</span></div>`}
       </div>
-      <div class="sh-f fijo ec-pie ec-pie2"><button class="big slim miniwa" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.wa} <span class="bl">Enviar estado</span></button><button class="m negro" id="ecPrint" aria-label="Imprimir por Bluetooth">${I.print}</button></div>`);
+      <div class="sh-f fijo ec-pie ec-pie2"><button class="big slim" id="ecWa" ${d.incl.length ? "" : "disabled"}>${I.share} <span class="bl">Resumen de deuda</span></button><button class="m negro" id="ecPrint" aria-label="Imprimir por Bluetooth">${I.print}</button></div>`);
     s.classList.add("ec");
     s.querySelector("[data-x]").onclick = closeSheet;
     /* 8) el estado sale como imagen vertical; la impresora va justo al lado */
@@ -305,7 +382,7 @@
   }
 
   function abonar(c) {
-    const s = sheetCliente(`<div class="sh-h"><h2 class="h-chico">Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2 class="h-gran">Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <label class="field"><span>Monto (RD$)</span><input id="ab" inputmode="decimal" placeholder="${deudaDe(c.cid)}"></label>
       <button class="btn" id="oka">Registrar abono</button>`);
     s.querySelector("[data-x]").onclick = closeSheet;
@@ -318,7 +395,10 @@
         if (resto <= 0) break;
         if (resto >= Number(v.total) - 0.01) { v.pagada = true; resto = S.round2(resto - Number(v.total)); }
       }
+      c.pagos = Array.isArray(c.pagos) ? c.pagos : [];
+      c.pagos.push({ id: S.uid("PC"), fecha: new Date().toISOString(), monto: S.round2(m) });
       S.save(); pend.forEach((v) => window.PPSync.saveSale(v));
+      window.PPSync.saveCliente(c);
       closeSheet(); toast("Abono registrado"); render();
     };
   }
@@ -402,6 +482,8 @@
     pintarProveedor(p);
   }
 
+  let provVista = "compra";   /* compra | pago */
+
   function pintarProveedor(p) {
     const view = document.getElementById("view");
     const s0 = saldoProv(p);
@@ -409,6 +491,9 @@
       ...comprasDe(p).map((c) => ({ t: c.fecha, tipo: "compra", x: c })),
       ...pagosDe(p).map((g) => ({ t: g.fecha, tipo: "pago", x: g })),
     ].sort((a, b) => String(b.t).localeCompare(String(a.t)));
+    const nCompras = mov.filter((m) => m.tipo === "compra").length;
+    const nPagos = mov.filter((m) => m.tipo === "pago").length;
+    const lista = mov.filter((m) => m.tipo === provVista);
     const fila = (m, i) => {
       const compra = m.tipo === "compra";
       const pend = compra ? Math.max(0, (Number(m.x.total) || 0) - (Number(m.x.pagado) || 0)) : 0;
@@ -434,8 +519,13 @@
         <button class="btn mini2 conic" id="svCompra">${window.PPUI.I.cart}<span>Nueva compra</span></button>
         ${s0.debe > 0 ? `<button class="btn sec mini2 conic" id="svPago">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
       </div>
-      <p class="lbl subv-lbl">MOVIMIENTOS (${mov.length})</p>
-      ${mov.length ? mov.map(fila).join("") : '<p class="cnt" style="padding:10px 14px">Sin movimientos registrados.</p>'}
+      <div class="seg2" id="segProv">
+        <button class="sg ${provVista === "compra" ? "on" : ""}" data-t="compra">COMPRA (${nCompras})</button>
+        <button class="sg ${provVista === "pago" ? "on" : ""}" data-t="pago">PAGOS (${nPagos})</button>
+      </div>
+      <div id="movCaja">
+        ${lista.length ? lista.map((m) => fila(m, mov.indexOf(m))).join("") : `<p class="cnt" style="padding:10px 14px">${provVista === "compra" ? "Sin compras registradas." : "Sin pagos registrados."}</p>`}
+      </div>
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">Editar proveedor</button></div>`;
     animarSub = false; view.scrollTop = 0;
@@ -448,6 +538,7 @@
       const m = mov[Number(el.dataset.mov)];
       if (m) verMovimiento(p, m);
     };
+    $("#segProv .sg").forEach((b) => (b.onclick = () => { provVista = b.dataset.t; pintarProveedor(p); }));
     $("#svCompra").onclick = () => registrarCompra(p);
     $("#svEdit").onclick = () => editarProveedor(p);
     const pg = $("#svPago");
