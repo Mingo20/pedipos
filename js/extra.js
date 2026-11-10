@@ -262,12 +262,7 @@
       } catch (_) { toast("No se pudo enviar el estado"); }
     };
     const ep = s.querySelector("#ecPrint");
-    if (ep) ep.onclick = async () => {
-      try {
-        await window.PPTicket.imprimir(window.PPTicket.lineasEstado(datosImg()));
-        toast("Estado enviado a la impresora");
-      } catch (err) { toast("No se pudo imprimir: " + String(err.message || err)); }
-    };
+    if (ep) ep.onclick = () => window.PPTicket.imprimirConVentana(window.PPTicket.lineasEstado(datosImg()), "estado de credito");
   }
 
   function lineasDe2(v) {

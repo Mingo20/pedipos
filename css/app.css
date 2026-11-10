@@ -1291,3 +1291,32 @@ div.hrow:active{transform:scale(.985)}
 /* botones de accion de las subpantallas siempre clicables */
 .subv-duo .btn,.subv-foot .btn{position:relative;z-index:2;pointer-events:auto}
 .subv-foot{z-index:20}
+
+/* ========== v53: ventana de impresora ========== */
+.prtwin{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:24px;pointer-events:none}
+.prtwin.on{pointer-events:auto}
+.pw-m{position:absolute;inset:0;background:#0b1a1385;opacity:0;transition:opacity .24s ease;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.prtwin.on .pw-m{opacity:1}
+.pw-c{position:relative;width:min(344px,100%);background:#fff;border-radius:30px;padding:30px 22px 20px;text-align:center;
+  box-shadow:0 28px 70px #0b1a1355,0 2px 10px #0000001a;
+  transform:translateY(22px) scale(.94);opacity:0;transition:transform .34s cubic-bezier(.22,1,.3,1),opacity .22s ease}
+.prtwin.on .pw-c{transform:none;opacity:1}
+.pw-i{position:relative;width:68px;height:68px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;
+  background:var(--g-soft);color:var(--g)}
+.pw-i svg{position:relative;z-index:2}
+.pw-ring{position:absolute;inset:-7px;border-radius:50%;border:2px solid transparent;pointer-events:none}
+.pw-i.carga .pw-ring{border-top-color:var(--g);border-right-color:#57C08D;animation:pwGira .9s linear infinite}
+.pw-i.ok{background:#E3F6EC;color:#0F7C4F;animation:pwPop .4s cubic-bezier(.34,1.56,.64,1)}
+.pw-i.err{background:#FDECEC;color:#B3261E}
+@keyframes pwGira{to{transform:rotate(360deg)}}
+@keyframes pwPop{from{transform:scale(.6)}to{transform:scale(1)}}
+.pw-c h3{margin:0 0 6px;font-size:19px;font-weight:800;color:var(--ink);letter-spacing:.005em}
+.pw-c p{margin:0 auto;max-width:270px;font-size:14px;line-height:1.45;color:var(--mut)}
+.pw-pasos{list-style:none;counter-reset:pw;margin:16px 0 4px;padding:0;text-align:left;display:grid;gap:8px}
+.pw-pasos li{counter-increment:pw;display:flex;align-items:center;gap:12px;background:#F6F8FA;border-radius:14px;padding:10px 12px;font-size:13.5px;font-weight:600;color:#2B3238}
+.pw-pasos li::before{content:counter(pw);flex:none;width:24px;height:24px;border-radius:50%;background:var(--g);color:#fff;font-size:12.5px;font-weight:800;display:grid;place-items:center}
+.pw-b{display:flex;gap:10px;margin-top:20px}
+.pw-b:empty{display:none;margin:0}
+.pw-btn{flex:1;height:48px;border-radius:16px;font:inherit;font-size:15px;font-weight:700;color:#2B3238;background:#F1F4F6;border:0;transition:transform .15s ease,box-shadow .2s ease}
+.pw-btn:active{transform:scale(.97)}
+.pw-btn.prim{background:var(--g);color:#fff;box-shadow:0 8px 20px #1f9d5c40}

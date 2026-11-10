@@ -1474,13 +1474,8 @@
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
       <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro" id="pr" aria-label="Imprimir por Bluetooth">${I.print}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
-    $("#pr", s).onclick = async () => {
-      try {
-        const neg = db().settings.negocio || "Mi negocio";
-        const dir = db().settings.direccion || "";
-        await window.PPTicket.imprimir(window.PPTicket.lineasVenta(sale, neg, dir));
-        toast("Ticket enviado a la impresora");
-      } catch (e) { toast(String(e.message || e)); }
+    $("#pr", s).onclick = () => {
+      window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(sale, db().settings.negocio || "Mi negocio", db().settings.direccion || ""), "ticket");
     };
     /* 4 y 5) el ticket sale como imagen vertical por WhatsApp */
     $("#wa", s).onclick = async () => {
@@ -1834,11 +1829,8 @@
         else if (r === "compartido") toast("Ticket compartido");
       } catch (e) { toast("No se pudo enviar el ticket"); }
     };
-    $("#prt", sh).onclick = async () => {
-      try {
-        await window.PPTicket.imprimir(window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || ""));
-        toast("Ticket enviado a la impresora");
-      } catch (e) { toast("No se pudo imprimir: " + String(e.message || e)); }
+    $("#prt", sh).onclick = () => {
+      window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || ""), "ticket");
     };
     $("#cam", sh).onclick = () => window.PPExtra.adjuntarComprobante(s, openDetalle);
   }

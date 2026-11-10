@@ -289,5 +289,100 @@
     return d.toLocaleDateString("es-DO", { day: "2-digit", month: "2-digit", year: "numeric" }) + " - " + d.toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
   };
 
-  window.PPTicket = { lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, conectar };
+  /* ---------- ventana de impresora (propia, sin dialogos del navegador) ---------- */
+  const ICO = {
+    print: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="8" rx="2.4"/><path d="M7 14h10v6H7z"/><circle cx="17" cy="12" r=".6" fill="currentColor"/></svg>',
+    bt: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 4V3l5 4L7 17"/></svg>',
+    ok: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.6 4.6L19 7.5"/></svg>',
+    err: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.4v.2"/></svg>',
+  };
+
+  function cerrarVentana() {
+    const d = document.getElementById("prtWin");
+    if (!d) return;
+    d.classList.remove("on");
+    setTimeout(() => d.remove(), 240);
+  }
+
+  function ventana(cfg) {
+    const prev = document.getElementById("prtWin");
+    if (prev) prev.remove();
+    const d = document.createElement("div");
+    d.id = "prtWin";
+    d.className = "prtwin";
+    d.innerHTML = '<div class="pw-m"></div><div class="pw-c" role="dialog" aria-modal="true">' +
+      '<div class="pw-i ' + (cfg.tono || "") + '"><span class="pw-ring"></span>' + cfg.icono + "</div>" +
+      "<h3>" + cfg.titulo + "</h3>" +
+      "<p>" + (cfg.texto || "") + "</p>" +
+      (cfg.pasos ? '<ol class="pw-pasos">' + cfg.pasos.map((x) => "<li>" + x + "</li>").join("") + "</ol>" : "") +
+      '<div class="pw-b">' + (cfg.botones || []).map((b, i) =>
+        '<button class="pw-btn ' + (b.tipo || "") + '" data-i="' + i + '">' + b.texto + "</button>").join("") + "</div></div>";
+    document.body.append(d);
+    requestAnimationFrame(() => d.classList.add("on"));
+    d.querySelector(".pw-m").onclick = () => { if (cfg.cerrable !== false) cerrarVentana(); };
+    (cfg.botones || []).forEach((b, i) => {
+      const el = d.querySelector('[data-i="' + i + '"]');
+      if (el) el.onclick = () => b.alHacer && b.alHacer();
+    });
+    return d;
+  }
+
+  /* Flujo completo: ofrece conectar, conecta, imprime y informa. */
+  function imprimirConVentana(lineas, etiqueta) {
+    etiqueta = etiqueta || "ticket";
+    const conectada = aparato && aparato.gatt && aparato.gatt.connected && caract;
+    const lanzar = async () => {
+      ventana({
+        icono: ICO.bt, tono: "carga", titulo: "Conectando",
+        texto: "Elige tu impresora en la lista que se abre.", cerrable: false, botones: [],
+      });
+      try {
+        await conectar();
+        const nombre = (aparato && aparato.name) || "la impresora";
+        ventana({
+          icono: ICO.print, tono: "carga", titulo: "Imprimiendo",
+          texto: "Enviando el " + etiqueta + " a " + nombre + "...", cerrable: false, botones: [],
+        });
+        await imprimir(lineas);
+        ventana({
+          icono: ICO.ok, tono: "ok", titulo: "Listo",
+          texto: "El " + etiqueta + " se envio a " + nombre + ".",
+          botones: [{ texto: "Aceptar", tipo: "prim", alHacer: cerrarVentana }],
+        });
+        setTimeout(cerrarVentana, 2200);
+      } catch (e) {
+        const msg = String((e && e.message) || e || "");
+        const cancelo = /cancel|chosen|seleccion/i.test(msg) || (e && e.name === "NotFoundError");
+        if (cancelo) { cerrarVentana(); return; }
+        ventana({
+          icono: ICO.err, tono: "err", titulo: "No se pudo imprimir",
+          texto: msg || "Revisa que la impresora este encendida y cerca.",
+          botones: [
+            { texto: "Cerrar", alHacer: cerrarVentana },
+            { texto: "Reintentar", tipo: "prim", alHacer: lanzar },
+          ],
+        });
+      }
+    };
+    if (conectada) { lanzar(); return; }
+    if (!navigator.bluetooth) {
+      ventana({
+        icono: ICO.err, tono: "err", titulo: "Bluetooth no disponible",
+        texto: "Este navegador no permite conectar impresoras. Abre PediPOS en Chrome desde un telefono Android.",
+        botones: [{ texto: "Entendido", tipo: "prim", alHacer: cerrarVentana }],
+      });
+      return;
+    }
+    ventana({
+      icono: ICO.print, titulo: "Conectar impresora",
+      texto: "Todavia no hay una impresora termica vinculada.",
+      pasos: ["Enciende la impresora", "Activa el Bluetooth del telefono", "Toca Buscar y elige tu impresora"],
+      botones: [
+        { texto: "Ahora no", alHacer: cerrarVentana },
+        { texto: "Buscar", tipo: "prim", alHacer: lanzar },
+      ],
+    });
+  }
+
+  window.PPTicket = { lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, conectar, imprimirConVentana };
 })();
