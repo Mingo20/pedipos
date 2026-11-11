@@ -1519,3 +1519,7 @@ body.focus .subv.conbarra > #movCaja > .hrow.mov{margin:0 14px 7px}
   padding:0!important;line-height:0}
 .act .recbar .rlock2.enviar svg{width:22px!important;height:22px!important;display:block;
   margin:0!important;transform:translate(-1px,.5px)!important}
+
+/* filas un poco mas bajas: las cinco entran sin tocar la barra inferior */
+.tick .tick-b .row{padding:11px 14px}
+.tick .tick-b .row .q,.tick .tick-b .row .p{font-size:15px}

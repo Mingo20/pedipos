@@ -439,8 +439,8 @@
       const r = tick.getBoundingClientRect();
       const cuerpo = b.getBoundingClientRect().height;
       const resto = Math.max(120, r.height - cuerpo);      /* cabecera + totales + herramientas */
-      const barra = 84;                                     /* barra NUEVA / COBRAR */
-      const aire = 16;
+      const barra = 76;                                     /* barra NUEVA / COBRAR */
+      const aire = 10;
       disponible = Math.max(h * 3, Math.floor(window.innerHeight - r.top - resto - barra - aire));
     }
     b.style.maxHeight = Math.min(tope, disponible) + "px";
