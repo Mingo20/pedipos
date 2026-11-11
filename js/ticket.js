@@ -313,26 +313,52 @@
     "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
   ];
 
-  async function conectar() {
-    if (!navigator.bluetooth) throw new Error("Este navegador no permite Bluetooth. Usa Chrome en Android.");
-    if (aparato && aparato.gatt && aparato.gatt.connected && caract) return caract;
-    aparato = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: SERVICIOS });
-    const server = await aparato.gatt.connect();
+  /* busca el canal de escritura de un dispositivo ya autorizado */
+  async function canalDe(device) {
+    const server = device.gatt.connected ? device.gatt : await device.gatt.connect();
     for (const uuid of SERVICIOS) {
       try {
         const s = await server.getPrimaryService(uuid);
         const cs = await s.getCharacteristics();
         const c = cs.find((k) => k.properties.write || k.properties.writeWithoutResponse) || cs[0];
-        if (c) { caract = c; return c; }
+        if (c) return c;
       } catch (_) { /* se prueba el siguiente */ }
     }
     const todos = await server.getPrimaryServices();
     for (const s of todos) {
       const cs = await s.getCharacteristics();
       const c = cs.find((k) => k.properties.write || k.properties.writeWithoutResponse);
-      if (c) { caract = c; return c; }
+      if (c) return c;
     }
-    throw new Error("La impresora no acepta datos");
+    return null;
+  }
+
+  /* Reconecta sin abrir la lista de dispositivos cuando el telefono ya dio permiso. */
+  async function reconectar() {
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return null;
+    try {
+      const guardados = await navigator.bluetooth.getDevices();
+      const nombre = localStorage.getItem("pedipos.printer") || "";
+      const d = guardados.find((x) => x.name === nombre) || guardados[0];
+      if (!d) return null;
+      const c = await canalDe(d);
+      if (!c) return null;
+      aparato = d; caract = c;
+      return d.name || "Impresora";
+    } catch (_) { return null; }
+  }
+
+  async function conectar() {
+    if (!navigator.bluetooth) throw new Error("Este navegador no permite Bluetooth. Usa Chrome en Android.");
+    if (aparato && aparato.gatt && aparato.gatt.connected && caract) return caract;
+    const lista = await reconectar();
+    if (lista && caract) return caract;
+    aparato = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: SERVICIOS });
+    const c2 = await canalDe(aparato);
+    if (!c2) throw new Error("La impresora no acepta datos");
+    caract = c2;
+    if (aparato.name) localStorage.setItem("pedipos.printer", aparato.name);
+    return caract;
   }
 
   /* Texto ESC/POS: 32 caracteres por linea, tipico de 58 mm. */
@@ -573,6 +599,17 @@
       }
     };
     if (conectada) { lanzar(); return; }
+
+    /* si el telefono ya dio permiso antes, se reconecta sola sin molestar */
+    ventana({ icono: ICO.bt, tono: "carga", titulo: "Buscando impresora", sub: "Bluetooth",
+      texto: "Revisando si la impresora ya esta vinculada...", cerrable: false, botones: [] });
+    reconectar().then((nombre) => {
+      if (caract) { cerrarVentana(); setTimeout(lanzar, 120); return; }
+      cerrarVentana();
+      pedirImpresora();
+    }).catch(() => { cerrarVentana(); pedirImpresora(); });
+
+    function pedirImpresora() {
     if (!navigator.bluetooth) {
       ventana({
         icono: ICO.err, tono: "err", titulo: "Bluetooth no disponible",
@@ -595,6 +632,7 @@
         { texto: "Buscar impresora", tipo: "prim", alHacer: lanzar },
       ],
     });
+    }
   }
 
   /* ================= Mensajes de WhatsApp =================

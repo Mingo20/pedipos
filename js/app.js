@@ -107,7 +107,11 @@
     } catch (_) {}
   }
   function vibrar(ms) { try { navigator.vibrate && navigator.vibrate(ms || 14); } catch (_) {} }
-  function tap() { beep(); vibrar(14); }
+  /* toque normal: el mismo "tock" seco en toda la app */
+  function tap() {
+    try { if (window.PPSound && window.PPSound.tock) { window.PPSound.tock(); vibrar(14); return; } } catch (_) {}
+    beep(); vibrar(14);
+  }
   /* confirmacion con vibracion fuerte al agregar al talonario */
   function tapFuerte() { beep(); try { navigator.vibrate && navigator.vibrate([55, 40, 90]); } catch (_) {} }
 
@@ -157,9 +161,10 @@
       ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
       : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("");
     $$("#dock button").forEach((b) => (b.onclick = () => {
+      tap();   /* la barra inferior suena igual que el resto */
       /* el icono central abre el panel de venta con una animacion breve */
       if (b.dataset.t === "panel" && window.animarTal) {
-        if (tab === "panel") { tap(); return; }
+        if (tab === "panel") return;
         window.animarTal({ ms: 1000, titulo: "Panel de venta", texto: "Abriendo el talonario...", abrir: () => go("panel") });
         return;
       }
@@ -503,9 +508,9 @@
           <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
         </div>
         <div class="tools">
-          <button class="plus tl" id="bList" aria-label="Lista de pedido">${I.list}</button>
-          <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}</button>
-          <button class="plus tl" id="bSearch" aria-label="Productos">${I.box}</button>
+          <button class="plus tl" id="bList" aria-label="Lista de pedido">${I.list}<i class="pin ${orderTexto().trim() ? "" : "off"}"></i></button>
+          <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}<i class="pin ${manual ? "" : "off"}"></i></button>
+          <button class="plus tl" id="bSearch" aria-label="Productos">${I.box}<i class="bub ${n ? "" : "off"}">${n}</i></button>
         </div>
       </section>
       <div class="act ${n ? "hay" : ""}" id="actbar">
@@ -693,6 +698,12 @@
       if (!activo) return;
       dx = Math.max(0, e.touches[0].clientX - x0);
       s.style.transform = "translateX(" + dx + "px)";
+      /* se difumina a la par que se corre, para que no salte al soltar */
+      const ancho = s.offsetWidth || 300;
+      const k = Math.min(1, dx / ancho);
+      s.style.opacity = String(1 - k * 0.35);
+      const m = document.getElementById("mask");
+      if (m) m.style.opacity = String(1 - k);
       /* la flecha avisa: a la derecha se oculta, al arrastrar apunta a la izquierda */
       const fl = s.querySelector(".flecha-lado svg");
       if (fl) fl.style.transform = "rotate(" + Math.min(180, Math.round(dx * 1.8)) + "deg)";
@@ -702,8 +713,22 @@
       activo = false; s.classList.remove("arrastrando");
       const fl = s.querySelector(".flecha-lado svg");
       if (fl) fl.style.transform = "";
-      if (dx > 62) { s.style.transform = ""; closeSheet(); }
-      else { s.style.transform = ""; }
+      const ancho = s.offsetWidth || 300;
+      const m = document.getElementById("mask");
+      if (dx > ancho * 0.3) {
+        /* termina el recorrido hasta fuera, con la misma suavidad del dedo */
+        s.style.transition = "transform .24s cubic-bezier(.4,0,.8,.4),opacity .24s ease";
+        s.style.transform = "translateX(" + (ancho + 12) + "px)";
+        s.style.opacity = "0";
+        if (m) { m.style.transition = "opacity .24s ease"; m.style.opacity = "0"; }
+        setTimeout(() => { s.style.transition = ""; s.style.opacity = ""; if (m) { m.style.transition = ""; m.style.opacity = ""; } closeSheet(true); }, 240);
+      } else {
+        s.style.transition = "transform .22s cubic-bezier(.22,1,.3,1),opacity .22s ease";
+        s.style.transform = "translateX(0)";
+        s.style.opacity = "";
+        if (m) { m.style.transition = "opacity .22s ease"; m.style.opacity = ""; }
+        setTimeout(() => { s.style.transition = ""; if (m) m.style.transition = ""; }, 230);
+      }
       dx = 0;
     };
     s.addEventListener("touchend", soltar);
@@ -1061,12 +1086,23 @@
   const guardarOrderTexto = (v) => { try { localStorage.setItem(ORDER_KEY, v == null ? "" : v); } catch (_) {} };
   window.PPOrder = { leer: orderTexto, borrar: () => guardarOrderTexto("") };
 
+  /* Los tres avisos del talonario: lista pendiente, fila manual y numero de productos. */
+  function pintarIndicadores() {
+    const pinL = document.querySelector("#bList .pin");
+    if (pinL) pinL.classList.toggle("off", !orderTexto().trim());
+    const pinM = document.querySelector("#bPlus .pin");
+    if (pinM) pinM.classList.toggle("off", !manual);
+    const bub = document.querySelector("#bSearch .bub");
+    if (bub) { const n = cart().lines.length; bub.textContent = String(n); bub.classList.toggle("off", !n); }
+  }
+  window.PPIndicadores = pintarIndicadores;
+
   function openOrder(initial) {
     const arranque = (initial != null && initial !== "") ? initial : orderTexto();
     const s = sheet(`<div class="sh-h"><h2>Lista de pedido</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <textarea class="ta baja" id="ta" placeholder="Escribe el pedido: dos leches, media libra de arroz...">${esc(arranque)}</textarea>
       <div class="sh-f solo"><button class="big" id="go">${I.spark} <span class="bl">Procesar pedido</span></button></div>`);
-    $("#x", s).onclick = () => { window.PPVoice.stopDictation(); closeSheet(); };
+    $("#x", s).onclick = () => { window.PPVoice.stopDictation(); closeSheet(); pintarIndicadores(); };
     const ta = $("#ta", s), go = $("#go", s);
     ta.value = arranque;
     ta.oninput = () => guardarOrderTexto(ta.value);
@@ -1555,7 +1591,7 @@
       const t = window.PPVoice.norm(catQ);
       const l = db().products.filter((p) => p.activo !== false && (!catCat || p.categoria === catCat) && (!t || window.PPVoice.norm(p.nombre).includes(t)));
       $("#cl").innerHTML = l.length ? l.map((p) => pcard(p, `title="${esc(p.categoria || "General")}"`)).join("") : '<div class="empty">Sin productos con ese filtro.</div>';
-      $$("#cl .pcard").forEach((el) => (el.onclick = () => { tap(); editProduct(db().products.find((p) => p.pid === el.dataset.p)); }));
+      $$("#cl .pcard").forEach((el) => (el.onclick = () => { editProduct(db().products.find((p) => p.pid === el.dataset.p)); }));
     };
     $("#cq").oninput = (e) => { catQ = e.target.value; draw(); };
     const pop = $("#cfp");
@@ -1753,7 +1789,7 @@
 
   /* ---------- Menu lateral ---------- */
   function openMenu() {
-    const items = [["panel", "Panel de venta", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
+    const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });

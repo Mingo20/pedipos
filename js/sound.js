@@ -51,7 +51,9 @@
     "#btnBell", "#btnMenu",             /* campana y menu del encabezado */
     ".fbtn",                            /* filtros junto a los buscadores */
     ".fab",                             /* botones + flotantes */
-    "#dock button",                     /* barra inferior de navegacion */
+    ".mnu",                             /* enlaces del menu lateral */
+    ".sh-x", ".inv-b",                  /* flechas de cerrar y volver */
+
   ].join(",");
 
   document.addEventListener("pointerdown", (e) => {
