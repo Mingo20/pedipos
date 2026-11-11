@@ -31,7 +31,7 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .tick{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);box-shadow:0 1px 2px #0000000a;margin-bottom:26px}
 .tick-h{display:grid;grid-template-columns:1.25fr 1fr .8fr 1fr;gap:6px;padding:14px 14px 10px;font-size:15.5px;letter-spacing:.09em;font-weight:700;color:var(--mut);border-bottom:2px dashed var(--line)}
 .tick-h span:last-child{text-align:right}
-.tick-b{min-height:84px;max-height:38vh;overflow-y:auto}
+.tick-b{min-height:84px;overflow-y:auto}
 .tick-empty{display:grid;place-items:center;min-height:84px;color:var(--mut);font-size:16px}
 .row{display:grid;grid-template-columns:1.25fr 1fr .8fr 1fr;gap:6px;align-items:center;padding:15px 14px;font-size:16px;background:#f3f5f7;border-bottom:2px dashed var(--line)}
 .row b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -657,7 +657,7 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 22px)}
 .inv-filtro{left:auto;right:16px;top:4px;min-width:230px;max-width:calc(100% - 32px)}
 
 /* 1) talonario: cuatro productos a la vista y el resto con scroll */
-.tick-b{max-height:212px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.tick-b{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .row{cursor:pointer}
 .row:active{background:#eef1f4}
 /* campos en dos columnas */
@@ -819,7 +819,7 @@ body.focus main#view{padding-top:0}
 .row.man input{border:1.5px solid #E3E7EC;box-shadow:none}
 .row.man input:focus{border-color:#CBD2D9;box-shadow:0 0 0 3px #cbd2d933}
 .row .q,.row .p{padding:0;min-width:0}
-.tick-b{max-height:none}
+/* el alto del talonario se maneja en una sola regla al final */
 
 /* dialogo propio para confirmar (reemplaza al confirm() del navegador) */
 .dlg{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:24px;pointer-events:none}
@@ -938,7 +938,7 @@ body.focus main#view{padding-top:0}
 /* ========== v39 ========== */
 
 /* 1) talonario: exactamente 5 secciones a la vista y separadores muy suaves */
-.tick-b{max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.tick-b{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .tick-h{border-bottom:1px solid #EFF2F5}
 .row{border-bottom:1px solid #EFF2F5}
 .row.man{border-bottom:1px solid #EFF2F5}
@@ -1489,8 +1489,6 @@ body.focus .subv.conbarra > #movCaja > .hrow.mov{margin:0 14px 7px}
 .tick{position:sticky;top:calc(env(safe-area-inset-top) + 58px);z-index:5}
 
 /* solo cinco secciones a la vista; el resto se desliza dentro */
-.tick-b{max-height:calc(5 * 58px)!important;overflow-y:auto!important;
-  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
 
 /* 2) avisos sutiles en los tres iconos del talonario */
 .plus{position:relative}
