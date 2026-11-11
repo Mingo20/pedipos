@@ -1908,6 +1908,7 @@
 
   function openDetalle(s) {
     if (!s) return;
+    ventaTicket = s;              /* queda lista para el boton de imprimir */
     const st = db().settings;
     const lineas = lineasDe(s).map((l) => `<div class="dl"><div><b>${esc(l.nombre)}</b><span>${num(l.cant)} ${esc(l.unidad || "unid.")} &middot; ${money(l.precio)} c/u</span></div><b>${money(l.cant * l.precio)}</b></div>`).join("");
     const pagado = s.metodo !== "credito";
@@ -1932,7 +1933,8 @@
         </div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => enviarTicketWa(s, waDeVenta(s));
-    $("#img", sh).onclick = async () => {
+    const bImg = $("#img", sh);           /* puede no existir: nunca debe cortar lo de abajo */
+    if (bImg) bImg.onclick = async () => {
       try {
         const c = window.PPTicket.lienzoVenta(s, { negocio: db().settings.negocio || "Mi negocio", direccion: db().settings.direccion || "", telefono: db().settings.telefono || "" });
         const r = await window.PPTicket.compartir(c, "ticket-" + (s.vid || "pedido") + ".png");
@@ -1940,8 +1942,8 @@
         else if (r === "compartido") toast("Ticket compartido");
       } catch (e) { toast("No se pudo generar la imagen"); }
     };
-    ventaTicket = s;
-    $("#prt", sh).onclick = (ev) => { ev.preventDefault(); imprimirTicket(); };
+    const bPrt = $("#prt", sh);
+    if (bPrt) bPrt.onclick = (ev) => { ev.preventDefault(); imprimirTicket(); };
 
   }
   function renderConfig() {
