@@ -1475,7 +1475,10 @@ body.focus .subv.conbarra > #movCaja > .hrow.mov{margin:0 14px 7px}
 .tick-b{scroll-margin-top:0}
 
 /* 1) el talonario crece con sus productos: nunca esconde la primera fila */
-.tick .tick-b{max-height:none!important;overflow:visible!important;min-height:64px}
+/* El talonario crece hasta cinco filas y de ahi en adelante la lista se desliza dentro. */
+.tick .tick-b{min-height:64px;max-height:calc(5 * 60px);
+  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin}
 .tick{overflow:visible}
 .tick-h{background:var(--card)}
 
@@ -1506,3 +1509,15 @@ body.focus .subv.conbarra > #movCaja > .hrow.mov{margin:0 14px 7px}
   padding:8px 0 8px;margin-bottom:6px!important;
   box-shadow:0 10px 14px -14px #10182855}
 #view > .stickbar + .filtro-pop{z-index:13}
+
+/* 2) boton de imprimir amplio: se acierta a la primera */
+.sh-f .m.ancho{width:auto!important;min-width:112px;border-radius:26px;padding:0 16px;
+  display:flex!important;align-items:center;justify-content:center;gap:8px;
+  font-size:14px;font-weight:700;color:var(--txt)}
+.sh-f .m.ancho svg{width:19px;height:19px;flex:none}
+
+/* el avion de enviar: centrado en su circulo verde y un poco mas grande */
+.act .recbar .rlock2.enviar{display:grid!important;place-items:center!important;
+  padding:0!important;line-height:0}
+.act .recbar .rlock2.enviar svg{width:22px!important;height:22px!important;display:block;
+  margin:0!important;transform:translate(-1px,.5px)!important}

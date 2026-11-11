@@ -161,7 +161,8 @@
       ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
       : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("");
     $$("#dock button").forEach((b) => (b.onclick = () => {
-      tap();   /* la barra inferior suena igual que el resto */
+      /* el acceso al panel va en silencio */
+      if (b.dataset.t !== "panel") tap();
       /* el icono central abre el panel de venta con una animacion breve */
       if (b.dataset.t === "panel" && window.animarTal) {
         if (tab === "panel") return;
@@ -423,13 +424,27 @@
 
   /* Deslizar una fila del talonario a cualquier lado para eliminarla. */
   /* El talonario muestra exactamente 5 secciones; el resto se desliza. */
+  /* Cinco filas como tope, y nunca mas alto que el hueco real de la pantalla:
+     asi el talonario completo se ve y la barra inferior no tapa los totales. */
   function ajustarAltoTalonario() {
     const b = $("#tickb");
     if (!b) return;
     const f = b.querySelector(".row");
     if (!f) { b.style.maxHeight = ""; return; }
     const h = Math.ceil(f.getBoundingClientRect().height) || 52;
-    b.style.maxHeight = (h * 5) + "px";
+    const tope = h * 5;
+    const tick = b.closest(".tick");
+    let disponible = tope;
+    if (tick) {
+      const r = tick.getBoundingClientRect();
+      const cuerpo = b.getBoundingClientRect().height;
+      const resto = Math.max(120, r.height - cuerpo);      /* cabecera + totales + herramientas */
+      const barra = 84;                                     /* barra NUEVA / COBRAR */
+      const aire = 16;
+      disponible = Math.max(h * 3, Math.floor(window.innerHeight - r.top - resto - barra - aire));
+    }
+    b.style.maxHeight = Math.min(tope, disponible) + "px";
+    b.style.overflowY = "auto";
   }
 
   function bindSwipeRows() {
@@ -516,7 +531,7 @@
       <div class="act ${n ? "hay" : ""}" id="actbar">
         <button class="n ${n ? "on" : ""}" id="bNew">NUEVA</button>
         <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
-        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.bag}</i></div>
+        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
       </div>`;
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => {
@@ -1877,6 +1892,20 @@
     return d.toLocaleDateString("es-DO") + " - " + d.toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
   }
 
+  /* Un solo camino para imprimir el ticket: si algo falla se ve el motivo. */
+  let ventaTicket = null;
+  function imprimirTicket() {
+    const s = ventaTicket;
+    if (!s) return toast("Abre un pedido para imprimir");
+    try {
+      const lineas = window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || "");
+      window.PPTicket.imprimirConVentana(lineas, "ticket");
+    } catch (e) {
+      toast("No se pudo abrir la impresion");
+    }
+  }
+  window.PPImprimirTicket = imprimirTicket;
+
   function openDetalle(s) {
     if (!s) return;
     const st = db().settings;
@@ -1899,7 +1928,7 @@
       ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}
       </div>
       <div class="sh-f fijo"><button class="big slim miniwa" id="send">${I.wa} <span class="bl">Enviar Ticket</span></button>
-        <button class="m negro" id="prt" aria-label="Imprimir">${I.print}</button>
+        <button class="m negro ancho" id="prt" aria-label="Imprimir ticket">${I.print}<span>Imprimir</span></button>
         </div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => enviarTicketWa(s, waDeVenta(s));
@@ -1911,9 +1940,8 @@
         else if (r === "compartido") toast("Ticket compartido");
       } catch (e) { toast("No se pudo generar la imagen"); }
     };
-    $("#prt", sh).onclick = () => {
-      window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(s, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || ""), "ticket");
-    };
+    ventaTicket = s;
+    $("#prt", sh).onclick = (ev) => { ev.preventDefault(); imprimirTicket(); };
 
   }
   function renderConfig() {
@@ -2102,6 +2130,14 @@
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => { marcarLeidos(); go("avisos"); };
+  /* respaldo del boton imprimir: funciona aunque el modal se haya vuelto a dibujar */
+  document.addEventListener("click", (e) => {
+    const b = e.target && e.target.closest ? e.target.closest("#prt") : null;
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();          /* evita que el mismo toque cuente dos veces */
+    window.PPImprimirTicket();
+  }, true);
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
   addEventListener("pp:installable", () => { const b = $("#instbar"); if (b && b.hidden && !localStorage.getItem(INS_DONE)) { localStorage.removeItem(INS_OFF); b.hidden = false; } });
   addEventListener("pp:installed", () => { localStorage.setItem(INS_DONE, "1"); const b = $("#instbar"); if (b) { b.hidden = true; } toast("PediPOS instalada"); });

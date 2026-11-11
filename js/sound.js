@@ -27,8 +27,8 @@
     o.frequency.setValueAtTime(330, t);
     o.frequency.exponentialRampToValueAtTime(140, t + 0.05);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.20, t + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.11, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
     o.connect(g); g.connect(c.destination);
     o.start(t); o.stop(t + 0.1);
 
@@ -39,7 +39,7 @@
     for (let i = 0; i < largo; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / largo, 7);
     const n = c.createBufferSource();
     const ng = c.createGain();
-    ng.gain.value = 0.07;
+    ng.gain.value = 0.04;
     n.buffer = buf;
     n.connect(ng); ng.connect(c.destination);
     n.start(t);

@@ -157,7 +157,7 @@
     const fila = (v) => {
       const cred = v.metodo === "credito";
       return `<div class="cx" role="button" tabindex="0" data-v="${esc(v.vid || "")}">
-        <div class="hi"><b>${cred ? (v.pagada ? "Compra a crédito pagada" : "Compra a crédito") : "Venta de contado"}</b>
+        <div class="hi"><b>${cred ? (v.pagada ? "Venta a crédito pagada" : "Venta a crédito") : "Venta de contado"}</b>
           <span>${new Date(v.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${v.lineas ? " &middot; " + lineasDe2(v).length + " art." : ""}</span>
           ${cred && v.fecha_pago ? `<span class="fpago">Pago prometido: ${new Date(v.fecha_pago + "T12:00:00").toLocaleDateString("es-DO", { day: "numeric", month: "long" })}</span>` : ""}</div>
         <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
@@ -381,7 +381,7 @@
   function abonar(c) {
     const s = sheetCliente(`<div class="sh-h"><h2 class="h-gran">Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <label class="field"><span>Monto (RD$)</span><input id="ab" inputmode="decimal" placeholder="${deudaDe(c.cid)}"></label>
-      <button class="btn" id="oka">Registrar abono</button>`);
+      <button class="btn" id="oka">Registrar pago</button>`);
     s.querySelector("[data-x]").onclick = closeSheet;
     s.querySelector("#oka").onclick = () => {
       const m = parseFloat(String(s.querySelector("#ab").value).replace(",", "."));
@@ -396,7 +396,12 @@
       c.pagos.push({ id: S.uid("PC"), fecha: new Date().toISOString(), monto: S.round2(m) });
       S.save(); pend.forEach((v) => window.PPSync.saveSale(v));
       window.PPSync.saveCliente(c);
-      closeSheet(); toast("Abono registrado"); render();
+      closeSheet(); toast("Pago registrado");
+      /* el detalle se vuelve a dibujar y muestra la tarjeta nueva en PAGOS */
+      cliVista = "pagos";
+      const fresco = (db().clients || []).find((x) => x.cid === c.cid) || c;
+      render();
+      setTimeout(() => { try { verCliente(fresco); } catch (_) {} }, 60);
     };
   }
 

@@ -351,8 +351,8 @@
   async function conectar() {
     if (!navigator.bluetooth) throw new Error("Este navegador no permite Bluetooth. Usa Chrome en Android.");
     if (aparato && aparato.gatt && aparato.gatt.connected && caract) return caract;
-    const lista = await reconectar();
-    if (lista && caract) return caract;
+    /* OJO: aqui NO se puede esperar nada antes de pedir el dispositivo.
+       Chrome exige el toque del usuario y se pierde con cualquier espera previa. */
     aparato = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: SERVICIOS });
     const c2 = await canalDe(aparato);
     if (!c2) throw new Error("La impresora no acepta datos");
