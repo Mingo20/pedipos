@@ -1523,3 +1523,18 @@ body.focus .subv.conbarra > #movCaja > .hrow.mov{margin:0 14px 7px}
 /* filas un poco mas bajas: las cinco entran sin tocar la barra inferior */
 .tick .tick-b .row{padding:11px 14px}
 .tick .tick-b .row .q,.tick .tick-b .row .p{font-size:15px}
+
+/* ========== v74: encabezados y sticky sin huecos ========== */
+/* El area que hace scroll es #view y empieza justo bajo el encabezado:
+   por eso el talonario se pega en 0 y no deja una franja vacia. */
+.tick{top:0!important}
+
+/* el encabezado de las subpantallas se pega al borde real del area */
+.subv-h{top:0}
+
+/* cliente y proveedor: alto del contenedor igual que su area, no de la pantalla */
+body.focus .subv.conbarra{height:100%;
+  padding-top:calc(env(safe-area-inset-top) + 74px)}
+
+/* cualquier hoja a pantalla completa respeta el notch */
+.sheet.alto .sh-h{padding-top:calc(env(safe-area-inset-top) + 8px)}
