@@ -524,6 +524,11 @@
     const q = window.PPVoice ? window.PPVoice.norm(panelQ) : String(panelQ || "").toLowerCase();
     const listaProd = (db().products || []).filter((p) => p.activo !== false && (!q ||
       (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q) : String(p.nombre).toLowerCase().includes(q))));
+    const actHTML = `<div class="act ${n ? "hay" : ""}" id="actbar">
+        <button class="n ${n ? "on" : ""}" id="bNew">NUEVA</button>
+        <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
+        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
+      </div>`;
     $("#view").innerHTML = `
       <div class="panel-work">
         <div class="pw-bar">
@@ -545,12 +550,9 @@
           <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}<i class="pin ${manual ? "" : "off"}"></i></button>
           <button class="plus tl" id="bSearch" aria-label="Productos">${I.box}<i class="bub ${n ? "" : "off"}">${n}</i></button>
         </div>
+        ${esPC() ? actHTML : ""}
       </section>
-      <div class="act ${n ? "hay" : ""}" id="actbar">
-        <button class="n ${n ? "on" : ""}" id="bNew">NUEVA</button>
-        <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
-        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
-      </div>`;
+      ${esPC() ? "" : actHTML}`;
     const pwq = $("#pwq");
     if (pwq) pwq.oninput = (e) => {
       panelQ = e.target.value;
@@ -2044,6 +2046,9 @@
     else if (tab === "config") renderConfig();
     else if (tab === "avisos") renderAvisos();
     drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
+    /* alto real del encabezado: el talonario arranca justo debajo, sin taparlo */
+    const tp = document.getElementById("top");
+    if (tp) document.documentElement.style.setProperty("--pp-top", Math.round(tp.getBoundingClientRect().height) + "px");
   }
 
   /* ---------- Acceso con PIN ---------- */
