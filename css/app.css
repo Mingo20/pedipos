@@ -1680,3 +1680,43 @@ body.focus .subv.conbarra{height:100%;
   body.panel-view #bSearch{display:none}
   .subv.conbarra .cx-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* ===== v82 · Ajustes finos del modo PC ===== */
+@media (min-width:1024px){
+  /* titulos separados de la barra lateral */
+  #top h1{margin-left:28px}
+  /* filtros: siempre visibles y bien colocados */
+  .searchrow{position:relative}
+  .stickbar .searchrow{justify-content:flex-start}
+  .filtro-pop{left:0;right:auto;top:calc(100% + 8px);z-index:55;min-width:230px}
+  .fbtn{flex:none}
+  /* talonario de punta a punta, sin huecos */
+  body.panel-view .tick{top:var(--pp-top,66px);bottom:0;padding:0 16px}
+  body.panel-view .tick .tick-h{margin-top:0}
+  body.panel-view .tick .act{margin:24px 0 16px!important}
+  /* cuatro columnas en pedidos, clientes, proveedores, ventas y pagos */
+  .ordlist{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .ordlist .ord{width:100%}
+  #cl2,#pl2{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .subv.conbarra .cx-list{grid-template-columns:repeat(4,minmax(0,1fr))}
+  /* catalogo en siete columnas */
+  .pgrid{grid-template-columns:repeat(7,minmax(0,1fr))}
+  body.panel-view .pw-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+  /* buscadores a la izquierda */
+  .stickbar .searchrow .search{max-width:420px}
+  /* detalle: encabezado a todo el ancho y barra de edicion centrada delante */
+  .subv.conbarra > .subv-h{width:100%;margin:0;padding-left:0;padding-right:0}
+  .subv.conbarra > .subv-h .subv-tt{flex:1}
+  .subv-foot{left:0;right:0;max-width:none;display:flex;justify-content:center;
+    padding:12px 26px calc(env(safe-area-inset-bottom) + 12px)}
+  .subv-foot .btn{min-width:280px;max-width:420px;margin:0 auto}
+  /* notificaciones en cuatro columnas */
+  body.avisos-view main#view{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+  body.avisos-view .aviso{width:100%}
+}
+@media (min-width:768px) and (max-width:1023px){
+  .filtro-pop{left:0;right:auto;top:calc(100% + 8px)}
+  .ordlist{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #cl2,#pl2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}

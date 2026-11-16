@@ -17,6 +17,7 @@
   }
 
   const I = {
+    bell: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>',
     menu: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h11M4 17h16"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
     list: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
@@ -152,6 +153,7 @@
   /* ---------- Pantalla grande (PC horizontal) ---------- */
   const esPC = () => window.matchMedia("(min-width:1024px)").matches;
   let panelQ = "";
+  let panelCat = "";
 
   /* ---------- Dock ---------- */
   const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
@@ -159,19 +161,20 @@
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
     if (tab !== "config") document.body.classList.remove("config-view");
+    if (tab !== "avisos") document.body.classList.remove("avisos-view");
     const pc = esPC();
     /* en el telefono el panel de venta usa su propia barra; en PC la navegacion vive a la izquierda */
     if (tab === "panel" && !pc) { d.classList.add("hide"); d.innerHTML = ""; document.body.classList.remove("has-dock"); return; }
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
     const lista = pc
-      ? [["panel", "Panel", "ticket"], ["historial", "Pedidos", "bagnav"], ["deudas", "Deudas", "card"],
+      ? [["panel", "Panel", "ticket"], ["historial", "Pedidos", "bagnav"],
          ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["avisos", "Avisos", "bell"],
          ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedor", "truck2"], ["config", "Ajustes", "gear"],
          ["soporte", "Soporte", "help"]]
       : TABS;
     const marca = pc ? `<div class="dock-brand"><img src="img/logo-96.png" alt=""><b>PediPOS</b></div>` : "";
-    const contraer = pc ? `<button class="dock-fold" id="dockFold" aria-label="Contraer navegacion">${I.chev || ""}<small>Contraer</small></button>` : "";
+    const contraer = "";
     d.innerHTML = marca + lista.map(([k, lb, ic]) => k === "panel"
       ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
       : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("") + contraer;
@@ -188,7 +191,7 @@
       go(b.dataset.t);
     }));
   }
-  const TITULOS = { panel: "PANEL", catalogo: "CATALOGO", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
+  const TITULOS = { panel: "PANEL", catalogo: "CATALOGO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
   /* ----- Avisos de pagos a credito ----- */
   const DIAS = 86400000;
   function avisosPago() {
@@ -240,6 +243,7 @@
       : nuevos.length + " avisos de pago");
   }
   function renderAvisos() {
+    document.body.classList.add("avisos-view");
     const av = avisosPago();
     const fila = (a) => {
       const s = a.s;
@@ -256,8 +260,7 @@
         <span class="av-go">${I.chev}</span>
       </button>`;
     };
-    $("#view").innerHTML = `<div class="av-h"><b>Notificaciones</b><span>${av.length ? av.length + " aviso" + (av.length === 1 ? "" : "s") + " de pago" : "Sin avisos por ahora"}</span></div>
-      ${av.length ? av.map(fila).join("") : '<div class="card"><div class="cnt" style="text-align:center;padding:26px 10px">No hay pagos proximos a vencer ni vencidos.</div></div>'}`;
+    $("#view").innerHTML = `${av.length ? av.map(fila).join("") : '<div class="card"><div class="cnt" style="text-align:center;padding:26px 10px">No hay pagos proximos a vencer ni vencidos.</div></div>'}`;
     $$(".aviso", $("#view")).forEach((b) => (b.onclick = () => {
       const s = (db().sales || []).find((x) => x.vid === b.dataset.v);
       if (s) openDetalle(s);
@@ -530,7 +533,7 @@
     const c = cart(), t = tot(), n = c.lines.length;
     document.body.classList.add("panel-view");
     const q = window.PPVoice ? window.PPVoice.norm(panelQ) : String(panelQ || "").toLowerCase();
-    const listaProd = (db().products || []).filter((p) => p.activo !== false && (!q ||
+    const listaProd = (db().products || []).filter((p) => p.activo !== false && (!panelCat || p.categoria === panelCat) && (!q ||
       (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q) : String(p.nombre).toLowerCase().includes(q))));
     const actHTML = `<div class="act ${n ? "hay" : ""}" id="actbar">
         <button class="n ${n ? "on" : ""}" id="bNew">NUEVA</button>
@@ -541,6 +544,11 @@
       <div class="panel-work">
         <div class="pw-bar">
           <div class="search pw-search">${I.search}<input id="pwq" placeholder="Buscar producto" value="${esc(panelQ)}" autocomplete="off"></div>
+          <button class="fbtn ${panelCat ? "on" : ""}" id="pwFil" aria-label="Filtrar por categoría" title="Filtrar por categoría">${I.filtro}</button>
+          <div class="filtro-pop" id="pwfp" hidden>
+            <button class="fopt ${panelCat === "" ? "on" : ""}" data-cat="">Todas las categorías ${I.check}</button>
+            ${[...new Set((db().products || []).map((p) => p.categoria).filter(Boolean))].sort().map((c) => `<button class="fopt ${panelCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${I.check}</button>`).join("")}
+          </div>
         </div>
         <div class="pgrid pw-grid" id="pwGrid">${listaProd.length ? listaProd.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:18px">Sin productos que coincidan.</p>'}</div>
       </div>
@@ -565,11 +573,19 @@
     if (pwq) pwq.oninput = (e) => {
       panelQ = e.target.value;
       const qq = window.PPVoice ? window.PPVoice.norm(panelQ) : panelQ.toLowerCase();
-      const prod = (db().products || []).filter((p) => p.activo !== false && (!qq ||
+      const prod = (db().products || []).filter((p) => p.activo !== false && (!panelCat || p.categoria === panelCat) && (!qq ||
         (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(qq) : String(p.nombre).toLowerCase().includes(qq))));
       const g = $("#pwGrid");
       if (g) g.innerHTML = prod.length ? prod.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:18px">Sin productos que coincidan.</p>';
     };
+    const pwFil = $("#pwFil"), pwfp = $("#pwfp");
+    if (pwFil && pwfp) {
+      pwFil.onclick = () => alternarFiltro(pwFil, pwfp);
+      $$("[data-cat]", pwfp).forEach((b) => (b.onclick = () => {
+        panelCat = b.dataset.cat; pwfp.hidden = true; pwFil.classList.remove("abierto");
+        pwFil.classList.toggle("on", !!panelCat); renderPanel();
+      }));
+    }
     const grid = $("#pwGrid");
     if (grid) grid.onclick = (e) => {
       const b = e.target.closest(".pcard");
