@@ -2043,6 +2043,7 @@
     else if (tab === "historial") renderHistorial();
     else if (tab === "config") renderConfig();
     else if (tab === "avisos") renderAvisos();
+    drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
   }
 
   /* ---------- Acceso con PIN ---------- */
