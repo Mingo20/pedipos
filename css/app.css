@@ -1607,6 +1607,7 @@ body.focus .subv.conbarra{height:100%;
   .kpis.kpi2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kpis.kpi3{grid-template-columns:repeat(3,minmax(0,1fr))}
   .card{max-width:none}
+  body.config-view main#view{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
 
   /* ---- listas a todo el ancho ---- */
   .stickbar{position:static;margin:0 0 14px;padding:0;background:none}

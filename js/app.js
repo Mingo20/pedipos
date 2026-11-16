@@ -158,6 +158,7 @@
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
+    if (tab !== "config") document.body.classList.remove("config-view");
     const pc = esPC();
     /* en el telefono el panel de venta usa su propia barra; en PC la navegacion vive a la izquierda */
     if (tab === "panel" && !pc) { d.classList.add("hide"); d.innerHTML = ""; document.body.classList.remove("has-dock"); return; }
@@ -2008,6 +2009,7 @@
   }
   function renderConfig() {
     const st = db().settings;
+    document.body.classList.add("config-view");
     $("#view").innerHTML = `<div class="card"><label class="field"><span>Nombre del negocio</span><input id="cn" value="${esc(st.negocio)}"></label>
       <label class="field"><span>Direccion del negocio</span><input id="cd" value="${esc(st.direccion || "")}" placeholder="Calle, numero, sector"></label>
       <label class="field"><span>Telefono del negocio</span><input id="ct2" value="${esc(st.telefono || "")}" placeholder="8090000000"></label>
