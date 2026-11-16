@@ -164,12 +164,19 @@
     if (tab === "panel" && !pc) { d.classList.add("hide"); d.innerHTML = ""; document.body.classList.remove("has-dock"); return; }
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
-    const lista = pc ? TABS.concat([["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Ajustes", "gear"]]) : TABS;
+    const lista = pc
+      ? [["panel", "Panel", "ticket"], ["historial", "Pedidos", "bagnav"], ["deudas", "Deudas", "card"],
+         ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["avisos", "Avisos", "bell"],
+         ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedor", "truck2"], ["config", "Ajustes", "gear"],
+         ["soporte", "Soporte", "help"]]
+      : TABS;
     const marca = pc ? `<div class="dock-brand"><img src="img/logo-96.png" alt=""><b>PediPOS</b></div>` : "";
+    const contraer = pc ? `<button class="dock-fold" id="dockFold" aria-label="Contraer navegacion">${I.chev || ""}<small>Contraer</small></button>` : "";
     d.innerHTML = marca + lista.map(([k, lb, ic]) => k === "panel"
       ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
-      : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("");
+      : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("") + contraer;
     $$("#dock button").forEach((b) => (b.onclick = () => {
+      if (b.id === "dockFold") { document.body.classList.toggle("nav-off"); return; }
       /* el acceso al panel va en silencio */
       if (b.dataset.t !== "panel") tap();
       /* el icono central abre el panel de venta con una animacion breve */
@@ -2048,6 +2055,8 @@
     else if (tab === "config") renderConfig();
     else if (tab === "avisos") renderAvisos();
     drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
+    const h1t = document.getElementById("title");
+    if (h1t && esPC()) h1t.textContent = TITULOS[tab] || "PediPOS";
     /* alto real del encabezado: el talonario arranca justo debajo, sin taparlo */
     const tp = document.getElementById("top");
     if (tp) document.documentElement.style.setProperty("--pp-top", Math.round(tp.getBoundingClientRect().height) + "px");

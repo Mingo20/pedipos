@@ -1560,7 +1560,9 @@ body.focus .subv.conbarra{height:100%;
   body.focus main#view{padding:18px 26px 28px}
   #top{padding-right:22px}
   #btnMenu{display:none!important}
-  #top .logo,#top h1{display:none}
+  #top .logo{display:none}
+  #top h1{display:block;font-size:19px;font-weight:800;letter-spacing:.01em;text-transform:uppercase}
+  #top{justify-content:space-between;gap:14px}
 
   /* ---- barra lateral ---- */
   .dock{position:fixed;left:0;top:0;bottom:0;width:118px;height:100vh;transform:none;margin:0;max-width:none;
@@ -1576,6 +1578,10 @@ body.focus .subv.conbarra{height:100%;
   .dock button.mid .orb{margin-top:0;width:44px;height:44px;border-width:0;box-shadow:0 6px 14px #1f9d5c40}
   .dock button.on{background:#EAF7F0}
   .dock button.on::after{display:none}
+  .dock-fold{margin:auto 8px 6px;height:54px;border-radius:14px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;color:#0B6F4C;background:#EAF7F0;flex:none}
+  .dock-fold small{font-size:10px;font-weight:700}
+  .dock-fold svg{transform:rotate(90deg)}
   body.has-dock main#view{padding-left:calc(118px + 26px)}
   body.has-dock #top{padding-left:118px}
 
@@ -1591,7 +1597,7 @@ body.focus .subv.conbarra{height:100%;
   .panel-work{display:block}
   .pw-bar{display:flex;padding:0 0 16px}
   .pw-search{width:min(520px,100%);max-width:none;margin:0}
-  .pw-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;padding:0}
+  .pw-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;padding:0}
   .pw-grid .pcard .ph{height:96px}
   body.panel-view main#view{padding-right:calc(430px + 26px)}
   body.panel-view .tick{position:fixed;right:0;top:var(--pp-top,66px);bottom:0;width:430px;height:auto;margin:0;
