@@ -1536,7 +1536,22 @@
     };
     upd();
     $("#done", s).onclick = () => {
-      if (met.value === "credito" && !$("#cli2", s).value) return toast("Elige el cliente para fiar");
+      if (met.value === "credito" && !$("#cli2", s).value && !(($("#ncn", s) || {}).value || "").trim()) return toast("Elige el cliente para fiar");
+      /* la venta queda a nombre del cliente aunque se escriba sin elegirlo en la lista:
+         se busca por nombre y, si no existe, se crea, para que aparezca en su detalle */
+      const cliSel = $("#cli2", s).value || "";
+      const cliNom = ((($("#ncn", s) || {}).value) || "").trim();
+      let clienteF = (db().clients || []).find((x) => x.cid === cliSel) || null;
+      if (!clienteF && cliNom) {
+        clienteF = (db().clients || []).find((x) => x.nombre && x.nombre.trim().toLowerCase() === cliNom.toLowerCase()) || null;
+        if (!clienteF) {
+          clienteF = { cid: S.uid("C"), nombre: cliNom, telefono: ((($("#nct", s) || {}).value) || "").trim(),
+            direccion: ((($("#ncd", s) || {}).value) || "").trim(), nota: "", limite_credito: 0, activo: true };
+          db().clients.push(clienteF); window.PPSync.saveClient && window.PPSync.saveClient(clienteF);
+        }
+        const sel = $("#cli2", s);
+        if (sel) { sel.innerHTML = '<option value="">Sin cliente</option>' + (window.PPClientOpts ? window.PPClientOpts(clienteF.cid) : ""); sel.value = clienteF.cid; }
+      }
       const sale = {
         vid: S.uid("V"), fecha: new Date().toISOString(),
         lineas: cart().lines.map((l) => ({ ...l })),
@@ -1545,7 +1560,7 @@
         recibido: (() => { const r = parseFloat(String(rec.value || "").replace(",", ".")); return isFinite(r) ? r : 0; })(),
         cambio: (() => { const r = parseFloat(String(rec.value || "").replace(",", ".")); return isFinite(r) && r >= t.total ? S.round2(r - t.total) : 0; })(),
         fecha_pago: met.value === "credito" ? $("#fpago", s).value : "",
-        cliente_id: $("#cli2", s).value || "", cliente: (() => { const c = (db().clients || []).find((x) => x.cid === $("#cli2", s).value); return c ? c.nombre : ""; })(),
+        cliente_id: clienteF ? clienteF.cid : "", cliente: clienteF ? clienteF.nombre : "",
       };
       db().sales.push(sale);
       for (const l of lineasDe(sale)) { const p = db().products.find((x) => x.pid === l.pid); if (p && typeof p.stock === "number") { p.stock = S.round2(p.stock - l.cant); window.PPSync.saveProduct(p); } }
