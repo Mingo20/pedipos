@@ -182,7 +182,7 @@
       </div>
       <div class="subv-duo">
         ${d > 0 ? `<button class="btn sec mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
-        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.chart}<span>Estado de deuda</span></button>
+        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.chart}<span>Deuda</span></button>
       </div>
       <div class="seg2" id="segCli">
         <button class="sg ${cliVista === "compras" ? "on" : ""}" data-t="compras">VENTAS (${vs.length})</button>

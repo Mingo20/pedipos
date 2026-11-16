@@ -153,6 +153,7 @@
   const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
   function drawDock() {
     const d = $("#dock");
+    if (tab !== "panel") document.body.classList.remove("panel-view");
     /* el panel de venta tiene su propia barra inferior: ahi el dock no aparece */
     if (tab === "panel") { d.classList.add("hide"); d.innerHTML = ""; document.body.classList.remove("has-dock"); return; }
     d.classList.remove("hide");
@@ -512,7 +513,9 @@
 
   function renderPanel() {
     const c = cart(), t = tot(), n = c.lines.length;
+    document.body.classList.add("panel-view");
     $("#view").innerHTML = `
+      <div class="panel-center"><div class="search" id="pcSearch">${I.search}<input id="pcq" placeholder="Buscar producto" readonly autocomplete="off"></div></div>
       <section class="tick">
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar productos</div>')}${manual ? manualRow() : ""}</div>
@@ -1222,8 +1225,10 @@
     if (!mic) return;
     let down = false, largo = false, x0 = 0, y0 = 0, tmr = null;
 
-    const inicio = (x, y) => { down = true; largo = false; x0 = x; y0 = y; micVibra(18);
-      tmr = setTimeout(() => { if (!down) return; largo = true; micVibra([40, 30, 70]); iniciarGrabacionGesto(); }, 500); };
+    let t0 = 0;
+    const inicio = (x, y) => { down = true; largo = false; x0 = x; y0 = y; t0 = Date.now(); micVibra(18);
+      /* modo venta por voz INMEDIATO: mantener pulsado activa la grabacion al instante, sin espera */
+      if (!MIC.activo) { largo = true; micVibra([30, 20, 60]); iniciarGrabacionGesto(); } };
     const mueve = (x) => {
       if (!down || !largo || MIC.bloqueado) return;
       MIC.dx = x - x0;
@@ -1234,6 +1239,8 @@
       down = false; clearTimeout(tmr);
       if (!largo) return;          /* un toque corto ya no activa nada */
       if (MIC.bloqueado) return;
+      /* un roce muy corto no debe generar un audio vacio */
+      if (Date.now() - t0 < 160) { micVibra(10); cancelarGrabacionGesto(false); return; }
       /* soltar: segun hacia donde quedo el dedo */
       if (MIC.dx < -70) { micVibra([30, 20, 45]); cancelarGrabacionGesto(true); }
       else if (MIC.dx > 70) bloquearGrabacionGesto();
@@ -1567,7 +1574,7 @@
     const s = sheet(`<div class="ok-big"><div class="tk">${I.ok}</div><h2>Venta registrada</h2><div class="cnt">${new Date(sale.fecha).toLocaleString("es-DO")}</div></div>
       <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
-      <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro" id="pr" aria-label="Imprimir por Bluetooth">${I.print}</button><button class="m" id="img" aria-label="Ticket en imagen">${I.ticket}</button></div>
+      <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro ancho" id="pr" aria-label="Imprimir por Bluetooth">${I.print}<span class="bl">Imprimir</span></button><button class="m" id="img" aria-label="Ticket en imagen">${I.ticket}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = () => {
       window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(sale, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || ""), "ticket");
@@ -1841,13 +1848,13 @@
           <button class="fopt ${pedTipo === "credito" ? "on" : ""}" data-t="credito">A credito ${I.check}</button>
         </div>
       </div>` +
-      (L.length ? L.map((s) => {
+      '<div class="ordlist">' + (L.length ? L.map((s) => {
         const est = esCredito(s) ? "A credito" : "Pagado";
         return `<button class="ord" data-v="${esc(s.vid)}">
           <div class="ord-t"><b>${esc(s.cliente || "Sin cliente")}</b><span class="badge ${esCredito(s) ? "cred" : ""}">${est}</span></div>
           <div class="ord-b"><span>${new Date(s.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span><b>${money(s.total)}</b></div>
         </button>`;
-      }).join("") : '<div class="card"><div class="cnt">No hay pedidos que coincidan con esa busqueda.</div></div>');
+      }).join("") : '<div class="card"><div class="cnt">No hay pedidos que coincidan con esa busqueda.</div></div>') + '</div>';
 
     const inp = $("#pq2");
     inp.oninput = (e) => {
@@ -1952,7 +1959,8 @@
       <label class="field"><span>Direccion del negocio</span><input id="cd" value="${esc(st.direccion || "")}" placeholder="Calle, numero, sector"></label>
       <label class="field"><span>Telefono del negocio</span><input id="ct2" value="${esc(st.telefono || "")}" placeholder="8090000000"></label>
       <label class="field"><span>ITBIS (%)</span><input id="ci" inputmode="decimal" value="${Math.round(st.itbisRate * 100)}"></label>
-      <button class="btn" id="cs">Guardar</button></div>
+      <button class="btn" id="cs">Guardar</button>
+      <button class="btn sec" id="cob" style="margin-top:8px">Volver a configurar mi negocio</button></div>
       <div class="card"><h3>Caja y acceso</h3>
         <div class="line" style="font-size:13px"><span>Sesion</span><b>${db().session ? esc(db().session.nombre + " · " + db().session.rol) : "sin iniciar"}</b></div>
         <label class="field" style="margin-top:8px"><span>Pedir PIN al abrir</span><select id="cr"><option value="0" ${st.pinReq ? "" : "selected"}>No</option><option value="1" ${st.pinReq ? "selected" : ""}>Si</option></select></label>
@@ -1967,6 +1975,7 @@
       try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); render(); }
       catch (e) { toast(String(e.message || e)); }
     };
+    const cob = $("#cob"); if (cob) cob.onclick = () => { if (window.PPOnboarding) window.PPOnboarding.abrir(true); };
     $("#cs").onclick = () => { st.negocio = $("#cn").value.trim() || "Mi negocio"; st.direccion = ($("#cd") ? $("#cd").value.trim() : ""); st.telefono = ($("#ct2") ? $("#ct2").value.trim() : ""); const r = parseFloat($("#ci").value); if (r >= 0 && r <= 100) st.itbisRate = r / 100; S.save(); toast("Guardado"); };
     const paint = () => ($("#syn") && ($("#syn").textContent = (window.PPSync.state.online ? "Conectado" : "Sin conexion") + " · " + window.PPSync.state.pending + " pendiente(s)"));
     paint(); $("#sy").onclick = async () => { await window.PPSync.flush(); await window.PPSync.pull(); paint(); toast("Sincronizado"); };
