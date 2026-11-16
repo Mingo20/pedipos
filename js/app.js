@@ -149,16 +149,23 @@
     </button>`;
   }
 
+  /* ---------- Pantalla grande (PC horizontal) ---------- */
+  const esPC = () => window.matchMedia("(min-width:1024px)").matches;
+  let panelQ = "";
+
   /* ---------- Dock ---------- */
   const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
-    /* el panel de venta tiene su propia barra inferior: ahi el dock no aparece */
-    if (tab === "panel") { d.classList.add("hide"); d.innerHTML = ""; document.body.classList.remove("has-dock"); return; }
+    const pc = esPC();
+    /* en el telefono el panel de venta usa su propia barra; en PC la navegacion vive a la izquierda */
+    if (tab === "panel" && !pc) { d.classList.add("hide"); d.innerHTML = ""; document.body.classList.remove("has-dock"); return; }
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
-    d.innerHTML = TABS.map(([k, lb, ic]) => k === "panel"
+    const lista = pc ? TABS.concat([["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Ajustes", "gear"]]) : TABS;
+    const marca = pc ? `<div class="dock-brand"><img src="img/logo-96.png" alt=""><b>PediPOS</b></div>` : "";
+    d.innerHTML = marca + lista.map(([k, lb, ic]) => k === "panel"
       ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
       : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("");
     $$("#dock button").forEach((b) => (b.onclick = () => {
@@ -514,8 +521,16 @@
   function renderPanel() {
     const c = cart(), t = tot(), n = c.lines.length;
     document.body.classList.add("panel-view");
+    const q = window.PPVoice ? window.PPVoice.norm(panelQ) : String(panelQ || "").toLowerCase();
+    const listaProd = (db().products || []).filter((p) => p.activo !== false && (!q ||
+      (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q) : String(p.nombre).toLowerCase().includes(q))));
     $("#view").innerHTML = `
-      <div class="panel-center"><div class="search" id="pcSearch">${I.search}<input id="pcq" placeholder="Buscar producto" readonly autocomplete="off"></div></div>
+      <div class="panel-work">
+        <div class="pw-bar">
+          <div class="search pw-search">${I.search}<input id="pwq" placeholder="Buscar producto" value="${esc(panelQ)}" autocomplete="off"></div>
+        </div>
+        <div class="pgrid pw-grid" id="pwGrid">${listaProd.length ? listaProd.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:18px">Sin productos que coincidan.</p>'}</div>
+      </div>
       <section class="tick">
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar productos</div>')}${manual ? manualRow() : ""}</div>
@@ -536,6 +551,27 @@
         <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
         <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
       </div>`;
+    const pwq = $("#pwq");
+    if (pwq) pwq.oninput = (e) => {
+      panelQ = e.target.value;
+      const qq = window.PPVoice ? window.PPVoice.norm(panelQ) : panelQ.toLowerCase();
+      const prod = (db().products || []).filter((p) => p.activo !== false && (!qq ||
+        (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(qq) : String(p.nombre).toLowerCase().includes(qq))));
+      const g = $("#pwGrid");
+      if (g) g.innerHTML = prod.length ? prod.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:18px">Sin productos que coincidan.</p>';
+    };
+    const grid = $("#pwGrid");
+    if (grid) grid.onclick = (e) => {
+      const b = e.target.closest(".pcard");
+      if (!b) return;
+      const p = (db().products || []).find((x) => x.pid === b.dataset.p);
+      if (!p) return;
+      addLine(p, 1); S.save(); tap();
+      const pos = pwq ? pwq.selectionStart : 0;
+      render();
+      const n2 = $("#pwq"); if (n2) { n2.focus(); n2.setSelectionRange(pos, pos); }
+    };
+    if (window.PPUI && window.PPUI.alDock) window.PPUI.alDock();
     $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => {
       /* siempre se puede agregar a mano: el talonario muestra 5 y el resto se desliza */

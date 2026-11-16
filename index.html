@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="img/logo-96.png" type="image/png">
 <link rel="apple-touch-icon" href="img/logo-192.png">
-<link rel="stylesheet" href="css/app.css?v=76">
+<link rel="stylesheet" href="css/app.css?v=77">
 </head>
 <body>
 <div id="app">
@@ -35,16 +35,22 @@
 <div class="toast" id="toast" hidden></div>
 <script>/* captura temprana: el aviso de instalacion puede llegar antes que la app */window.__ppInstallPrompt=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__ppInstallPrompt=e;dispatchEvent(new Event("pp:installable"))});addEventListener("appinstalled",function(){window.__ppInstallPrompt=null;dispatchEvent(new Event("pp:installed"))});</script>
 <script src="https://js.puter.com/v2/"></script>
-<script src="js/store.js?v=76"></script>
-<script src="js/sync.js?v=76"></script>
-<script src="js/voice.js?v=76"></script>
-<script src="js/ticket.js?v=76"></script>
-<script src="js/extra.js?v=76"></script>
-<script src="js/sound.js?v=76"></script>
-<script src="js/onboarding.js?v=76"></script>
-<script src="js/app.js?v=76"></script>
+<script src="js/store.js?v=77"></script>
+<script src="js/sync.js?v=77"></script>
+<script src="js/voice.js?v=77"></script>
+<script src="js/ticket.js?v=77"></script>
+<script src="js/extra.js?v=77"></script>
+<script src="js/sound.js?v=77"></script>
+<script src="js/onboarding.js?v=77"></script>
+<script src="js/app.js?v=77"></script>
 <script>
 /* Capa responsive: ocultar navegacion y abrir el buscador central del panel. */
+/* al girar o cambiar de tamano se rehace la navegacion (5 iconos en movil, 8 en PC) */
+var ppT = null;
+addEventListener("resize", function () {
+  clearTimeout(ppT);
+  ppT = setTimeout(function () { if (window.PPUI && window.PPUI.render) window.PPUI.render(); }, 260);
+});
 document.addEventListener("click", function (e) {
   if (e.target.closest("#navToggle")) { document.body.classList.toggle("nav-off"); return; }
   if (e.target.closest("#pcSearch")) { var b = document.querySelector("#bSearch"); if (b) b.click(); }
@@ -53,7 +59,7 @@ document.addEventListener("click", function (e) {
 <script>
 /* Siempre la ultima version: el service worker se revisa al abrir y cada vez que se vuelve a la app. */
 (function(){
-  var VERSION="76";
+  var VERSION="77";
   if(!("serviceWorker"in navigator))return;
   var recargando=false;
   navigator.serviceWorker.addEventListener("controllerchange",function(){
