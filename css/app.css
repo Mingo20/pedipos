@@ -1720,3 +1720,59 @@ body.focus .subv.conbarra{height:100%;
   #cl2,#pl2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+
+/* ===== v83 · Ajustes finales del modo PC ===== */
+@media (min-width:1024px){
+  /* 1. panel: area de productos en blanco, encabezado intacto */
+  body.panel-view main#view{background:#fff}
+  body.panel-view .panel-work{background:#fff;padding-top:16px}
+  body.panel-view #top{background:var(--bg);z-index:45}
+  /* el talonario arranca exacto bajo el encabezado y nunca lo tapa */
+  body.panel-view .tick{top:var(--pp-top,66px);z-index:28}
+
+  /* 2. boton imprimir con su etiqueta, mas ancho */
+  .sh-f .m.ancho{width:auto!important;min-width:124px;padding:0 20px;display:inline-flex!important;gap:9px;
+    align-items:center;justify-content:center;border-radius:999px!important}
+  .sh-f .m.ancho .bl{display:inline-block;font-size:14.5px;font-weight:800;color:#fff;white-space:nowrap}
+
+  /* 3. analitica: KPIs pegados al encabezado */
+  #view > .kpis{margin-top:0!important;margin-bottom:14px!important}
+
+  /* 4. clientes y proveedores: KPIs centrados, sin sombra y con margen corto */
+  body:not(.panel-view):not(.avisos-view):not(.config-view) #view > .kpis{
+    max-width:640px;margin:6px auto 12px!important;box-shadow:none}
+  #view > .kpis .kpi{box-shadow:none}
+  #cl2,#pl2{margin-top:6px}
+  .stickbar{box-shadow:none;border-bottom:0}
+
+  /* 5 y 6. detalle de cliente y proveedor: ventas y pagos en tres columnas,
+     encabezado de esquina a esquina */
+  .subv.conbarra .cx-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .subv.conbarra > .subv-h{width:100%;max-width:none;margin:0;padding:0 0 4px}
+
+  /* 7. configuracion: negocio a la izquierda, caja arriba y sincronizacion debajo */
+  body.config-view main#view{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+  body.config-view main#view > .card:nth-child(1){grid-column:1;grid-row:1 / span 2}
+  body.config-view main#view > .card:nth-child(2){grid-column:2;grid-row:1}
+  body.config-view main#view > .card:nth-child(3){grid-column:2;grid-row:2}
+
+  /* 8. soporte: las tres secciones en tres columnas y centradas con mas aire */
+  .hx-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px}
+  .hx-list{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+  .hx-h{max-width:none;margin-left:auto;margin-right:auto}
+  #view > .hx-grid,#view > .hx-list,#view > .hx-h,#view > .hx-hero,#view > .hx-contact{
+    max-width:calc(100% - 6 * 26px);margin-left:auto;margin-right:auto}
+
+  /* 10. filtros en PC: la barrita se despliega bajo el boton */
+  .stickbar{position:relative}
+  .filtro-pop{position:absolute;left:0;top:calc(100% + 8px);right:auto;z-index:70;min-width:236px;
+    background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px #0b141c26;padding:8px}
+  .filtro-pop:not([hidden]){display:block}
+}
+@media (min-width:768px) and (max-width:1023px){
+  .filtro-pop{position:absolute;left:0;top:calc(100% + 8px);right:auto;z-index:70}
+  .stickbar{position:relative}
+  .hx-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .hx-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .sh-f .m.ancho .bl{display:inline-block}
+}

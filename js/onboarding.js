@@ -243,6 +243,7 @@
   }
 
   window.PPOnboarding = { abrir, cerrar, necesita };
+  window.PPOnboarding.geo = { PROVINCIAS, MUNIS, TIPOS, TAMANOS };
 
   /* arranque: si es la primera vez, se abre solo */
   function auto() {

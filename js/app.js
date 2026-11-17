@@ -168,10 +168,9 @@
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
     const lista = pc
-      ? [["panel", "Panel", "ticket"], ["historial", "Pedidos", "bagnav"],
-         ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["avisos", "Avisos", "bell"],
-         ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedor", "truck2"], ["config", "Ajustes", "gear"],
-         ["soporte", "Soporte", "help"]]
+      ? [["panel", "Panel", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"],
+         ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"],
+         ["config", "Ajustes", "gear"], ["soporte", "Soporte", "help"], ["avisos", "Avisos", "bell"]]
       : TABS;
     const marca = pc ? `<div class="dock-brand"><img src="img/logo-96.png" alt=""><b>PediPOS</b></div>` : "";
     const contraer = "";
@@ -2032,11 +2031,17 @@
   }
   function renderConfig() {
     const st = db().settings;
+    const geo = (window.PPOnboarding && window.PPOnboarding.geo) || { PROVINCIAS: [], MUNIS: {}, TIPOS: [], TAMANOS: [] };
+    const munisDe = (prov) => (geo.MUNIS || {})[prov] || [];
     document.body.classList.add("config-view");
     $("#view").innerHTML = `<div class="card"><label class="field"><span>Nombre del negocio</span><input id="cn" value="${esc(st.negocio)}"></label>
       <label class="field"><span>Direccion del negocio</span><input id="cd" value="${esc(st.direccion || "")}" placeholder="Calle, numero, sector"></label>
       <label class="field"><span>Telefono del negocio</span><input id="ct2" value="${esc(st.telefono || "")}" placeholder="8090000000"></label>
       <label class="field"><span>ITBIS (%)</span><input id="ci" inputmode="decimal" value="${Math.round(st.itbisRate * 100)}"></label>
+      <label class="field"><span>Tipo de negocio</span><select id="cTipo">${(geo.TIPOS || []).map((t) => `<option ${st.tipo_negocio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+      <label class="field"><span>Tamaño del negocio</span><select id="cTam">${(geo.TAMANOS || []).map((t) => `<option ${st.tamano_negocio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+      <label class="field"><span>Ciudad / Provincia</span><select id="cProv"><option value="">Seleccionar provincia...</option>${(geo.PROVINCIAS || []).map((t) => `<option ${st.provincia === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+      <label class="field"><span>Municipio</span><select id="cMuni"><option value="">Seleccionar municipio...</option>${munisDe(st.provincia).map((t) => `<option ${st.municipio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
       <button class="btn" id="cs">Guardar</button>
       <button class="btn sec" id="cob" style="margin-top:8px">Volver a configurar mi negocio</button></div>
       <div class="card"><h3>Caja y acceso</h3>
@@ -2053,14 +2058,26 @@
       try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); render(); }
       catch (e) { toast(String(e.message || e)); }
     };
+    const prov2 = $("#cProv"), muni2 = $("#cMuni");
+    if (prov2 && muni2) prov2.onchange = () => {
+      const lista = (geo.MUNIS || {})[prov2.value] || [];
+      muni2.innerHTML = '<option value="">Seleccionar municipio...</option>' + lista.map((t) => `<option>${esc(t)}</option>`).join("");
+    };
     const cob = $("#cob"); if (cob) cob.onclick = () => { if (window.PPOnboarding) window.PPOnboarding.abrir(true); };
-    $("#cs").onclick = () => { st.negocio = $("#cn").value.trim() || "Mi negocio"; st.direccion = ($("#cd") ? $("#cd").value.trim() : ""); st.telefono = ($("#ct2") ? $("#ct2").value.trim() : ""); const r = parseFloat($("#ci").value); if (r >= 0 && r <= 100) st.itbisRate = r / 100; S.save(); toast("Guardado"); };
+    $("#cs").onclick = () => { st.negocio = $("#cn").value.trim() || "Mi negocio"; st.direccion = ($("#cd") ? $("#cd").value.trim() : ""); st.telefono = ($("#ct2") ? $("#ct2").value.trim() : "");
+      st.tipo_negocio = $("#cTipo") ? $("#cTipo").value : st.tipo_negocio;
+      st.tamano_negocio = $("#cTam") ? $("#cTam").value : st.tamano_negocio;
+      st.provincia = prov2 ? prov2.value : st.provincia;
+      st.municipio = muni2 ? muni2.value : st.municipio; const r = parseFloat($("#ci").value); if (r >= 0 && r <= 100) st.itbisRate = r / 100; S.save(); toast("Guardado"); };
     const paint = () => ($("#syn") && ($("#syn").textContent = (window.PPSync.state.online ? "Conectado" : "Sin conexion") + " · " + window.PPSync.state.pending + " pendiente(s)"));
     paint(); $("#sy").onclick = async () => { await window.PPSync.flush(); await window.PPSync.pull(); paint(); toast("Sincronizado"); };
   }
 
   function render() {
     clearFab();
+    /* el alto del encabezado se mide primero: el talonario arranca justo debajo */
+    const tp0 = document.getElementById("top");
+    if (tp0) document.documentElement.style.setProperty("--pp-top", Math.round(tp0.getBoundingClientRect().height) + "px");
     if (tab === "panel") renderPanel();
     else if (tab === "catalogo") renderCatalogo();
     else if (tab === "soporte") renderSoporte();
