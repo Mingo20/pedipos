@@ -17,6 +17,7 @@
   }
 
   const I = {
+    shield: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
     bell: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>',
     menu: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h11M4 17h16"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
@@ -156,7 +157,7 @@
   let panelCat = "";
 
   /* ---------- Dock ---------- */
-  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
+  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
@@ -168,7 +169,7 @@
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
     const lista = pc
-      ? [["panel", "Panel", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"],
+      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"],
          ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"],
          ["config", "Ajustes", "gear"], ["soporte", "Soporte", "help"], ["avisos", "Avisos", "bell"]]
       : TABS;
@@ -190,7 +191,7 @@
       go(b.dataset.t);
     }));
   }
-  const TITULOS = { panel: "PANEL", catalogo: "CATALOGO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
+  const TITULOS = { fiscal: "FACTURACION", panel: "PANEL", catalogo: "CATALOGO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
   /* ----- Avisos de pagos a credito ----- */
   const DIAS = 86400000;
   function avisosPago() {
@@ -2087,6 +2088,7 @@
     else if (tab === "historial") renderHistorial();
     else if (tab === "config") renderConfig();
     else if (tab === "avisos") renderAvisos();
+    else if (tab === "fiscal") { if (window.PPFiscal) window.PPFiscal.render($("#view")); }
     drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
     const h1t = document.getElementById("title");
     if (h1t && esPC()) h1t.textContent = TITULOS[tab] || "PediPOS";
@@ -2239,6 +2241,7 @@
   });
   window.addEventListener("resize", () => ajustarAltoTalonario());
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
+  window.render = render; window.toast = toast; window.go = go;
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => { marcarLeidos(); go("avisos"); };

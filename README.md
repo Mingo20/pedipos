@@ -14,6 +14,10 @@
 
 </div>
 
+## Facturación electrónica (e-CF)
+
+PediPOS Fiscal emite comprobantes electrónicos ante la DGII desde la misma venta: XML e-CF, firma con el certificado del comerciante, envío, acuse y archivo. Pantalla *Fiscal* con configuración guiada y modo demostración. Ver `AGENTS.md` para el detalle técnico.
+
 ## El problema
 
 Los pequeños comercios dominicanos pierden ventas cuando se cae el internet y pierden tiempo anotando pedidos a mano.
