@@ -157,7 +157,7 @@
   let panelCat = "";
 
   /* ---------- Dock ---------- */
-  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
+  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
@@ -578,6 +578,16 @@
       const g = $("#pwGrid");
       if (g) g.innerHTML = prod.length ? prod.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:18px">Sin productos que coincidan.</p>';
     };
+    /* en PC la lista muestra 5 productos de un vistazo, sin tener que deslizar */
+    if (esPC()) {
+      const tb = $("#tickb");
+      if (tb) requestAnimationFrame(() => {
+        const t = $("#tickb"); if (!t) return;
+        const r0 = t.querySelector(".row");
+        const hFila = r0 && r0.getBoundingClientRect().height > 20 ? r0.getBoundingClientRect().height : 42;
+        t.style.maxHeight = Math.round(hFila * 5 + 4) + "px";
+      });
+    }
     const pwFil = $("#pwFil"), pwfp = $("#pwfp");
     if (pwFil && pwfp) {
       pwFil.onclick = () => alternarFiltro(pwFil, pwfp);
@@ -1768,21 +1778,10 @@
 
   /* ---------- Analitica ---------- */
   function renderAnalitica() {
-    const sales = db().sales, today = new Date().toISOString().slice(0, 10);
-    const hoy = sales.filter((s) => String(s.fecha).slice(0, 10) === today);
-    const sum = (a, k) => a.reduce((x, s) => x + (Number(s[k]) || 0), 0);
-    const byProd = {};
-    for (const s of sales) { let L = s.lineas; if (typeof L === "string") { try { L = JSON.parse(L); } catch (_) { L = []; } } for (const l of L) byProd[l.nombre] = (byProd[l.nombre] || 0) + l.cant * l.precio; }
-    const top = Object.entries(byProd).sort((a, b) => b[1] - a[1]).slice(0, 6), mx = top.length ? top[0][1] : 1;
-    const ticket = sales.length ? sum(sales, "total") / sales.length : 0;
-    $("#view").innerHTML = `<div class="kpis">
-      <div class="kpi"><small>Ventas hoy</small><b>${money(sum(hoy, "total"))}</b></div>
-      <div class="kpi"><small>Tickets hoy</small><b>${hoy.length}</b></div>
-      <div class="kpi"><small>ITBIS hoy</small><b>${money(sum(hoy, "itbis"))}</b></div>
-      <div class="kpi"><small>Ticket promedio</small><b>${money(ticket)}</b></div></div>
-      <div class="card"><h3>Productos mas vendidos</h3>${top.length ? top.map(([n, v]) => `<div class="bar-r"><span>${esc(n)}</span><i><u style="width:${Math.max(6, v / mx * 100)}%"></u></i><em>${money(v)}</em></div>`).join("") : '<div class="empty" style="padding:24px">Aun no hay ventas.</div>'}</div>
-      <div class="card"><h3>Ultimas ventas</h3>${sales.length ? sales.slice(-8).reverse().map((s) => `<div class="bar-r" style="grid-template-columns:1fr auto"><span>${new Date(s.fecha).toLocaleString("es-DO", { dateStyle: "short", timeStyle: "short" })} &middot; ${esc(s.metodo)}</span><em>${money(s.total)}</em></div>`).join("") : '<div class="empty" style="padding:24px">Sin ventas registradas.</div>'}</div>`;
+    if (window.PPAnalitica) return window.PPAnalitica.render($("#view"));
+    $("#view").innerHTML = '<p class="cnt">Analitica no disponible.</p>';
   }
+
 
   /* ---------- Soporte ---------- */
   const DOC = [
@@ -1889,7 +1888,7 @@
   /* ---------- Menu lateral ---------- */
   function openMenu() {
     const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
-      ["historial", "Pedidos", "bagnav"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
+      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();

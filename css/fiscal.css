@@ -1,7 +1,7 @@
 /* PediPOS Fiscal · estilos de la pantalla de facturacion electronica */
 .ecf-wrap{padding:14px 14px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;max-width:760px;margin:0 auto}
 .ecf-hero{position:relative;border-radius:20px;padding:18px 18px 14px;color:#fff;overflow:hidden;
-  background:linear-gradient(135deg,#0B2545 0%,#123A66 55%,#1B4F86 100%)}
+  background:linear-gradient(135deg,#14663B 0%,#1F9D5C 55%,#2FBF77 100%)}
 .ecf-hero.demo{background:linear-gradient(135deg,#5A3410 0%,#8A4A12 55%,#B45309 100%)}
 .ecf-hero:after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)}

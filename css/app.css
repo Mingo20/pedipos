@@ -1779,3 +1779,7 @@ body.focus .subv.conbarra{height:100%;
 
 /* el talonario en PC arranca debajo del encabezado, sin quedar tapado por la barra */
 body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px)!important}
+
+/* margen entre la barra de busqueda y el icono de filtro, y pop anclado a la barra */
+.pw-bar{position:relative;gap:12px;align-items:center}
+.pw-bar .filtro-pop{z-index:40}
