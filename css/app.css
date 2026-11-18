@@ -270,9 +270,9 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .act .mic{flex:none;margin:0 2px;z-index:2}
 
 /* ---------- Dock de 5 iconos ---------- */
-.dock{grid-template-columns:repeat(5,1fr);height:62px}
-.dock button{gap:2px;font-size:10.5px;font-weight:600;color:#59616b;align-content:center}
-.dock button svg{width:23px;height:23px}
+.dock{grid-template-columns:repeat(6,1fr);height:62px;width:min(calc(100% - 20px),580px)}
+.dock button{gap:2px;font-size:9.6px;font-weight:600;color:#59616b;align-content:center;letter-spacing:-.1px}
+.dock button svg{width:21px;height:21px}
 .dock button.mid{position:relative}
 .dock button.mid .orb{width:50px;height:50px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;margin-top:-22px;box-shadow:0 8px 18px #1f9d5c55;border:4px solid #fff;transition:transform .15s}
 .dock button.mid:active .orb{transform:scale(.93)}
@@ -1600,7 +1600,7 @@ body.focus .subv.conbarra{height:100%;
   .pw-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;padding:0}
   .pw-grid .pcard .ph{height:96px}
   body.panel-view main#view{padding-right:calc(430px + 26px)}
-  body.panel-view .tick{position:fixed;right:0;top:var(--pp-top,66px);bottom:0;width:430px;height:auto;margin:0;
+  body.panel-view .tick{position:fixed;right:0;top:calc(var(--pp-top,66px) + 14px);bottom:0;width:430px;height:auto;margin:0;
     border-radius:0;border-top:0;border-left:1px solid var(--line);box-shadow:-8px 0 22px #0000000a;
     padding:16px 16px 96px;overflow:auto;z-index:31}
   body.panel-view .tick .act{position:static!important;left:auto!important;right:auto!important;transform:none!important;
@@ -1671,7 +1671,7 @@ body.focus .subv.conbarra{height:100%;
   .pgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
   .stickbar{position:static;padding:0;margin:0 0 12px;background:none}
   body.panel-view main#view{padding-right:calc(min(360px,40vw) + 18px)}
-  body.panel-view .tick{position:fixed;right:0;top:var(--pp-top,66px);bottom:0;width:min(360px,40vw);height:auto;margin:0;
+  body.panel-view .tick{position:fixed;right:0;top:calc(var(--pp-top,66px) + 14px);bottom:0;width:min(360px,40vw);height:auto;margin:0;
     border-radius:0;border-top:0;border-left:1px solid var(--line);box-shadow:-8px 0 20px #0000000a;
     padding:14px 14px 92px;overflow:auto;z-index:31}
   body.panel-view .tick .act{position:static!important;left:auto!important;right:auto!important;transform:none!important;
@@ -1691,7 +1691,7 @@ body.focus .subv.conbarra{height:100%;
   .filtro-pop{left:0;right:auto;top:calc(100% + 8px);z-index:55;min-width:230px}
   .fbtn{flex:none}
   /* talonario de punta a punta, sin huecos */
-  body.panel-view .tick{top:var(--pp-top,66px);bottom:0;padding:0 16px}
+  body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px);bottom:0;padding:0 16px}
   body.panel-view .tick .tick-h{margin-top:0}
   body.panel-view .tick .act{margin:24px 0 16px!important}
   /* cuatro columnas en pedidos, clientes, proveedores, ventas y pagos */
@@ -1700,8 +1700,8 @@ body.focus .subv.conbarra{height:100%;
   #cl2,#pl2{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
   .subv.conbarra .cx-list{grid-template-columns:repeat(4,minmax(0,1fr))}
   /* catalogo en siete columnas */
-  .pgrid{grid-template-columns:repeat(7,minmax(0,1fr))}
-  body.panel-view .pw-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+  .pgrid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  body.panel-view .pw-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
   /* buscadores a la izquierda */
   .stickbar .searchrow .search{max-width:420px}
   /* detalle: encabezado a todo el ancho y barra de edicion centrada delante */
@@ -1728,7 +1728,7 @@ body.focus .subv.conbarra{height:100%;
   body.panel-view .panel-work{background:#fff;padding-top:16px}
   body.panel-view #top{background:var(--bg);z-index:45}
   /* el talonario arranca exacto bajo el encabezado y nunca lo tapa */
-  body.panel-view .tick{top:var(--pp-top,66px);z-index:28}
+  body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px);z-index:28}
 
   /* 2. boton imprimir con su etiqueta, mas ancho */
   .sh-f .m.ancho{width:auto!important;min-width:124px;padding:0 20px;display:inline-flex!important;gap:9px;
@@ -1776,3 +1776,6 @@ body.focus .subv.conbarra{height:100%;
   .hx-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .sh-f .m.ancho .bl{display:inline-block}
 }
+
+/* el talonario en PC arranca debajo del encabezado, sin quedar tapado por la barra */
+body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px)!important}
