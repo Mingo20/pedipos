@@ -2,6 +2,16 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.5.0] - 2026-11-19
+
+### Cambiado
+- **Las ventas pasan a IndexedDB** (`js/ventas.js`). El almacen viejo solo guarda productos, clientes, ajustes y carrito. Se acabo el borrado de historial cuando el telefono se llenaba: la app ya no recorta ventas para hacer espacio.
+- Migracion automatica al arrancar: las ventas que estaban en el almacen viejo se copian a IndexedDB, se unen sin duplicar si habia de los dos lados y despues se reescribe el almacen viejo sin ventas.
+- Escritura agrupada cada 700 ms y volcado al salir de la pagina, para no escribir en cada toque.
+
+### Corregido
+- El aviso de espacio lleno decia que se habia liberado historial antiguo; ahora informa el estado real.
+
 ## [1.4.0] - 2026-11-19
 
 ### Añadido

@@ -35,34 +35,79 @@
   }
 
   let db;
+  let legado = [];          /* ventas que venian del almacen viejo, pendientes de pasar a IndexedDB */
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
       db = raw ? JSON.parse(raw) : fresh();
       if (!db || !db.products) db = fresh();
+      if (Array.isArray(db.sales) && db.sales.length) legado = db.sales.slice();
+      db.sales = [];        /* el espejo en memoria lo llena hydrate() desde IndexedDB */
     } catch (_) {
       db = fresh();
     }
     return db;
   }
 
-  /* Guardado resistente a cuota llena: si revienta, recorta ventas antiguas y reintenta. */
+  /* El almacen viejo solo guarda productos, clientes, ajustes y carrito.
+     Las ventas van a IndexedDB: asi nunca se borra historial para hacer espacio. */
   let warned = false;
   function save() {
-    for (let i = 0; i < 4; i++) {
+    const payload = JSON.stringify({ ...db, sales: [] });
+    let ok = false;
+    for (let i = 0; i < 2; i++) {
       try {
-        localStorage.setItem(KEY, JSON.stringify(db));
-        return true;
+        localStorage.setItem(KEY, payload);
+        ok = true;
+        break;
       } catch (e) {
-        if (db.sales.length > 50) db.sales = db.sales.slice(-Math.floor(db.sales.length * 0.7));
-        else break;
+        if (window.PPComprobantes && window.PPComprobantes.borrarTodo && i === 0) {
+          /* ultimo recurso: liberar comprobantes duplicados en el almacen viejo */
+          try { localStorage.removeItem("pedipos.ecf.v1"); } catch (_) {}
+        }
       }
     }
-    if (!warned) {
+    if (!ok && !warned) {
       warned = true;
       window.dispatchEvent(new CustomEvent("pp:quota"));
     }
-    return false;
+    if (window.PPVentas) window.PPVentas.marcar(db.sales);
+    return ok;
+  }
+
+  /* ---------- arranque: pasa las ventas viejas a IndexedDB y las carga ---------- */
+  let hidratado = null;
+  function hydrate() {
+    if (hidratado) return hidratado;
+    if (!window.PPVentas) { db.sales = legado; legado = []; hidratado = Promise.resolve(db.sales); return hidratado; }
+    hidratado = window.PPVentas.init().then((enIDB) => {
+      const yaHay = Array.isArray(enIDB) && enIDB.length > 0;
+      if (legado.length && !yaHay) {
+        return window.PPVentas.reemplazar(legado).then(() => {
+          legado = [];
+          save();                       /* reescribe el almacen viejo sin ventas */
+          return window.PPVentas.todas();
+        });
+      }
+      if (legado.length && yaHay) {
+        /* habia ventas en los dos lados: se unen sin duplicar */
+        const vistos = new Set(enIDB.map((v) => v.vid));
+        const extra = legado.filter((v) => v && v.vid && !vistos.has(v.vid));
+        legado = [];
+        if (extra.length) {
+          return window.PPVentas.reemplazar(enIDB.concat(extra)).then(() => window.PPVentas.todas());
+        }
+      }
+      return enIDB;
+    }).then((lista) => {
+      db.sales = Array.isArray(lista) ? lista : [];
+      return db.sales;
+    }).catch(() => {
+      db.sales = legado.length ? legado : db.sales;
+      legado = [];
+      return db.sales;
+    });
+    return hidratado;
   }
 
   /* ---------- Dinero y totales ---------- */
@@ -75,7 +120,7 @@
 
   window.PPStore = {
     get db() { return db || load(); },
-    load, save, uid, round2, totals,
+    load, save, hydrate, uid, round2, totals,
     reset() { db = fresh(); save(); return db; },
   };
   load();

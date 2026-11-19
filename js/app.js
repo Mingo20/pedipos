@@ -2275,7 +2275,7 @@
     render();
   });
   window.addEventListener("resize", () => ajustarAltoTalonario());
-  window.addEventListener("pp:quota", () => toast("Espacio casi lleno. Se libero historial antiguo."));
+  window.addEventListener("pp:quota", () => toast("Espacio casi lleno en el navegador. Tus ventas ya estan a salvo."));
   window.render = render; window.toast = toast; window.go = go;
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
   $("#btnMenu").onclick = openMenu;
@@ -2289,6 +2289,8 @@
     window.PPImprimirTicket();
   }, true);
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
+  /* las ventas viven en IndexedDB: se cargan al arrancar y se repinta con ellas */
+  if (window.PPStore && window.PPStore.hydrate) window.PPStore.hydrate().then(() => { render(); });
   addEventListener("pp:installable", () => { const b = $("#instbar"); if (b && b.hidden && !localStorage.getItem(INS_DONE)) { localStorage.removeItem(INS_OFF); b.hidden = false; } });
   addEventListener("pp:installed", () => { localStorage.setItem(INS_DONE, "1"); const b = $("#instbar"); if (b) { b.hidden = true; } toast("PediPOS instalada"); });
   if (db().settings.pinReq && !db().session) setTimeout(loginScreen, 260);
