@@ -1783,3 +1783,7 @@ body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px)!important}
 /* margen entre la barra de busqueda y el icono de filtro, y pop anclado a la barra */
 .pw-bar{position:relative;gap:12px;align-items:center}
 .pw-bar .filtro-pop{z-index:40}
+
+/* sin sombra gris bajo las tarjetas de kpis: el borde ya separa */
+.kpis{box-shadow:none!important}
+.kpis .kpi{box-shadow:none!important}

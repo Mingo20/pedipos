@@ -19,14 +19,14 @@
 
   /* ---------- Cuentas por cobrar ---------- */
   function deudaDe(cid) {
-    let t = 0;
-    for (const s of db().sales) {
-      if (s.cliente_id !== cid) continue;
-      if (s.metodo !== "credito") continue;
-      t += Number(s.total) || 0;
-      if (s.pagada) t -= Number(s.total) || 0;
-    }
-    return Math.round(t * 100) / 100;
+    const cli = (db().clients || []).find((x) => x.cid === cid);
+    const ventas = (db().sales || []).filter((s) => s.cliente_id === cid && s.metodo === "credito");
+    const total = ventas.reduce((a, s) => a + (Number(s.total) || 0), 0);
+    const pagos = (Array.isArray(cli && cli.pagos) ? cli.pagos : []).reduce((a, p) => a + (Number(p.monto) || 0), 0);
+    /* compatibilidad con ventas marcadas pagadas antes de existir el historial de abonos */
+    const huerfanas = ventas.filter((s) => s.pagada).reduce((a, s) => a + (Number(s.total) || 0), 0);
+    const aplicado = pagos > 0 ? pagos : huerfanas;
+    return Math.max(0, Math.round((total - aplicado) * 100) / 100);
   }
   function ventasDe(cid) {
     return db().sales.filter((s) => s.cliente_id === cid).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
@@ -384,24 +384,38 @@
       <button class="btn" id="oka">Registrar pago</button>`);
     s.querySelector("[data-x]").onclick = closeSheet;
     s.querySelector("#oka").onclick = () => {
-      const m = parseFloat(String(s.querySelector("#ab").value).replace(",", "."));
+      const m = S.round2(parseFloat(String(s.querySelector("#ab").value).replace(",", ".")));
       if (!(m > 0)) return toast("Monto invalido");
-      const pend = db().sales.filter((s2) => s2.cliente_id === c.cid && s2.metodo === "credito" && !s2.pagada).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
-      let resto = m;
-      for (const v of pend) {
-        if (resto <= 0) break;
-        if (resto >= Number(v.total) - 0.01) { v.pagada = true; resto = S.round2(resto - Number(v.total)); }
+      try {
+        const pend = db().sales.filter((s2) => s2.cliente_id === c.cid && s2.metodo === "credito" && !s2.pagada)
+          .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+        /* reparte el abono en las ventas: las saldadas se marcan, las demas acumulan abonado */
+        let resto = m;
+        for (const v of pend) {
+          if (resto <= 0) break;
+          const t = Number(v.total) || 0;
+          if (resto >= t - 0.01) { v.pagada = true; resto = S.round2(resto - t); }
+          else { v.abonada = S.round2((Number(v.abonada) || 0) + resto); resto = 0; }
+        }
+        c.pagos = Array.isArray(c.pagos) ? c.pagos : [];
+        c.pagos.push({ id: S.uid("PC"), fecha: new Date().toISOString(), monto: m });
+        const guardado = S.save();
+        if (!guardado) {
+          closeSheet();
+          return toast("No hay espacio en el telefono: exporta tus datos antes de seguir");
+        }
+        try { pend.forEach((v) => window.PPSync && window.PPSync.saveSale && window.PPSync.saveSale(v)); } catch (_) {}
+        try { window.PPSync && window.PPSync.saveCliente && window.PPSync.saveCliente(c); } catch (_) {}
+        closeSheet();
+        toast("Pago de " + money(m) + " registrado");
+        /* el detalle se vuelve a dibujar y muestra la tarjeta nueva en PAGOS */
+        cliVista = "pagos";
+        const fresco = (db().clients || []).find((x) => x.cid === c.cid) || c;
+        render();
+        setTimeout(() => { try { verCliente(fresco); } catch (_) {} }, 60);
+      } catch (e) {
+        toast("No se pudo registrar: " + (e && e.message ? e.message : e));
       }
-      c.pagos = Array.isArray(c.pagos) ? c.pagos : [];
-      c.pagos.push({ id: S.uid("PC"), fecha: new Date().toISOString(), monto: S.round2(m) });
-      S.save(); pend.forEach((v) => window.PPSync.saveSale(v));
-      window.PPSync.saveCliente(c);
-      closeSheet(); toast("Pago registrado");
-      /* el detalle se vuelve a dibujar y muestra la tarjeta nueva en PAGOS */
-      cliVista = "pagos";
-      const fresco = (db().clients || []).find((x) => x.cid === c.cid) || c;
-      render();
-      setTimeout(() => { try { verCliente(fresco); } catch (_) {} }, 60);
     };
   }
 

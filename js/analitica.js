@@ -74,6 +74,11 @@
 
   /* ---------- graficos SVG ---------- */
   function area(serie, etiquetas) {
+    /* en pantallas angostas se rotula cada N dias para que no se amontone */
+    if (etiquetas && etiquetas.length > 8 && (global.innerWidth || 400) < 560) {
+      var salto = Math.ceil(etiquetas.length / 6);
+      etiquetas = etiquetas.map(function (t, i) { return i % salto === 0 ? t : ""; });
+    }
     var w = 620, h = 150, pad = 6;
     var max = Math.max.apply(null, serie.concat([1]));
     var n = serie.length;
@@ -184,22 +189,19 @@
     var KPIS = [
       ["Ventas", money(total), vsAnterior === null ? "en el periodo" : (vsAnterior >= 0 ? "+" : "") + vsAnterior + "% vs anterior", vsAnterior],
       ["Tickets", String(tickets), "transacciones", null],
-      ["Ticket promedio", money(promedio), "por venta", null],
       ["ITBIS", money(itbis), "impuesto generado", null],
-      ["Articulos", String(Math.round(articulos)), "unidades vendidas", null],
       ["A credito", money(credito), "pendiente de cobro", null]
     ];
 
     view.innerHTML =
       '<div class="an-wrap">' +
         '<div class="an-head">' +
-          "<div><h2>Analitica</h2><p>Rendimiento de tu negocio en tiempo real" +
-            (usandoDemo ? ' <span class="an-demo">datos de ejemplo</span>' : "") + "</p></div>" +
           '<div class="an-tabs" role="tablist">' +
             [[1, "Hoy"], [7, "7 dias"], [30, "30 dias"], [0, "Todo"]].map(function (p) {
               return '<button class="an-tab ' + (periodo === p[0] ? "on" : "") + '" data-p="' + p[0] + '">' + p[1] + "</button>";
             }).join("") +
           "</div>" +
+          (usandoDemo ? '<span class="an-demo">datos de ejemplo</span>' : "") +
         "</div>" +
 
         '<div class="an-kpis">' + KPIS.map(function (k) {

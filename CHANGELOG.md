@@ -2,6 +2,22 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.3.0] - 2026-11-18
+
+### Añadido
+- **Comprobantes en IndexedDB** (`js/comprobantes.js`): los XML firmados salen de localStorage, que se llenaba a las pocas horas con volumen alto. Espejo en memoria, migración automática de lo viejo y liberación del espacio.
+- **Exportación** de comprobantes en JSON (con datos del emisor) y CSV desde la tarjeta de Comprobantes.
+- **Panel de emisores** (`js/emisores.js`, pantalla nueva en las dos barras): avisa de certificado vencido, secuencia vencida, rechazos y comprobantes en cola. Importa el archivo exportado por cada comerciante.
+- **Un solo emisor por secuencia**: cada equipo tiene identidad propia; si la secuencia pertenece a otro equipo, la emisión se bloquea con aviso y hay un botón para liberarla.
+
+### Corregido
+- Los abonos del cliente no descontaban la deuda: solo restaban cuando se saldaba una venta completa. Ahora la deuda es total a crédito menos pagos, el abono se reparte en las ventas y la tarjeta aparece en el historial de pagos.
+- El abono avisa si el teléfono no tiene espacio en vez de fallar en silencio.
+- Sombra gris bajo las tarjetas de kpis en Clientes y Proveedores, que se veía sobre la primera tarjeta de la lista.
+
+### Cambiado
+- Analítica: sin título ni subtítulo, pastillas de periodo centradas, ancho un poco mayor, fuera las tarjetas "Ticket promedio" y "Artículos". Las tarjetas de gráfico ya no se desbordan en el teléfono y el eje de fechas se rotula cada N días.
+
 ## [1.2.1] - 2026-11-18
 
 ### Añadido

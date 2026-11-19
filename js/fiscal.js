@@ -47,6 +47,11 @@
 
   /* ---------- emision ---------- */
   async function emitir(sale, opts) {
+    var c0 = cfg();
+    if (emisorBloqueado(c0)) {
+      toast("Esta secuencia pertenece al equipo " + c0.emisorId + ". Usala desde ese equipo o liberala en Fiscal.");
+      return { ok: false, error: "secuencia de otro equipo" };
+    }
     var c = cfg();
     opts = opts || {};
     if (!c.rnc) return { ok: false, error: "Falta el RNC del comerciante en Ajustes fiscales" };
@@ -104,7 +109,7 @@
       c.ultimoError = sinRed ? "" : msg;
     }
 
-    db().ecf.unshift(reg);
+    if (global.PPComprobantes) global.PPComprobantes.add(reg); else { db().ecf = db().ecf || []; db().ecf.unshift(reg); }
     if (reg.estado !== "error" && reg.estado !== "rechazado") c.ncf = siguienteNcf(c);
     guardar();
     return { ok: reg.estado === "aceptado" || reg.estado === "enviado", reg: reg };
@@ -114,7 +119,7 @@
   /* ---------- cola de contingencia: reintenta lo que no salio ---------- */
   async function reintentar() {
     var c = cfg();
-    var pend = (db().ecf || []).filter(function (r) { return r.estado === "encola" || r.estado === "error"; });
+    var pend = (global.PPComprobantes ? global.PPComprobantes.all() : (db().ecf || [])).filter(function (r) { return r.estado === "encola" || r.estado === "error"; });
     if (!pend.length) return { ok: true, enviados: 0 };
     var cred = null;
     if (!c.demo) {
@@ -145,10 +150,24 @@
     return { ok: true, enviados: hechos };
   }
 
+
+  /* ---------- identidad del equipo: una secuencia pertenece a un solo emisor ---------- */
+  function deviceId() {
+    var k = "pedipos.device.v1";
+    try {
+      var v = localStorage.getItem(k);
+      if (!v) { v = "EQ-" + Math.random().toString(36).slice(2, 8).toUpperCase(); localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return "EQ-LOCAL"; }
+  }
+  function emisorBloqueado(c) {
+    return !!(c && c.emisorId && c.emisorId !== deviceId());
+  }
+
   /* ---------- vista ---------- */
   function render(view) {
     var c = cfg();
-    var lista = db().ecf || [];
+    var lista = global.PPComprobantes ? global.PPComprobantes.all() : (db().ecf || []);
     var ventas = (db().sales || []).slice(0, 5);
     var listo = !!(c.rnc && c.ncf);
     var aceptados = lista.filter(function (x) { return x.estado === "aceptado"; }).length;
@@ -190,6 +209,8 @@
             '<label class="ecf-file">Certificado (.p12)<input id="f-p12" type="file" accept=".p12,.pfx"></label>' +
             '<label>Clave del certificado<input id="f-pass" type="password" placeholder="Se pide al firmar"></label>' +
             '<label class="ecf-check"><input id="f-demo" type="checkbox"' + (c.demo ? " checked" : "") + "> Modo demostración (no envía a la DGII)</label>" +
+            '<div class="ecf-emi"><span>Equipo emisor: <b>' + (c.emisorId || deviceId()) + "</b></span>" +
+              (emisorBloqueado(c) ? '<button class="ecf-mini" id="f-libre">Liberar para este equipo</button>' : "") + "</div>" +
             '<button class="ecf-btn" id="f-save">Guardar configuración</button>' +
           "</section>") +
 
@@ -210,6 +231,9 @@
 
         '<section class="ecf-card">' +
           "<h3>Comprobantes</h3>" +
+          '<div class="ecf-exp"><button class="ecf-mini" id="f-exp-json">Exportar JSON</button>' +
+            '<button class="ecf-mini" id="f-exp-csv">Exportar CSV</button>' +
+            "<span>" + lista.length + " guardados en este equipo</span></div>" +
           ((lista.filter(function (x) { return x.estado === "encola" || x.estado === "error"; }).length)
             ? '<button class="ecf-btn ghost" id="f-retry" style="margin:0 0 12px">Reintentar ' +
               lista.filter(function (x) { return x.estado === "encola" || x.estado === "error"; }).length +
@@ -230,6 +254,15 @@
       "</div>";
 
     /* guardar configuracion */
+    var libre = $("#f-libre", view);
+    if (libre) libre.onclick = function () {
+      var cc = cfg();
+      cc.emisorId = deviceId();
+      guardar();
+      toast("Secuencia liberada para este equipo");
+      if (global.render) global.render();
+    };
+
     var save = $("#f-save", view);
     if (save) save.onclick = function () {
       var ncfNuevo = ($("#f-ncf", view).value || "").trim().toUpperCase();
@@ -245,7 +278,19 @@
       var pass = $("#f-pass", view).value;
       if (pass) global.__ppFiscalPass = pass;
       c.activo = !!(c.rnc && c.ncf);
+      /* regla de un solo emisor por secuencia: la secuencia queda atada a este equipo */
+      if (!c.emisorId) c.emisorId = deviceId();
+      if (c.emisorId !== deviceId()) {
+        toast("Esta secuencia pertenece a " + c.emisorId + ". Liberala aqui para emitir desde este equipo.");
+      }
       guardar();
+      if (c.rnc && global.PPEmisores) {
+        global.PPEmisores.registrar({
+          rnc: c.rnc, razonSocial: c.razonSocial || "", nombreComercial: c.nombreComercial || "",
+          ambiente: c.ambiente, secuencia: c.ncf, vencimientoSecuencia: c.vencimientoSecuencia || "",
+          certVence: c.certVence || "", emisorId: c.emisorId
+        });
+      }
       toast(c.activo ? "Configuración fiscal guardada" : "Falta RNC o e-NCF");
       if (global.render) global.render();
     };
@@ -258,7 +303,22 @@
       var fr = new FileReader();
       fr.onload = function () {
         c.p12 = String(fr.result || "").split(",").pop();
+        /* se lee el vencimiento del certificado para poder avisar antes de que caduque */
+        try {
+          var pass0 = global.__ppFiscalPass || ($("#f-pass", view) ? $("#f-pass", view).value : "") || "";
+          var cred0 = global.ECF.cargarP12(c.p12, pass0);
+          var cert = cred0 && cred0.cert;
+          var hasta = cert && cert.validity && cert.validity.notAfter;
+          if (hasta) c.certVence = new Date(hasta).toISOString();
+        } catch (e) { /* la clave se pide al emitir */ }
         guardar();
+        if (c.rnc && global.PPEmisores) {
+          global.PPEmisores.registrar({
+            rnc: c.rnc, razonSocial: c.razonSocial || "", nombreComercial: c.nombreComercial || "",
+            ambiente: c.ambiente, secuencia: c.ncf, vencimientoSecuencia: c.vencimientoSecuencia || "",
+            certVence: c.certVence || "", emisorId: c.emisorId || deviceId()
+          });
+        }
         toast("Certificado cargado");
       };
       fr.readAsDataURL(f);
@@ -275,6 +335,16 @@
     var demoBtn = $("#f-demo-sale", view);
     if (demoBtn) demoBtn.onclick = async function () {
       await lanzar(ventaEjemplo(), $("#f-note", view), view);
+    };
+
+    var eJ = $("#f-exp-json", view), eC = $("#f-exp-csv", view);
+    if (eJ) eJ.onclick = function () {
+      var n = global.PPComprobantes.exportarJSON();
+      toast("Exportados " + n + " comprobantes");
+    };
+    if (eC) eC.onclick = function () {
+      var n = global.PPComprobantes.exportarCSV();
+      toast("Exportados " + n + " comprobantes");
     };
 
     var retry = $("#f-retry", view);
@@ -330,6 +400,15 @@
       if (pend.length) reintentar().then(function (r) { if (r && r.ok && global.render) global.render(); });
     });
   } catch (e) {}
+
+  /* los comprobantes viven en IndexedDB: se cargan una vez y se refresca la vista */
+  if (global.PPComprobantes) {
+    global.PPComprobantes.init().then(function (n) {
+      if (n && n.length && global.render && global.PPFiscal) {
+        try { if (document.querySelector(".ecf-wrap")) global.render(); } catch (e) {}
+      }
+    });
+  }
 
   global.PPFiscal = {
     render: render, emitir: emitir, cfg: cfg, ventaEjemplo: ventaEjemplo, reintentar: reintentar,
