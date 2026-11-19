@@ -24,6 +24,9 @@
       r.onupgradeneeded = function () { crearAlmacen(r.result); };
       r.onsuccess = function () {
         var d = r.result;
+        /* si otra pestana pide subir la version, se suelta la conexion o queda bloqueada */
+        d.onversionchange = function () { try { d.close(); } catch (e) {} promesa = null; };
+        d.onclose = function () { promesa = null; };
         /* si la base quedo creada sin el almacen, se reabre con una version nueva */
         if (!d.objectStoreNames.contains(STORE)) {
           var v = (d.version || 1) + 1;
@@ -39,6 +42,20 @@
       r.onerror = function () { rej(r.error); };
     });
     return promesa;
+  }
+
+  /* suelta la conexion: no se dejan ventanas de IndexedDB abiertas */
+  function cerrar() {
+    if (!promesa) return Promise.resolve(false);
+    return promesa.then(function (d) {
+      try { d.close(); } catch (e) {}
+      promesa = null;
+      return true;
+    }).catch(function () { promesa = null; return false; });
+  }
+
+  if (global.addEventListener) {
+    global.addEventListener("pagehide", function () { cerrar(); });
   }
 
   function tx(modo) {
@@ -161,6 +178,7 @@
   }
 
   global.PPComprobantes = {
+    cerrar: cerrar,
     init: init, all: all, add: add, update: update, count: count,
     exportarJSON: exportarJSON, exportarCSV: exportarCSV, importar: importar, borrarTodo: borrarTodo
   };

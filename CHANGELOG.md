@@ -2,6 +2,11 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.3.1] - 2026-11-19
+
+### Corregido
+- Las conexiones de IndexedDB quedaban abiertas para siempre: comprobantes y cola de sincronizacion. Ahora se sueltan al salir de la pagina, al pedir otra pestana una version nueva y con `PPComprobantes.cerrar()`. Probado: tras cerrar, una apertura con version superior sube sin bloqueo.
+
 ## [1.3.0] - 2026-11-18
 
 ### Añadido

@@ -6,6 +6,13 @@
   const DB_NAME = "pedipos-queue", STORE = "q";
   const S = () => window.PPStore;
 
+  /* suelta la conexion de la cola: no se dejan ventanas de IndexedDB abiertas */
+  function cerrar() {
+    if (!idb) return;
+    idb.then((d) => { try { d.close(); } catch (_) {} }).catch(() => {}).finally(() => { idb = null; });
+  }
+  if (window.addEventListener) window.addEventListener("pagehide", cerrar);
+
   /* ---------- IndexedDB (la cola NO va en localStorage: se llenaria) ---------- */
   let idb;
   function open() {
@@ -13,7 +20,13 @@
     idb = new Promise((res, rej) => {
       const r = indexedDB.open(DB_NAME, 1);
       r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath: "n", autoIncrement: true });
-      r.onsuccess = () => res(r.result);
+      r.onsuccess = () => {
+        const d = r.result;
+        /* si otra pestana pide subir la version, se suelta la conexion o queda bloqueada */
+        d.onversionchange = () => { try { d.close(); } catch (_) {} idb = null; };
+        d.onclose = () => { idb = null; };
+        res(d);
+      };
       r.onerror = () => rej(r.error);
     });
     return idb;
