@@ -1811,7 +1811,7 @@ body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px)!important}
 .dr-card .em-acc{margin-top:10px}
 
 /* ---------- buscadores pegados al encabezado (pedidos y catalogo) ---------- */
-.stickbar.pegada{top:-4px;padding-top:0;margin-top:-30px}
+.stickbar.pegada{top:-4px;padding-top:0;margin-top:-18px}
 
 /* ---------- modo manos libres: la barra flota sobre la rejilla ---------- */
 .act.flotante{position:fixed!important;left:50%!important;right:auto!important;bottom:calc(env(safe-area-inset-bottom) + 14px)!important;
