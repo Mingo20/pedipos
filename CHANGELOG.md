@@ -2,6 +2,19 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.2.1] - 2026-11-18
+
+### Añadido
+- Arquitectura confirmada **todo en el navegador**: cada comerciante firma y envía con su propio certificado desde su computadora, sin servidores intermedios.
+- **Cola de contingencia** en Fiscal: si se cae la red, el comprobante queda en cola con estado propio, se reintenta solo al volver la conexión y hay un botón para reintentar los pendientes.
+- Analítica muestra **datos de ejemplo** cuando aún no hay ventas reales, con etiqueta visible, para que el panel se entienda desde el primer día.
+
+### Corregido
+- Barra de navegación del teléfono centrada para cualquier número de iconos (quedaba corrida a la izquierda tras quitar Fiscal).
+- Encabezado de Fiscal en el verde de la marca también en modo demostración (antes salía ámbar).
+- Botón "Guardar configuración" en blanco con borde verde, acorde a la paleta.
+- Margen de 16 px entre el encabezado y las tarjetas Comprado/Pagado y Comprado/Debe en los detalles de cliente y proveedor.
+
 ## [1.2.0] - 2026-11-18
 
 ### Añadido

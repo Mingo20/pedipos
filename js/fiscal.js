@@ -31,7 +31,7 @@
 
   var COLOR = {
     borrador: "#8A93A6", firmado: "#2563EB", enviado: "#B45309",
-    aceptado: "#15803D", rechazado: "#B91C1C", error: "#B91C1C"
+    aceptado: "#15803D", rechazado: "#B91C1C", error: "#B91C1C", encola: "#6B7280"
   };
 
   /* ---------- siguiente e-NCF ---------- */
@@ -97,15 +97,52 @@
         }
       }
     } catch (e) {
-      reg.estado = "error";
-      reg.mensaje = String(e.message || e);
-      c.ultimoError = reg.mensaje;
+      var msg = String(e.message || e);
+      var sinRed = /Failed to fetch|NetworkError|Load failed|ERR_NETWORK|ERR_INTERNET|timeout|timed out/i.test(msg);
+      reg.estado = sinRed ? "encola" : "error";
+      reg.mensaje = sinRed ? "Sin conexion: queda en cola y se envia solo al volver la red" : msg;
+      c.ultimoError = sinRed ? "" : msg;
     }
 
     db().ecf.unshift(reg);
     if (reg.estado !== "error" && reg.estado !== "rechazado") c.ncf = siguienteNcf(c);
     guardar();
     return { ok: reg.estado === "aceptado" || reg.estado === "enviado", reg: reg };
+  }
+
+
+  /* ---------- cola de contingencia: reintenta lo que no salio ---------- */
+  async function reintentar() {
+    var c = cfg();
+    var pend = (db().ecf || []).filter(function (r) { return r.estado === "encola" || r.estado === "error"; });
+    if (!pend.length) return { ok: true, enviados: 0 };
+    var cred = null;
+    if (!c.demo) {
+      try { cred = global.ECF.cargarP12(c.p12, global.__ppFiscalPass || ""); }
+      catch (e) { return { ok: false, error: "No se pudo abrir el certificado: " + e.message }; }
+    }
+    var tk = "";
+    if (cred) { try { tk = await global.ECF.token(c, cred); } catch (e) { return { ok: false, error: String(e.message || e) }; } }
+    var hechos = 0;
+    for (var i = 0; i < pend.length; i++) {
+      var r = pend[i];
+      try {
+        if (c.demo) {
+          var d = global.ECF.demo("aceptado");
+          r.trackId = d.trackId; r.estado = d.estado; r.mensaje = d.mensaje;
+        } else {
+          var env = await global.ECF.enviar(c, r.xml, tk);
+          r.trackId = env.trackId; r.mensaje = env.mensaje;
+          if (env.trackId) {
+            var est = await global.ECF.estado(c, env.trackId, tk);
+            r.estado = est.estado; r.mensaje = est.detalle || r.mensaje;
+          } else { r.estado = "encola"; }
+        }
+        if (r.estado === "aceptado" || r.estado === "enviado") { hechos++; c.ncf = siguienteNcf(c); }
+      } catch (e) { r.mensaje = String(e.message || e); }
+    }
+    guardar();
+    return { ok: true, enviados: hechos };
   }
 
   /* ---------- vista ---------- */
@@ -126,7 +163,7 @@
           "</div>" +
           "<h2>Facturación electrónica</h2>" +
           "<p>" + (listo
-            ? "Cada venta se puede emitir como e-CF y la DGII la recibe sola."
+            ? "Cada venta se emite como e-CF desde esta computadora: la firma y el envio salen de aqui, sin servidores de por medio."
             : "Configura tu RNC y tu secuencia una sola vez. Después solo cobras.") + "</p>" +
           '<div class="ecf-kpis">' +
             '<div><b>' + aceptados + "</b><small>Aceptadas</small></div>" +
@@ -173,6 +210,11 @@
 
         '<section class="ecf-card">' +
           "<h3>Comprobantes</h3>" +
+          ((lista.filter(function (x) { return x.estado === "encola" || x.estado === "error"; }).length)
+            ? '<button class="ecf-btn ghost" id="f-retry" style="margin:0 0 12px">Reintentar ' +
+              lista.filter(function (x) { return x.estado === "encola" || x.estado === "error"; }).length +
+              " pendiente(s)</button>"
+            : "") +
           (lista.length ? '<div class="ecf-list">' + lista.map(function (r) {
             return '<div class="ecf-row" data-id="' + r.id + '">' +
               '<span class="ecf-tag" style="background:' + (COLOR[r.estado] || "#666") + '">' + r.estado + "</span>" +
@@ -235,6 +277,14 @@
       await lanzar(ventaEjemplo(), $("#f-note", view), view);
     };
 
+    var retry = $("#f-retry", view);
+    if (retry) retry.onclick = async function () {
+      retry.disabled = true; retry.textContent = "Reintentando…";
+      var r = await reintentar();
+      toast(r.ok ? "Reintento terminado" : r.error);
+      if (global.render) global.render();
+    };
+
     $$(".ecf-mini", view).forEach(function (b) {
       b.onclick = function () {
         var r = (db().ecf || []).find(function (x) { return x.id === b.dataset.xml; });
@@ -274,8 +324,15 @@
     };
   }
 
+  try {
+    global.addEventListener("online", function () {
+      var pend = (db().ecf || []).filter(function (r) { return r.estado === "encola"; });
+      if (pend.length) reintentar().then(function (r) { if (r && r.ok && global.render) global.render(); });
+    });
+  } catch (e) {}
+
   global.PPFiscal = {
-    render: render, emitir: emitir, cfg: cfg, ventaEjemplo: ventaEjemplo,
+    render: render, emitir: emitir, cfg: cfg, ventaEjemplo: ventaEjemplo, reintentar: reintentar,
     siguienteNcf: siguienteNcf
   };
 })(window);

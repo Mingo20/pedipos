@@ -36,6 +36,42 @@
     return todas.filter(function (s) { return new Date(s.fecha) >= desde; });
   }
 
+
+  /* ---------- datos de ejemplo (solo para mostrar el panel con vida) ---------- */
+  function demoVentas(nDias) {
+    var prods = (db().products || []).map(function (p) { return { n: p.nombre, p: p.precio }; });
+    if (!prods.length) prods = [{ n: "Arroz Campo", p: 45 }, { n: "Aceite", p: 180 }, { n: "Habichuelas Rojas", p: 60 },
+      { n: "Leche Entera", p: 75 }, { n: "Pollo", p: 95 }, { n: "Huevos", p: 8 }, { n: "Azucar", p: 40 }, { n: "Platano", p: 20 }];
+    var clientes = ["Consumidor final", "Colmado La Esquina", "Sra. Martinez", "Jose Perez", "Mini Market El Sol", "Dona Rosa"];
+    var metodos = ["efectivo", "efectivo", "efectivo", "tarjeta", "credito"];
+    var out = [], hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    for (var d = nDias - 1; d >= 0; d--) {
+      var base = 3 + Math.round(Math.abs(Math.sin(d * 1.7)) * 6);
+      for (var i = 0; i < base; i++) {
+        var f = new Date(hoy); f.setDate(f.getDate() - d); f.setHours(8 + ((i * 3 + d) % 11), (i * 17) % 60, 0, 0);
+        var lineas = [], sub = 0, nl = 1 + (i % 3);
+        for (var k = 0; k < nl; k++) {
+          var pr = prods[(i + k + d) % prods.length], cant = 1 + ((i + k) % 3);
+          lineas.push({ nombre: pr.n, cant: cant, precio: pr.p });
+          sub += cant * pr.p;
+        }
+        var itbis = Math.round(sub * 0.18 * 100) / 100;
+        out.push({
+          vid: "DEMO" + d + "-" + i, fecha: f.toISOString(), lineas: lineas, subtotal: sub, itbis: itbis,
+          total: Math.round((sub + itbis) * 100) / 100,
+          metodo: metodos[(i + d) % metodos.length], cliente: clientes[(i + d) % clientes.length]
+        });
+      }
+    }
+    return out;
+  }
+  function demoFiltrado() {
+    var todas = demoVentas(Math.max(periodo || 30, 30));
+    if (!periodo) return todas;
+    var desde = periodo === 1 ? new Date(new Date().setHours(0, 0, 0, 0)) : diasAtras(periodo);
+    return todas.filter(function (s) { return new Date(s.fecha) >= desde; });
+  }
+
   /* ---------- graficos SVG ---------- */
   function area(serie, etiquetas) {
     var w = 620, h = 150, pad = 6;
@@ -93,7 +129,9 @@
 
   /* ---------- vista ---------- */
   function render(view) {
-    var sales = ventasFiltradas();
+    var hayReales = ((db().sales || []).length > 0);
+    var usandoDemo = !hayReales;
+    var sales = usandoDemo ? demoFiltrado() : ventasFiltradas();
     var sum = function (a, k) { return a.reduce(function (x, s) { return x + (Number(s[k]) || 0); }, 0); };
     var total = sum(sales, "total"), itbis = sum(sales, "itbis"), tickets = sales.length;
     var articulos = 0, porDia = {}, porHora = new Array(24).fill(0), metodos = {}, prods = {}, clientes = {};
@@ -134,7 +172,7 @@
     var maxDia = Math.max.apply(null, serie.concat([0]));
     var mejorDia = serie.indexOf(maxDia);
     var vsAnterior = (function () {
-      if (!periodo) return null;
+      if (!periodo || usandoDemo) return null;
       var desde = diasAtras(periodo), hasta = diasAtras(1);
       var prev = (db().sales || []).filter(function (s) {
         var f = new Date(s.fecha); return f >= desde && f < hasta;
@@ -155,7 +193,8 @@
     view.innerHTML =
       '<div class="an-wrap">' +
         '<div class="an-head">' +
-          "<div><h2>Analitica</h2><p>Rendimiento de tu negocio en tiempo real</p></div>" +
+          "<div><h2>Analitica</h2><p>Rendimiento de tu negocio en tiempo real" +
+            (usandoDemo ? ' <span class="an-demo">datos de ejemplo</span>' : "") + "</p></div>" +
           '<div class="an-tabs" role="tablist">' +
             [[1, "Hoy"], [7, "7 dias"], [30, "30 dias"], [0, "Todo"]].map(function (p) {
               return '<button class="an-tab ' + (periodo === p[0] ? "on" : "") + '" data-p="' + p[0] + '">' + p[1] + "</button>";

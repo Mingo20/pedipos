@@ -54,3 +54,5 @@
   .an-kpi b{font-size:23px}
   .an-svg{height:180px}
 }
+
+.an-demo{display:inline-block;margin-left:6px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#8A6A16;background:#FDF6E3;border:1px solid #F2E2B8;border-radius:99px;padding:2px 7px;vertical-align:middle}

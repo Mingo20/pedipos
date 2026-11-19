@@ -270,7 +270,7 @@ main#view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 1
 .act .mic{flex:none;margin:0 2px;z-index:2}
 
 /* ---------- Dock de 5 iconos ---------- */
-.dock{grid-template-columns:repeat(6,1fr);height:62px;width:min(calc(100% - 20px),580px)}
+.dock{grid-template-columns:repeat(auto-fit,minmax(0,1fr));height:62px;width:min(calc(100% - 20px),580px)}
 .dock button{gap:2px;font-size:9.6px;font-weight:600;color:#59616b;align-content:center;letter-spacing:-.1px}
 .dock button svg{width:21px;height:21px}
 .dock button.mid{position:relative}
@@ -1464,7 +1464,7 @@ body.focus .subv.conbarra .seg2{margin-top:14px}
 body.focus .subv.conbarra{display:flex;flex-direction:column;
   height:100dvh;box-sizing:border-box;overflow:hidden;
   padding-top:calc(env(safe-area-inset-top) + 82px);padding-bottom:0}
-body.focus .subv.conbarra > .kpis{margin:0 14px 10px!important;flex:none}
+body.focus .subv.conbarra > .kpis{margin:16px 14px 10px!important;flex:none}
 body.focus .subv.conbarra > .subv-duo{margin:0 14px 4px;flex:none}
 body.focus .subv.conbarra > .seg2{margin:8px 14px 6px!important;flex:none}
 body.focus .subv.conbarra > #cxCaja,
