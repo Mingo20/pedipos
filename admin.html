@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PediPOS · Administración de comercios</title>
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --bg:#f6f7f8; --card:#fff; --ink:#101418; --mut:#6b7280; --line:#e4e7eb;
+    --g:#15803d; --g-soft:#e8f5ee; --red:#b91c1c; --red-soft:#fdeaea; --amber:#b45309; --amber-soft:#fdf3e3;
+    --r:18px; --sh:0 1px 2px #0000000a, 0 12px 30px #1014180d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;font-size:15px}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  input,select,textarea{font:inherit;color:inherit}
+  a{color:inherit;text-decoration:none}
+
+  /* ---------- encabezado ---------- */
+  .adm-top{position:sticky;top:0;z-index:30;background:#fffffff2;backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .adm-top-in{max-width:1240px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em}
+  .brand i{width:34px;height:34px;border-radius:11px;background:var(--ink);color:#fff;display:grid;place-items:center;font-style:normal;font-size:13px;font-weight:800}
+  .brand span{font-size:13px;color:var(--mut);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+  .spacer{flex:1}
+  .buscar{display:flex;align-items:center;gap:8px;background:var(--card);border:1.5px solid var(--line);border-radius:14px;height:44px;padding:0 14px;min-width:220px}
+  .buscar svg{width:18px;height:18px;color:var(--mut);flex:none}
+  .buscar input{border:0;outline:none;background:none;width:100%;font-size:14.5px}
+  .seg{display:flex;background:#eceef1;border-radius:14px;padding:3px;gap:2px}
+  .seg button{padding:8px 14px;border-radius:11px;font-size:13.5px;font-weight:700;color:var(--mut);transition:.18s}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px #1014181a}
+  .btn{height:42px;padding:0 16px;border-radius:13px;background:var(--ink);color:#fff;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s,opacity .18s}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+  .btn svg{width:17px;height:17px}
+
+  /* ---------- resumen ---------- */
+  .wrap{max-width:1240px;margin:0 auto;padding:18px}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:14px 16px}
+  .kpi b{display:block;font-size:24px;letter-spacing:-.02em}
+  .kpi span{font-size:12.5px;color:var(--mut);font-weight:600}
+  .kpi.al b{color:var(--red)}
+  .kpi.ok b{color:var(--g)}
+
+  /* ---------- tarjetas ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .cm{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:16px;cursor:pointer;
+    transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s,border-color .18s;position:relative}
+  .cm:hover{transform:translateY(-2px);box-shadow:var(--sh);border-color:#d6dae0}
+  .cm.bloq{background:#fcfcfd}
+  .cm-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+  .cm-av{width:42px;height:42px;border-radius:13px;background:var(--g-soft);color:var(--g);display:grid;place-items:center;font-weight:800;flex:none}
+  .cm-tt{min-width:0;flex:1}
+  .cm-tt b{display:block;font-size:15.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cm-tt span{display:block;font-size:12.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:800;letter-spacing:.02em}
+  .chip.on{background:var(--g-soft);color:var(--g)}
+  .chip.off{background:var(--red-soft);color:var(--red)}
+  .chip.warn{background:var(--amber-soft);color:var(--amber)}
+  .cm-meta{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px}
+  .cm-f{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+  .wa{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px;border-radius:12px;background:#e8f7ee;color:#128c4a;font-weight:800;font-size:13px}
+  .wa svg{width:16px;height:16px}
+  .ver{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--mut)}
+
+  /* ---------- detalle PC ---------- */
+  .detalle{position:fixed;top:0;right:0;bottom:0;width:min(560px,46vw);background:var(--card);border-left:1px solid var(--line);
+    box-shadow:-24px 0 60px #1014181f;z-index:60;transform:translateX(102%);transition:transform .34s cubic-bezier(.22,1,.36,1);
+    display:flex;flex-direction:column}
+  .detalle.abierto{transform:none}
+  .det-h{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .det-h b{font-size:16px}
+  .det-b{overflow:auto;padding:18px;flex:1}
+  .det-f{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px}
+  .blk{margin-bottom:18px}
+  .blk h4{margin:0 0 8px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f0f2f4;font-size:14px}
+  .row:last-child{border-bottom:0}
+  .row span{color:var(--mut)}
+  .row b{font-weight:700;text-align:right}
+  .sw-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0f2f4}
+  .sw-row:last-child{border-bottom:0}
+  .sw-row .tt{flex:1;min-width:0}
+  .sw-row .tt b{display:block;font-size:14px}
+  .sw-row .tt span{display:block;font-size:12px;color:var(--mut)}
+  .sw{width:46px;height:27px;border-radius:999px;background:#dfe3e8;position:relative;flex:none;transition:background .2s}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0000002e;transition:transform .22s cubic-bezier(.22,1,.36,1)}
+  .sw.on{background:var(--g)}
+  .sw.on::after{transform:translateX(19px)}
+  .sw.rojo.on{background:var(--red)}
+  .notas{width:100%;min-height:80px;border:1.5px solid var(--line);border-radius:14px;padding:11px 13px;resize:vertical;outline:none;font-size:14px}
+  .notas:focus{border-color:#b9c0c8}
+
+  /* ---------- hoja móvil ---------- */
+  .mask{position:fixed;inset:0;background:#10141866;opacity:0;pointer-events:none;transition:opacity .26s;z-index:59}
+  .mask.on{opacity:1;pointer-events:auto}
+  .hoja{position:fixed;left:0;right:0;bottom:0;max-height:92dvh;background:var(--card);border-radius:24px 24px 0 0;z-index:61;
+    transform:translateY(102%);transition:transform .34s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column}
+  .hoja.abierta{transform:none}
+  .hoja .grip{width:42px;height:4px;border-radius:99px;background:#d6dae0;margin:10px auto 0}
+  .hoja .det-b{max-height:74dvh}
+
+  /* ---------- mapa ---------- */
+  #mapa{height:calc(100dvh - 210px);min-height:420px;border-radius:var(--r);border:1.5px solid var(--line);overflow:hidden}
+  .leaflet-container{font:inherit}
+
+  .vacio{padding:40px 16px;text-align:center;color:var(--mut)}
+  .pie{max-width:1240px;margin:0 auto;padding:8px 18px 28px;color:var(--mut);font-size:12.5px}
+
+  @media (max-width:900px){
+    .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .adm-top-in{padding:12px 14px;gap:10px}
+    .buscar{min-width:0;flex:1;order:3;width:100%}
+    .grid{grid-template-columns:1fr}
+    .detalle{display:none}
+    #mapa{height:calc(100dvh - 260px)}
+  }
+  @media (min-width:901px){ .hoja,.mask{display:none} }
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<header class="adm-top">
+  <div class="adm-top-in">
+    <div class="brand"><i>DG</i><div>Administración de comercios<br><span>PediPOS</span></div></div>
+    <div class="spacer"></div>
+    <div class="buscar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+      <input id="q" placeholder="Buscar negocio, responsable o RNC" autocomplete="off">
+    </div>
+    <div class="seg" id="filtro">
+      <button data-f="todos" class="on">Todos</button>
+      <button data-f="activos">Activos</button>
+      <button data-f="bloqueados">Bloqueados</button>
+      <button data-f="alerta">Con alerta</button>
+    </div>
+    <div class="seg" id="vista">
+      <button data-v="tarjetas" class="on">Tarjetas</button>
+      <button data-v="mapa">Mapa</button>
+    </div>
+    <button class="btn ghost" id="imp">Importar</button>
+    <button class="btn" id="exp">Exportar</button>
+    <input type="file" id="file" accept="application/json" hidden>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="kpis" id="kpis"></section>
+  <section id="vista-tarjetas"><div class="grid" id="grid"></div></section>
+  <section id="vista-mapa" hidden><div id="mapa"></div></section>
+  <p class="pie" id="pie"></p>
+</main>
+
+<div class="mask" id="mask"></div>
+<aside class="detalle" id="detalle" aria-hidden="true"></aside>
+<section class="hoja" id="hoja" aria-hidden="true"></section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ============================================================
+   Administración de comercios PediPOS
+   Registro local (IndexedDB) con datos de demostración.
+   Para conectar el registro real: reemplazar cargar() por la
+   llamada al backend de sincronización.
+   ============================================================ */
+const DB = "pedipos_admin", STORE = "comercios", VER = 1;
+let datos = [], filtro = "todos", vista = "tarjetas", q = "", mapa = null, capa = null, abierto = null;
+
+/* coordenadas aproximadas por provincia (para el mapa) */
+const PROV = {
+  "Azua":[18.45,-70.73],"Bahoruco":[18.49,-71.42],"Barahona":[18.21,-71.10],"Dajabon":[19.55,-71.71],
+  "Distrito Nacional":[18.47,-69.90],"Duarte":[19.30,-70.25],"Elias Pina":[18.88,-70.70],"El Seibo":[18.77,-69.04],
+  "Espaillat":[19.45,-70.62],"Hato Mayor":[18.76,-69.26],"Hermanas Mirabal":[19.42,-70.42],"Independencia":[18.49,-71.85],
+  "La Altagracia":[18.61,-68.71],"La Romana":[18.43,-68.97],"La Vega":[19.22,-70.53],"Maria Trinidad Sanchez":[19.38,-69.85],
+  "Monsenor Nouel":[18.94,-70.41],"Monte Cristi":[19.85,-71.65],"Monte Plata":[18.81,-69.79],"Pedernales":[18.04,-71.75],
+  "Peravia":[18.28,-70.33],"Puerto Plata":[19.79,-70.69],"Samana":[19.21,-69.34],"San Cristobal":[18.42,-70.11],
+  "San Jose de Ocoa":[18.55,-70.51],"San Juan":[18.81,-71.23],"San Pedro de Macoris":[18.45,-69.30],
+  "Sanchez Ramirez":[19.06,-70.15],"Santiago":[19.45,-70.70],"Santiago Rodriguez":[19.48,-71.34],
+  "Santo Domingo":[18.49,-69.94],"Valverde":[19.58,-71.08]
+};
+
+const SEMILLA = [
+  ["Colmado La Esperanza","Domingo Guerra","8296469885","Santo Domingo","Santo Domingo Este","Av. Venezuela 45","131-23456-7","Pro",true],
+  ["Colmado Doña Rosa","Rosa Martinez","8095551234","Santiago","Santiago de los Caballeros","Calle del Sol 12","131-55512-3","Basico",false],
+  ["Mini Market El Paraiso","Luis Peralta","8495557788","La Vega","Concepción de La Vega","Av. Imbert 88","131-77788-1","Pro",false],
+  ["Almacen Los Pinos","Josefina Cruz","8295553322","San Cristobal","San Cristóbal","Calle Mella 33","130-99887-5","Pro",true],
+  ["Ventorrillo El Coco","Manuel Reyes","8095559012","La Altagracia","Higüey","Calle Duarte 7","130-44123-9","Basico",false],
+  ["Colmado San Miguel","Ana Batista","8295554477","Puerto Plata","San Felipe","Av. Manolo Tavárez 210","131-33221-4","Basico",false],
+  ["Mini Market Bella Vista","Pedro Sanchez","8495551199","Distrito Nacional","Santo Domingo","Calle El Vergel 14","131-11223-8","Pro",false],
+  ["Colmado El Progreso","Yolanda Diaz","8095556633","Duarte","San Francisco de Macorís","Av. Libertad 56","130-55667-2","Pro",false],
+  ["Almacen Central","Rafael Nunez","8295552288","Barahona","Santa Cruz de Barahona","Calle Jaime Mota 9","130-22119-6","Basico",false],
+  ["Colmado La Bendicion","Carmen Rosario","8495553344","San Juan","San Juan de la Maguana","Calle Independencia 22","130-88991-0","Basico",false],
+  ["Mini Market La Union","Alberto Jimenez","8095554455","Valverde","Mao","Av. Duarte 101","131-44556-1","Pro",false],
+  ["Colmado Villa Maria","Marta Pena","8295557799","La Romana","La Romana","Calle Francisco Richiez 30","130-77998-3","Basico",false]
+];
+
+function abrirDB(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open(DB,VER);
+    r.onupgradeneeded = ()=>{ if(!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE,{keyPath:"id"}); };
+    r.onsuccess = ()=>res(r.result);
+    r.onerror = ()=>rej(r.error);
+  });
+}
+async function guardarTodo(){
+  const db = await abrirDB();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).clear();
+    datos.forEach(d=>tx.objectStore(STORE).put(d));
+    tx.oncomplete = ()=>{ db.close(); res(true); };
+    tx.onerror = ()=>{ db.close(); rej(tx.error); };
+  });
+}
+async function cargar(){
+  const db = await abrirDB();
+  const todo = await new Promise((res,rej)=>{
+    const tx = db.transaction(STORE,"readonly").objectStore(STORE).getAll();
+    tx.onsuccess = ()=>res(tx.result||[]); tx.onerror = ()=>rej(tx.error);
+  });
+  db.close();
+  if (todo.length) return todo;
+  const hoy = Date.now();
+  return SEMILLA.map((s,i)=>({
+    id:"C"+(1000+i), negocio:s[0], responsable:s[1], whatsapp:s[2], provincia:s[3], municipio:s[4],
+    direccion:s[5], rnc:s[6], plan:s[7], email:"",
+    alta:new Date(hoy - (30+i*17)*864e5).toISOString(),
+    ultimoAcceso:new Date(hoy - i*7*36e5).toISOString(),
+    facturas: 120 + i*97, ventas: 45000 + i*15300, limiteFacturas: s[7]==="Pro"?20000:5000,
+    alertas:{ certVencido:s[8], rechazos: i%4===0?2:0, sinRespaldo: i%3===0 },
+    estado:{ bloqueado:false },
+    funciones:{ ecf:true, voz:true, respaldo:true, notificaciones:true, soporte:s[7]==="Pro" },
+    notas:""
+  }));
+}
+
+/* ---------- utilidades ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = (s)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iniciales = (n)=>String(n||"?").split(/\s+/).slice(0,2).map(p=>p[0]||"").join("").toUpperCase();
+const fecha = (iso)=>{ try{ return new Date(iso).toLocaleDateString("es-DO",{day:"2-digit",month:"short",year:"numeric"}); }catch(e){ return "—"; } };
+const waLink = (tel, texto)=>{ let n = String(tel||"").replace(/\D/g,""); if (n.length === 10) n = "1" + n; return `https://wa.me/${n}?text=${encodeURIComponent(texto)}`; };
+
+function alertasDe(c){
+  const a = [];
+  if (c.alertas.certVencido) a.push({t:"off", m:"Certificado vencido"});
+  if (c.alertas.rechazos) a.push({t:"warn", m:c.alertas.rechazos+" rechazo(s)"});
+  if (c.alertas.sinRespaldo) a.push({t:"warn", m:"Sin respaldo"});
+  return a;
+}
+function filtrados(){
+  const k = q.trim().toLowerCase();
+  return datos.filter(c=>{
+    if (filtro==="activos" && c.estado.bloqueado) return false;
+    if (filtro==="bloqueados" && !c.estado.bloqueado) return false;
+    if (filtro==="alerta" && !alertasDe(c).length) return false;
+    if (!k) return true;
+    return [c.negocio,c.responsable,c.rnc,c.municipio,c.provincia].join(" ").toLowerCase().includes(k);
+  });
+}
+
+/* ---------- pintar ---------- */
+function pintarKpis(){
+  const total = datos.length;
+  const bloq = datos.filter(c=>c.estado.bloqueado).length;
+  const aler = datos.filter(c=>alertasDe(c).length).length;
+  const fact = datos.reduce((a,c)=>a+(c.facturas||0),0);
+  $("#kpis").innerHTML = `
+    <div class="kpi"><b>${total}</b><span>Comercios registrados</span></div>
+    <div class="kpi ok"><b>${total-bloq}</b><span>Activos</span></div>
+    <div class="kpi al"><b>${aler}</b><span>Con alerta</span></div>
+    <div class="kpi"><b>${fact.toLocaleString("es-DO")}</b><span>Facturas emitidas</span></div>`;
+}
+function tarjeta(c){
+  const al = alertasDe(c);
+  return `<article class="cm ${c.estado.bloqueado?"bloq":""}" data-id="${esc(c.id)}" tabindex="0">
+    <div class="cm-h">
+      <div class="cm-av">${esc(iniciales(c.responsable))}</div>
+      <div class="cm-tt"><b>${esc(c.negocio)}</b><span>${esc(c.responsable)}</span></div>
+      <span class="chip ${c.estado.bloqueado?"off":"on"}">${c.estado.bloqueado?"Bloqueado":"Activo"}</span>
+    </div>
+    <div class="cm-meta">
+      <span class="chip" style="background:#f1f3f5;color:#4b5563">${esc(c.provincia)}</span>
+      <span class="chip" style="background:#f1f3f5;color:#4b5563">${esc(c.plan)}</span>
+      ${al.map(a=>`<span class="chip ${a.t}">${esc(a.m)}</span>`).join("")}
+    </div>
+    <div class="cm-f">
+      <a class="wa" href="${waLink(c.whatsapp,"Hola "+c.responsable+", le escribo de PediPOS sobre "+c.negocio+".")}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.1-.7.2-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.4.5-.6.1-.2.2-.3.3-.5 0-.2 0-.4-.1-.5-.1-.2-.7-1.6-.9-2.2-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.5-.3M12 21.8a9.8 9.8 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8m0-21.6C5.4.2.1 5.5.1 12c0 2.1.5 4.1 1.6 5.9L0 24l6.3-1.6c1.7.9 3.7 1.4 5.7 1.4 6.6 0 11.9-5.3 11.9-11.8S18.6.2 12 .2"/></svg>
+        WhatsApp
+      </a>
+      <span class="ver">${c.estado.bloqueado?"Ver detalle":"Ver detalle"}</span>
+    </div>
+  </article>`;
+}
+function pintar(){
+  const L = filtrados();
+  $("#grid").innerHTML = L.length ? L.map(tarjeta).join("") : `<div class="vacio">Sin comercios que coincidan.</div>`;
+  $("#pie").textContent = L.length + " de " + datos.length + " comercios · registro local del navegador";
+  pintarKpis();
+  if (vista==="mapa") pintarMapa();
+}
+
+/* ---------- mapa ---------- */
+function coordDe(c){
+  const base = PROV[c.provincia] || [18.49,-69.94];
+  const h = [...String(c.id)].reduce((a,ch)=>a+ch.charCodeAt(0),0);
+  return [base[0] + ((h%17)-8)/220, base[1] + ((h%13)-6)/220];
+}
+function pintarMapa(){
+  if (!window.L) { $("#mapa").innerHTML = '<div class="vacio">No se pudo cargar el mapa.</div>'; return; }
+  if (!mapa){
+    mapa = L.map("mapa",{zoomControl:true,scrollWheelZoom:true}).setView([18.8,-70.2],8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(mapa);
+  }
+  if (capa) capa.remove();
+  capa = L.layerGroup().addTo(mapa);
+  filtrados().forEach(c=>{
+    const [la,lo] = coordDe(c);
+    L.circleMarker([la,lo],{radius:9,color:"#15803d",weight:2,fillColor:"#15803d",fillOpacity:c.estado.bloqueado?.25:.75})
+      .addTo(capa)
+      .bindPopup(`<b>${esc(c.negocio)}</b><br>${esc(c.responsable)}<br>${esc(c.municipio)}, ${esc(c.provincia)}<br>
+        <a href="${waLink(c.whatsapp,"Hola "+c.responsable+".")}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`);
+  });
+  setTimeout(()=>mapa.invalidateSize(),120);
+}
+
+/* ---------- detalle ---------- */
+function cuerpoDetalle(c){
+  const al = alertasDe(c);
+  return `
+  <div class="blk">
+    <h4>Negocio</h4>
+    <div class="row"><span>Nombre</span><b>${esc(c.negocio)}</b></div>
+    <div class="row"><span>RNC</span><b>${esc(c.rnc||"—")}</b></div>
+    <div class="row"><span>Plan</span><b>${esc(c.plan)}</b></div>
+    <div class="row"><span>Alta</span><b>${fecha(c.alta)}</b></div>
+    <div class="row"><span>Último acceso</span><b>${fecha(c.ultimoAcceso)}</b></div>
+  </div>
+  <div class="blk">
+    <h4>Responsable</h4>
+    <div class="row"><span>Nombre</span><b>${esc(c.responsable)}</b></div>
+    <div class="row"><span>WhatsApp</span><b>${esc(c.whatsapp)}</b></div>
+    <div class="row"><span>Correo</span><b>${esc(c.email||"—")}</b></div>
+  </div>
+  <div class="blk">
+    <h4>Ubicación</h4>
+    <div class="row"><span>Provincia</span><b>${esc(c.provincia)}</b></div>
+    <div class="row"><span>Municipio</span><b>${esc(c.municipio)}</b></div>
+    <div class="row"><span>Dirección</span><b>${esc(c.direccion)}</b></div>
+  </div>
+  <div class="blk">
+    <h4>Actividad</h4>
+    <div class="row"><span>Facturas emitidas</span><b>${(c.facturas||0).toLocaleString("es-DO")}</b></div>
+    <div class="row"><span>Ventas registradas</span><b>RD$${(c.ventas||0).toLocaleString("es-DO")}</b></div>
+    <div class="row"><span>Límite de facturas</span><b>${(c.limiteFacturas||0).toLocaleString("es-DO")}</b></div>
+    ${al.length?`<div class="row"><span>Alertas</span><b style="color:#b45309">${al.map(a=>a.m).join(" · ")}</b></div>`:""}
+  </div>
+  <div class="blk">
+    <h4>Funciones y permisos</h4>
+    <div class="sw-row"><div class="tt"><b>Bloquear comercio</b><span>No puede abrir la app ni emitir</span></div>
+      <button class="sw rojo ${c.estado.bloqueado?"on":""}" data-sw="bloqueado"></button></div>
+    <div class="sw-row"><div class="tt"><b>Facturación electrónica</b><span>Emitir e-CF a la DGII</span></div>
+      <button class="sw ${c.funciones.ecf?"on":""}" data-sw="ecf"></button></div>
+    <div class="sw-row"><div class="tt"><b>Venta por voz</b><span>Dictado y modo flash</span></div>
+      <button class="sw ${c.funciones.voz?"on":""}" data-sw="voz"></button></div>
+    <div class="sw-row"><div class="tt"><b>Respaldo en Drive</b><span>Copia de comprobantes</span></div>
+      <button class="sw ${c.funciones.respaldo?"on":""}" data-sw="respaldo"></button></div>
+    <div class="sw-row"><div class="tt"><b>Notificaciones</b><span>Avisos y recordatorios</span></div>
+      <button class="sw ${c.funciones.notificaciones?"on":""}" data-sw="notificaciones"></button></div>
+    <div class="sw-row"><div class="tt"><b>Soporte prioritario</b><span>Atención preferente</span></div>
+      <button class="sw ${c.funciones.soporte?"on":""}" data-sw="soporte"></button></div>
+  </div>
+  <div class="blk">
+    <h4>Notas internas</h4>
+    <textarea class="notas" id="notas" placeholder="Anotaciones de seguimiento...">${esc(c.notas||"")}</textarea>
+  </div>`;
+}
+function abrirDetalle(id){
+  const c = datos.find(x=>x.id===id);
+  if (!c) return;
+  abierto = id;
+  const pc = window.matchMedia("(min-width:901px)").matches;
+  const cont = pc ? $("#detalle") : $("#hoja");
+  cont.innerHTML = `
+    <div class="det-h">
+      <div class="cm-av">${esc(iniciales(c.responsable))}</div>
+      <div style="flex:1;min-width:0"><b>${esc(c.negocio)}</b><div style="font-size:12.5px;color:#6b7280">${esc(c.responsable)}</div></div>
+      <button class="btn ghost" id="cerrar">Cerrar</button>
+    </div>
+    <div class="det-b">${pc?"":'<div class="grip"></div>'}${cuerpoDetalle(c)}</div>
+    <div class="det-f">
+      <a class="wa" style="height:42px;flex:1;justify-content:center" href="${waLink(c.whatsapp,"Hola "+c.responsable+", le escribo de PediPOS.")}" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn ghost" href="tel:+${String(c.whatsapp).replace(/\D/g,"")}">Llamar</a>
+    </div>`;
+  cont.classList.add(pc?"abierto":"abierta");
+  cont.setAttribute("aria-hidden","false");
+  $("#mask").classList.add("on");
+  $("#cerrar").onclick = cerrarDetalle;
+  $$("[data-sw]",cont).forEach(b=>{
+    b.onclick = ()=>{
+      const k = b.dataset.sw;
+      if (k==="bloqueado"){ c.estado.bloqueado = !c.estado.bloqueado; b.classList.toggle("on",c.estado.bloqueado); }
+      else { c.funciones[k] = !c.funciones[k]; b.classList.toggle("on",c.funciones[k]); }
+      guardarTodo(); pintar();
+    };
+  });
+  const nt = $("#notas",cont);
+  if (nt) nt.onchange = ()=>{ c.notas = nt.value; guardarTodo(); };
+}
+function cerrarDetalle(){
+  $("#detalle").classList.remove("abierto");
+  $("#hoja").classList.remove("abierta");
+  $("#mask").classList.remove("on");
+  $("#detalle").setAttribute("aria-hidden","true");
+  $("#hoja").setAttribute("aria-hidden","true");
+  abierto = null;
+}
+
+/* ---------- eventos ---------- */
+$("#q").oninput = (e)=>{ q = e.target.value; pintar(); };
+$("#filtro").onclick = (e)=>{
+  const b = e.target.closest("button"); if(!b) return;
+  filtro = b.dataset.f;
+  $$("#filtro button").forEach(x=>x.classList.toggle("on",x===b));
+  pintar();
+};
+$("#vista").onclick = (e)=>{
+  const b = e.target.closest("button"); if(!b) return;
+  vista = b.dataset.v;
+  $$("#vista button").forEach(x=>x.classList.toggle("on",x===b));
+  $("#vista-tarjetas").hidden = vista!=="tarjetas";
+  $("#vista-mapa").hidden = vista!=="mapa";
+  if (vista==="mapa") pintarMapa();
+};
+$("#grid").onclick = (e)=>{ const t = e.target.closest(".cm"); if(t) abrirDetalle(t.dataset.id); };
+$("#grid").onkeydown = (e)=>{ if(e.key==="Enter"){ const t=e.target.closest(".cm"); if(t) abrirDetalle(t.dataset.id); } };
+$("#mask").onclick = cerrarDetalle;
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") cerrarDetalle(); });
+
+$("#exp").onclick = ()=>{
+  const blob = new Blob([JSON.stringify({v:1,comercios:datos},null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "comercios-pedipos-"+new Date().toISOString().slice(0,10)+".json";
+  a.click(); URL.revokeObjectURL(a.href);
+};
+$("#imp").onclick = ()=>$("#file").click();
+$("#file").onchange = async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const j = JSON.parse(await f.text());
+    const lista = Array.isArray(j)?j:(j.comercios||[]);
+    const mapa2 = new Map(datos.map(c=>[c.id,c]));
+    lista.forEach(c=>{ if(c && c.id) mapa2.set(c.id,{...mapa2.get(c.id),...c}); });
+    datos = [...mapa2.values()];
+    await guardarTodo(); pintar(); alert(lista.length+" comercios importados.");
+  }catch(err){ alert("El archivo no es válido."); }
+  e.target.value = "";
+};
+
+/* ---------- arranque ---------- */
+(async ()=>{
+  datos = await cargar();
+  if (!datos.length) datos = [];
+  await guardarTodo();
+  pintar();
+})();
+</script>
+</body>
+</html>

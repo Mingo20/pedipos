@@ -2,6 +2,16 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.7.0] - 2026-11-19
+
+### Añadido
+- **Interfaz administrativa** (`admin.html`): gestión de comercios con tarjetas, buscador, filtros, detalle en panel lateral (PC) o hoja deslizante (móvil), seis interruptores por comercio (bloquear, e-CF, voz, respaldo, notificaciones, soporte), notas internas, mapa con Leaflet por provincia/municipio, importar y exportar JSON. Registro local en IndexedDB con datos de demostración.
+- **Modo manos libres en PC**: al deslizar el micrófono a la derecha, la barra de grabación sale del talonario y flota sobre la rejilla de productos, con tiempo en vivo, ver, pausar, cancelar y enviar; el talonario se retira para dejar explorar el catálogo. Al enviar, se abre la ventana Cobrar.
+- Acceso a la administración desde Configuración.
+
+### Corregido
+- El hueco entre el encabezado y el buscador de Pedidos y Catálogo era la barra de instalación, que ocupaba 59 px de alto. Ahora flota sobre el contenido y el hueco baja de 73 px a 14 px.
+
 ## [1.6.0] - 2026-11-19
 
 ### Corregido

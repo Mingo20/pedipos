@@ -1355,6 +1355,10 @@
     transformarBarra(true);
     MIC.tick = setInterval(() => {
       MIC.seg++;
+      const s = document.getElementById("recSeg");
+      if (s) s.textContent = fmtSeg(MIC.seg);
+      const tx = document.getElementById("recTxt");
+      if (tx && voice && voice.text) tx.textContent = String(voice.text).slice(-70);
     }, 1000);
   }
 
@@ -1372,8 +1376,10 @@
         <span class="rlock2" id="recLock" aria-hidden="true">${I.lockAnim}</span>
 
 
+        <div class="rlive" id="recLive" hidden><b id="recSeg">0:00</b><span id="recTxt">Escuchando...</span></div>
         <div class="rfree" id="recF" hidden>
           <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
+          <button class="rver" id="recVer" aria-label="Ver lo dictado">${I.eye || I.search}</button>
           <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
           <button class="rpause" id="recP" aria-label="Pausar">${I.pausa}</button>
           <button class="rsend" id="recSend" aria-label="Guardar pedido">${I.bag}</button>
@@ -1382,6 +1388,8 @@
       $("#recDel").onclick = () => cancelarGrabacionGesto(true);
       $("#recSend").onclick = () => terminarGrabacionGesto();
       $("#recP").onclick = alternarPausa;
+      const vv = $("#recVer");
+      if (vv) vv.onclick = () => { const l = $("#recLive"); if (l) l.classList.toggle("abierta"); };
     }
     const m = $("#bMic"); m && m.classList.add("grab");
     /* los dos avisos aparecen desde el primer instante, en modo suave */
@@ -1433,12 +1441,35 @@
     }
   }
 
+  /* La barra de grabacion se sale del talonario y flota sobre la rejilla de productos:
+     asi el comerciante sigue explorando mientras dicta el pedido. */
+  function activarManosLibres() {
+    document.body.classList.add("manos-libres");
+    const bar = document.getElementById("actbar");
+    if (!bar) return;
+    if (!bar.dataset.casa) bar.dataset.casa = "1";   /* recuerda que hay que devolverla */
+    if (bar.parentElement !== document.body) document.body.appendChild(bar);
+    bar.classList.add("flotante");
+    const live = document.getElementById("recLive");
+    if (live) live.hidden = false;
+  }
+  function desactivarManosLibres() {
+    document.body.classList.remove("manos-libres");
+    const bar = document.getElementById("actbar");
+    if (bar) {
+      bar.classList.remove("flotante");
+      const tick = document.querySelector(".tick");
+      if (tick && bar.parentElement === document.body) tick.appendChild(bar);
+    }
+  }
+
   function limpiarGrabacionGesto() {
     clearInterval(MIC.tick); MIC.tick = null;
     MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.pausado = false;
     /* el microfono vuelve siempre visible (antes quedaba oculto tras cancelar en manos libres) */
     const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; m.style.display = ""; }
     transformarBarra(false);
+    desactivarManosLibres();
     const m2 = $("#bMic"); if (m2) m2.style.display = "";
   }
 
@@ -1454,6 +1485,7 @@
     if (!MIC.activo) return;
     MIC.bloqueado = true; MIC.dx = 0;
     micVibra(40);
+    activarManosLibres();
     /* el icono de la barra se retira: el boton de guardar ya es una bolsa verde */
     const m = $("#bMic"); if (m) { m.style.transform = ""; m.style.display = "none"; }
     const hh = $("#recH"); if (hh) hh.hidden = true;
@@ -1723,7 +1755,7 @@
   let catQ = "", catCat = "";
   function renderCatalogo() {
     const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
-    $("#view").innerHTML = `<div class="stickbar">
+    $("#view").innerHTML = `<div class="stickbar pegada">
         <div class="searchrow">
           <div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}" autocomplete="off"></div>
           <button class="fbtn ${catCat ? "on" : ""}" id="cfil" aria-label="Filtrar por categoria">${I.filtro}</button>
@@ -1839,6 +1871,7 @@
     ["spark", "Lista de Pedido con IA", ["Texto a productos", "Cache de intenciones", "Productos no encontrados"]],
     ["bulb", "Buenas practicas", ["Organizar favoritos", "Registrar clientes", "Revisar analitica diaria"]],
     ["help", "Solucion de problemas", ["No conecta microfono", "No imprime", "Puter no conecta"]],
+    ["shield", "Administracion", ["Comercios registrados", "Panel del dueno"]],
   ];
   const TIPS = [["bolt", "Vende mas rapido", "Usa favoritos para acceder a tus productos mas vendidos con un solo toque."], ["box", "Organiza tu catalogo", "Marca los productos frecuentes; apareceran en 'Mis productos' al instante."], ["list", "Uso de Lista de Pedido", "Escribe varios productos en texto libre y la IA los agrega todos a la vez."], ["mic", "Uso de venta por voz", "Dicta el pedido en lenguaje natural. La IA transcribe e interpreta automaticamente."], ["users", "Gestion de clientes", "Registra cada cliente con WhatsApp para enviar facturas y recordar cobros."], ["card", "Organizacion de creditos", "Asigna fecha de cobro y recibe avisos antes del vencimiento."], ["globe", "Portal Global de Suplidores", "Usa el catalogo global compartido para mantener precios consistentes."]];
   const FAQ = [["Como hago una venta manual?", "Toca + en el Panel, busca el producto, ajusta la cantidad y toca Cobrar."], ["Como vendo desde el catalogo?", "Abre Catalogo, toca el producto y se agrega al talonario."], ["Como funciona la venta por voz?", "Toca el microfono negro y dicta, por ejemplo: dos libras y media de arroz. La IA interpreta y te pide confirmar."], ["Que es la Lista de Pedido con IA?", "Una caja de texto donde escribes o dictas varios productos a la vez. La IA los cruza con tu catalogo."], ["Como comparto una factura por WhatsApp?", "Al cobrar toca Enviar por WhatsApp. Se abre el chat con el detalle de la venta."], ["Puedo enviar facturas en texto?", "Si. El detalle se envia como mensaje de texto ordenado."], ["Puedo enviar facturas en imagen?", "Puedes imprimir o guardar el ticket como imagen desde el boton de impresion."], ["Como funcionan los creditos?", "Elige A credito al cobrar, asigna cliente y fecha de cobro."], ["Como activo el ITBIS?", "En el Panel, el interruptor ITBIS 18% aplica o quita el impuesto de la venta."], ["Como registro un cliente?", "Al cobrar escribe el nombre del cliente. En Gestion de clientes guardas su WhatsApp."], ["Funciona sin internet?", "Si. Todo se guarda en tu telefono y sube solo cuando vuelve la conexion."]];
@@ -1952,7 +1985,7 @@
       return window.PPVoice.norm([s.cliente || "sin cliente", mes, anio, tipo].join(" ")).includes(q);
     });
 
-    $("#view").innerHTML = `<div class="stickbar">
+    $("#view").innerHTML = `<div class="stickbar pegada">
         <div class="searchrow">
           <div class="search">${I.search}<input id="pq2" placeholder="Buscar pedido" value="${esc(pedQ)}" autocomplete="off"></div>
           <button class="fbtn ${conFiltro ? "on" : ""}" id="pfil" aria-label="Filtrar pedidos">${I.filtro}</button>
@@ -2087,6 +2120,7 @@
         <div class="line" style="font-size:13px"><span>Sesion</span><b>${db().session ? esc(db().session.nombre + " · " + db().session.rol) : "sin iniciar"}</b></div>
         <label class="field" style="margin-top:8px"><span>Pedir PIN al abrir</span><select id="cr"><option value="0" ${st.pinReq ? "" : "selected"}>No</option><option value="1" ${st.pinReq ? "selected" : ""}>Si</option></select></label>
         <button class="btn sec" id="cses">${db().session ? "Cerrar sesion" : "Iniciar sesion"}</button>
+        <a class="btn sec" id="cadm" href="admin.html" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:8px;text-decoration:none">Administracion de comercios</a>
         <button class="btn sec" id="cbm" style="margin-top:8px">Emparejar impresora Bluetooth</button>
         <div class="cnt" style="font-size:11.5px;margin-top:6px" id="bti">${localStorage.getItem("pedipos.printer") ? "Impresora: " + esc(localStorage.getItem("pedipos.printer")) : "Sin impresora emparejada"}</div>
       </div>
@@ -2281,6 +2315,7 @@
   window.addEventListener("resize", () => ajustarAltoTalonario());
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno en el navegador. Tus ventas ya estan a salvo."));
   window.render = render; window.toast = toast; window.go = go;
+  window.PPMic = { bloquear: bloquearGrabacionGesto, activar: activarManosLibres, desactivar: desactivarManosLibres, estado: () => ({ ...MIC }) };
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => { marcarLeidos(); go("avisos"); };
