@@ -1787,3 +1787,25 @@ body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px)!important}
 /* sin sombra gris bajo las tarjetas de kpis: el borde ya separa */
 .kpis{box-shadow:none!important}
 .kpis .kpi{box-shadow:none!important}
+
+/* ---------- interruptor ITBIS: chip de factura electronica ---------- */
+.ecf-chip{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:6px;background:rgba(21,128,61,.12);color:#15803D;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.2px;vertical-align:1px}
+
+/* linea del comprobante en el recibo de venta */
+.ecf-res{margin:10px 0 2px;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;background:#F3F4F6;color:#6B7280}
+.ecf-res.work{background:#EFF6FF;color:#2563EB}
+.ecf-res.ok{background:#ECFDF5;color:#15803D}
+.ecf-res.warn{background:#FFFBEB;color:#B45309}
+.ecf-res.off{background:#F3F4F6;color:#6B7280}
+
+/* etiqueta blanca del boton Imprimir, igual que su icono */
+.sh-f .m.negro .bl,.sh-f .m.negro>span{color:#fff;font-weight:800}
+
+/* ---------- tarjeta de respaldo en Drive ---------- */
+.dr-card{margin:0 0 14px}
+.dr-alta{margin:10px 0 6px}
+.dr-lb{display:block;font-size:12px;font-weight:800;color:#6B7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.dr-fila{display:flex;gap:8px;align-items:center}
+.dr-fila input{flex:1;min-width:0;height:40px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px;font-size:13px;font-family:inherit;background:#fff;color:var(--ink)}
+.dr-fila input:focus{outline:none;border-color:#15803D}
+.dr-card .em-acc{margin-top:10px}

@@ -45,6 +45,18 @@
     return serie + tipo + sig;
   }
 
+  /* ---------- activacion ligada al interruptor ITBIS ----------
+   * ITBIS encendido  -> la factura electronica queda activa y se emite al cobrar.
+   * ITBIS apagado    -> se desactiva la emision; la venta sigue, pero informal.
+   */
+  function activo() { return !!cfg().activo; }
+  function setActivo(v) {
+    var c = cfg(), antes = !!c.activo;
+    c.activo = !!v;
+    guardar();
+    return antes !== c.activo;
+  }
+
   /* ---------- emision ---------- */
   async function emitir(sale, opts) {
     var c0 = cfg();
@@ -54,6 +66,9 @@
     }
     var c = cfg();
     opts = opts || {};
+    if (!c.activo && !opts.forzar) {
+      return { ok: false, error: "La facturacion electronica esta apagada: enciende el ITBIS en el panel de venta" };
+    }
     if (!c.rnc) return { ok: false, error: "Falta el RNC del comerciante en Ajustes fiscales" };
 
     var valores = {
@@ -412,6 +427,7 @@
 
   global.PPFiscal = {
     render: render, emitir: emitir, cfg: cfg, ventaEjemplo: ventaEjemplo, reintentar: reintentar,
+    activo: activo, setActivo: setActivo,
     siguienteNcf: siguienteNcf
   };
 })(window);

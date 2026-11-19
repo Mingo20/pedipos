@@ -556,7 +556,7 @@
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar productos</div>')}${manual ? manualRow() : ""}</div>
         <div class="tick-f">
-          <div class="itbis-r"><span>ITBIS ${Math.round(rate() * 100)}%</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
+          <div class="itbis-r"><span>ITBIS ${Math.round(rate() * 100)}%${(c.itbis && window.PPFiscal && window.PPFiscal.activo()) ? ' <i class="ecf-chip">e-CF</i>' : ""}</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
           <div class="line"><span>Subtotal</span><span id="vSub">${money(t.subtotal)}</span></div>
           <div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>
           <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
@@ -619,6 +619,17 @@
       cart().itbis = !cart().itbis; S.save();
       const b = tot();
       const sw = $("#swItbis"); sw.classList.toggle("on", cart().itbis);
+      /* el interruptor manda: encendido se emite factura electronica, apagado la venta sigue informal */
+      if (window.PPFiscal && window.PPFiscal.setActivo) {
+        window.PPFiscal.setActivo(cart().itbis);
+        const fila = sw && sw.parentElement;
+        const eti = fila ? fila.querySelector("span") : null;
+        const chip = eti ? eti.querySelector(".ecf-chip") : null;
+        if (cart().itbis && eti && !chip) { const i = document.createElement("i"); i.className = "ecf-chip"; i.textContent = "e-CF"; eti.appendChild(i); }
+        if (!cart().itbis && chip) chip.remove();
+        const listo = !!(window.PPFiscal.cfg && window.PPFiscal.cfg().rnc);
+        toast(cart().itbis ? (listo ? "Facturacion electronica activa" : "ITBIS activo: falta configurar el emisor") : "Venta informal: sin factura electronica");
+      }
       cuenta("#vSub", a.subtotal, b.subtotal, false);
       cuenta("#vIt", a.itbis, b.itbis, true);
       cuenta("#vTot", a.total, b.total, false);
@@ -1639,6 +1650,7 @@
       cart().lines = []; S.save(); window.PPSync.saveSale(sale);
       guardarOrderTexto("");   /* el cobro confirmado limpia la lista de pedido */
       receipt(sale);
+      emitirAlCobrar(sale);    /* con el ITBIS encendido la factura sale sola */
     };
   }
   /* WhatsApp del cliente de la venta: para abrir el chat directo */
@@ -1657,10 +1669,33 @@
     toast(r === "chat" ? "Abriendo el chat del cliente" : "Elige el contacto en WhatsApp");
   }
 
+  /* pinta el resultado del comprobante en el recibo abierto */
+  function pintarEcf(texto, tipo) {
+    const el = $("#ecfRes");
+    if (!el) return;
+    el.className = "ecf-res " + (tipo || "");
+    el.textContent = texto;
+  }
+
+  /* al cobrar: si el ITBIS esta encendido y hay emisor configurado, la factura sale sola */
+  async function emitirAlCobrar(sale) {
+    if (!window.PPFiscal || !window.PPFiscal.activo) return;
+    if (!window.PPFiscal.activo()) { pintarEcf("Venta informal: sin comprobante electronico", "off"); return; }
+    const c = window.PPFiscal.cfg();
+    if (!c.rnc || !c.ncf) { pintarEcf("Falta configurar el emisor en Fiscal", "warn"); return; }
+    pintarEcf("Emitiendo comprobante electronico...", "work");
+    try {
+      const r = await window.PPFiscal.emitir(sale, {});
+      if (r && r.reg && r.reg.ncf) pintarEcf(r.reg.ncf + " - " + (r.reg.estado || ""), r.ok ? "ok" : "warn");
+      else pintarEcf((r && r.error) || "No se pudo emitir el comprobante", "warn");
+    } catch (e) { pintarEcf("No se pudo emitir: " + (e.message || e), "warn"); }
+  }
+
   function receipt(sale) {
     const s = sheet(`<div class="ok-big"><div class="tk">${I.ok}</div><h2>Venta registrada</h2><div class="cnt">${new Date(sale.fecha).toLocaleString("es-DO")}</div></div>
       <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
+      <div class="ecf-res" id="ecfRes"></div>
       <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro ancho" id="pr" aria-label="Imprimir por Bluetooth">${I.print}<span class="bl">Imprimir</span></button><button class="m" id="img" aria-label="Ticket en imagen">${I.ticket}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = () => {
@@ -2012,7 +2047,7 @@
       ${s.foto ? `<img class="comp" src="${s.foto}" alt="Comprobante">` : ""}
       </div>
       <div class="sh-f fijo"><button class="big slim miniwa" id="send">${I.wa} <span class="bl">Enviar Ticket</span></button>
-        <button class="m negro ancho" id="prt" aria-label="Imprimir ticket">${I.print}<span>Imprimir</span></button>
+        <button class="m negro ancho" id="prt" aria-label="Imprimir ticket">${I.print}<span class="bl">Imprimir</span></button>
         </div>`);
     $("#x", sh).onclick = closeSheet;
     $("#send", sh).onclick = () => enviarTicketWa(s, waDeVenta(s));

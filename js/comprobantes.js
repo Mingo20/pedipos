@@ -179,7 +179,7 @@
 
   global.PPComprobantes = {
     cerrar: cerrar,
-    init: init, all: all, add: add, update: update, count: count,
+    init: init, all: all, add: add, update: update, actualizar: update, count: count,
     exportarJSON: exportarJSON, exportarCSV: exportarCSV, importar: importar, borrarTodo: borrarTodo
   };
 })(window);

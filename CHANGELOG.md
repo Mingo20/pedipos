@@ -2,6 +2,16 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.4.0] - 2026-11-19
+
+### Añadido
+- **Respaldo en el Drive del comerciante** (`js/respaldo.js`): cada comprobante se sube a su propio Drive, en PediPOS Comprobantes / año / mes, con permiso `drive.file`. Se verifica leyendo de vuelta el archivo, se escribe un `indice.json` del mes con total, ultimo e-NCF y huella SHA-256, y hay restauracion desde Drive.
+- **Estado del respaldo en el panel de Emisores**: conectado como, respaldados, pendientes, ultimo respaldo y avisos cuando algo queda solo en el equipo.
+- **El interruptor ITBIS manda sobre la factura electronica**: encendido activa la emision y la factura sale sola al cobrar; apagado la desactiva y la venta sigue como informal. Chip "e-CF" junto al ITBIS y linea de estado en el recibo.
+
+### Cambiado
+- La etiqueta del boton Imprimir en "Ticket del pedido" ahora es blanca, igual que su icono.
+
 ## [1.3.1] - 2026-11-19
 
 ### Corregido
