@@ -109,18 +109,41 @@
       db.products = merged.filter((p) => !gone.has(p.pid));
     }
 
-    /* ventas: se unen por id logico */
+    /* ventas: se unen por id logico; lo que ya se cobro o se abono manda sobre la nube */
     const sales = new Map();
     for (const s of j.sales || []) sales.set(s.vid, s);
-    for (const s of db.sales) if (pendSale.has(s.vid) || !sales.has(s.vid)) sales.set(s.vid, s);
+    for (const s of db.sales) {
+      const enNube = sales.get(s.vid);
+      if (!enNube || pendSale.has(s.vid)) { sales.set(s.vid, s); continue; }
+      sales.set(s.vid, {
+        ...enNube, ...s,
+        pagada: !!(s.pagada || enNube.pagada),
+        abonada: Math.max(Number(s.abonada) || 0, Number(enNube.abonada) || 0)
+      });
+    }
     db.sales = [...sales.values()].filter((s) => !gone.has(s.vid)).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
 
     /* clientes y proveedores: mismo criterio que productos */
+    /* clientes y proveedores: lo local manda (el comerciante es el dueno del dato)
+       y los pagos se unen por id, asi la nube nunca borra un abono */
+    const unirPagos = (a, b) => {
+      const m = new Map();
+      for (const g of (Array.isArray(a) ? a : [])) if (g && g.id) m.set(g.id, g);
+      for (const g of (Array.isArray(b) ? b : [])) if (g && g.id && !m.has(g.id)) m.set(g.id, g);
+      return [...m.values()].sort((x, y) => String(x.fecha).localeCompare(String(y.fecha)));
+    };
     const mergeList = (arr, pendSet, key) => {
       const loc = new Map((arr.local || []).map((x) => [x[key], x]));
       const out = [];
-      for (const x of arr.cloud || []) out.push(pendSet.has(x[key]) && loc.has(x[key]) ? loc.get(x[key]) : x);
-      for (const x of arr.local || []) if (pendSet.has(x[key]) && !out.some((o) => o[key] === x[key])) out.push(x);
+      for (const x of arr.cloud || []) {
+        const l = loc.get(x[key]);
+        if (!l) { out.push(x); continue; }
+        if (pendSet.has(x[key])) { out.push(l); continue; }
+        const unido = { ...x, ...l };
+        if (key === "cid") unido.pagos = unirPagos(x.pagos, l.pagos);
+        out.push(unido);
+      }
+      for (const x of arr.local || []) if (!out.some((o) => o[key] === x[key])) out.push(x);
       return out.filter((x) => !gone.has(x[key]));
     };
     const pendCli = new Set(pend.filter((x) => x.action === "saveCliente").map((x) => x.payload.cliente.cid));

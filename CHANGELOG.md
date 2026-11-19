@@ -2,6 +2,22 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.6.0] - 2026-11-19
+
+### Corregido
+- **El teclado del telefono se cerraba solo.** El redibujado por cambio de tamano se disparaba al abrirse el teclado (cambia el alto, no el ancho) y destruia el campo. Ahora solo se redibuja si cambia el ancho y nunca mientras se escribe. Verificado: antes el foco y el texto se perdian, ahora se conservan.
+- **Los pagos se borraban solos.** La sincronizacion reemplazaba el cliente desde la nube cada 30 s y se llevaba los abonos. Ahora los pagos se unen por identificador, la nube no puede borrarlos y el estado de pago de las ventas no se revierte.
+- El archivo tenia dos funciones llamadas `registrarPago`: la de proveedores anulaba la de clientes. Renombrada a `registrarPagoCliente`.
+
+### Añadido
+- `js/cuentas.js`: los pagos viven en su propio almacen IndexedDB, con migracion de los que estaban dentro del cliente.
+- Tarjeta de pago con fecha, monto, nota y saldo despues del abono.
+- Modo flash: al dictar una venta por voz, la ventana Cobrar se abre sola con el boton Confirmar cobro.
+- Boton "Pagar todo" en el abono.
+
+### Cambiado
+- Un solo sonido para toda la app: tocar un producto suena igual que tocar un icono de navegacion.
+
 ## [1.5.0] - 2026-11-19
 
 ### Cambiado

@@ -22,7 +22,11 @@
     const cli = (db().clients || []).find((x) => x.cid === cid);
     const ventas = (db().sales || []).filter((s) => s.cliente_id === cid && s.metodo === "credito");
     const total = ventas.reduce((a, s) => a + (Number(s.total) || 0), 0);
-    const pagos = (Array.isArray(cli && cli.pagos) ? cli.pagos : []).reduce((a, p) => a + (Number(p.monto) || 0), 0);
+    /* pagos del almacen nuevo + los que quedaron dentro del cliente, sin contar dos veces */
+    const propios = (window.PPCuentas && window.PPCuentas.deCliente) ? window.PPCuentas.deCliente(cid) : [];
+    const vistos = new Set(propios.map((g) => g.id));
+    const viejos = (Array.isArray(cli && cli.pagos) ? cli.pagos : []).filter((g) => g && g.id && !vistos.has(g.id));
+    const pagos = propios.concat(viejos).reduce((a, g) => a + (Number(g.monto) || 0), 0);
     /* compatibilidad con ventas marcadas pagadas antes de existir el historial de abonos */
     const huerfanas = ventas.filter((s) => s.pagada).reduce((a, s) => a + (Number(s.total) || 0), 0);
     const aplicado = pagos > 0 ? pagos : huerfanas;
@@ -142,18 +146,24 @@
 
   /* Pagos del cliente: los registrados al abonar y, si es historico, las ventas ya pagadas. */
   /* Solo los pagos que el negocio registro como abono. Nada derivado de ventas. */
+  /* Los pagos viven en su propio almacen (IndexedDB): la nube no los puede borrar.
+     Se suman los que hayan quedado dentro del cliente por compatibilidad. */
   function pagosDeCliente(c) {
-    const reg = Array.isArray(c.pagos) ? c.pagos.slice() : [];
-    return reg.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
+    const propios = (window.PPCuentas && window.PPCuentas.deCliente) ? window.PPCuentas.deCliente(c.cid) : [];
+    const viejos = Array.isArray(c.pagos) ? c.pagos : [];
+    const vistos = new Set(propios.map((g) => g.id));
+    const todos = propios.concat(viejos.filter((g) => g && g.id && !vistos.has(g.id)).map((g) => ({ ...g, cliente_id: c.cid })));
+    return todos.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
   }
 
   let cliVista = "compras";   /* compras | pagos */
+  let pagoNuevo = "";         /* id del ultimo pago, para resaltar su tarjeta */
 
   function pintarCliente(c) {
     const view = document.getElementById("view");
     const d = deudaDe(c.cid), vs = ventasDe(c.cid);
     const comprado = vs.reduce((x, v) => x + (Number(v.total) || 0), 0);
-    const pagado = Math.max(0, Math.round((comprado - d) * 100) / 100);
+    const pagado = pagosDeCliente(c).reduce((x, g) => x + (Number(g.monto) || 0), 0);
     const fila = (v) => {
       const cred = v.metodo === "credito";
       return `<div class="cx" role="button" tabindex="0" data-v="${esc(v.vid || "")}">
@@ -163,9 +173,11 @@
         <b class="${cred && !v.pagada ? "red" : ""}">${money(v.total)}</b></div>`;
     };
     const pagos = pagosDeCliente(c);
-    const filaPago = (g) => `<div class="cx pago" role="button" tabindex="0" data-p="${esc(g.id)}">
-        <div class="hi"><b>Pago registrado</b>
-          <span>${new Date(g.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}</span></div>
+    const filaPago = (g) => `<div class="cx pago${g.id === pagoNuevo ? " nuevo" : ""}" role="button" tabindex="0" data-p="${esc(g.id)}">
+        <div class="hi"><b>${Number(g.saldoDespues) > 0 ? "Abono registrado" : "Pago completo registrado"}</b>
+          <span>${new Date(g.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+          ${g.nota ? `<span class="fpago">${esc(g.nota)}</span>` : ""}
+          ${typeof g.saldoDespues === "number" ? `<span class="fpago">Saldo despues: ${money(g.saldoDespues)}</span>` : ""}</div>
         <b class="green">-${money(g.monto)}</b></div>`;
     window.PPUI.clearFab();
     document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
@@ -378,44 +390,83 @@
     };
   }
 
+  /* ---------- pagos del cliente ----------
+   * Todo abono o pago se guarda en el cliente vivo de la base (no en la copia
+   * que estaba en pantalla), deja su tarjeta en la pestana PAGOS con fecha,
+   * monto y saldo, y descuenta la deuda. */
+  function clienteVivo(cid) {
+    const arr = (db().clients = db().clients || []);
+    return arr.find((x) => x.cid === cid) || null;
+  }
+
+  function registrarPagoCliente(cid, monto, nota) {
+    const c = clienteVivo(cid);
+    if (!c) return { ok: false, error: "El cliente ya no existe en la base" };
+    const m = S.round2(Number(monto) || 0);
+    if (!(m > 0)) return { ok: false, error: "Monto invalido" };
+
+    const antes = deudaDe(cid);
+    const pagos = (c.pagos = Array.isArray(c.pagos) ? c.pagos : []);
+    const pago = {
+      id: S.uid("PG"), fecha: new Date().toISOString(), monto: m,
+      nota: String(nota || "").trim(), saldoAntes: antes,
+      saldoDespues: Math.max(0, S.round2(antes - m)), cliente_id: cid
+    };
+    pagos.push(pago);
+    if (window.PPCuentas) window.PPCuentas.add(pago);   /* evidencia permanente */
+
+    /* reparte el pago en las ventas a credito, de la mas vieja a la mas nueva */
+    const pend = (db().sales || [])
+      .filter((v) => v.cliente_id === cid && v.metodo === "credito" && !v.pagada)
+      .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+    let resto = m;
+    const aplicadas = [];
+    for (const v of pend) {
+      if (resto <= 0) break;
+      const t = Number(v.total) || 0;
+      if (resto >= t - 0.01) { v.pagada = true; v.abonada = 0; resto = S.round2(resto - t); aplicadas.push(v.vid); }
+      else { v.abonada = S.round2((Number(v.abonada) || 0) + resto); resto = 0; aplicadas.push(v.vid); }
+    }
+    pago.aplicadoA = aplicadas;
+
+    const guardado = S.save();
+    if (!guardado) {
+      pagos.pop();
+      return { ok: false, error: "Sin espacio en el telefono: exporta tus datos antes de seguir" };
+    }
+    try { pend.forEach((v) => window.PPSync && window.PPSync.saveSale && window.PPSync.saveSale(v)); } catch (_) {}
+    try { window.PPSync && window.PPSync.saveCliente && window.PPSync.saveCliente(c); } catch (_) {}
+    return { ok: true, pago: pago, cliente: c };
+  }
+
   function abonar(c) {
+    const debe = deudaDe(c.cid);
     const s = sheetCliente(`<div class="sh-h"><h2 class="h-gran">Abono de ${esc(c.nombre)}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
-      <label class="field"><span>Monto (RD$)</span><input id="ab" inputmode="decimal" placeholder="${deudaDe(c.cid)}"></label>
-      <button class="btn" id="oka">Registrar pago</button>`);
+      <p class="cnt" style="margin:0 2px 12px">Debe ahora: <b>${money(debe)}</b></p>
+      <label class="field"><span>Monto (RD$)</span><input id="ab" inputmode="decimal" placeholder="${debe}"></label>
+      <label class="field"><span>Nota (opcional)</span><input id="abn" placeholder="Ej: abono semanal" autocomplete="off"></label>
+      <div class="sh-f fijo" style="gap:8px">
+        <button class="m" id="abTodo" aria-label="Pagar todo" title="Pagar todo">${I.ok}</button>
+        <button class="big slim" id="oka"><span class="bl">Registrar pago</span></button>
+      </div>`);
     s.querySelector("[data-x]").onclick = closeSheet;
+    const campo = s.querySelector("#ab");
+    const todo = s.querySelector("#abTodo");
+    if (todo) todo.onclick = () => { campo.value = String(debe || ""); campo.focus(); };
+
     s.querySelector("#oka").onclick = () => {
-      const m = S.round2(parseFloat(String(s.querySelector("#ab").value).replace(",", ".")));
-      if (!(m > 0)) return toast("Monto invalido");
-      try {
-        const pend = db().sales.filter((s2) => s2.cliente_id === c.cid && s2.metodo === "credito" && !s2.pagada)
-          .sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
-        /* reparte el abono en las ventas: las saldadas se marcan, las demas acumulan abonado */
-        let resto = m;
-        for (const v of pend) {
-          if (resto <= 0) break;
-          const t = Number(v.total) || 0;
-          if (resto >= t - 0.01) { v.pagada = true; resto = S.round2(resto - t); }
-          else { v.abonada = S.round2((Number(v.abonada) || 0) + resto); resto = 0; }
-        }
-        c.pagos = Array.isArray(c.pagos) ? c.pagos : [];
-        c.pagos.push({ id: S.uid("PC"), fecha: new Date().toISOString(), monto: m });
-        const guardado = S.save();
-        if (!guardado) {
-          closeSheet();
-          return toast("No hay espacio en el telefono: exporta tus datos antes de seguir");
-        }
-        try { pend.forEach((v) => window.PPSync && window.PPSync.saveSale && window.PPSync.saveSale(v)); } catch (_) {}
-        try { window.PPSync && window.PPSync.saveCliente && window.PPSync.saveCliente(c); } catch (_) {}
-        closeSheet();
-        toast("Pago de " + money(m) + " registrado");
-        /* el detalle se vuelve a dibujar y muestra la tarjeta nueva en PAGOS */
-        cliVista = "pagos";
-        const fresco = (db().clients || []).find((x) => x.cid === c.cid) || c;
-        render();
-        setTimeout(() => { try { verCliente(fresco); } catch (_) {} }, 60);
-      } catch (e) {
-        toast("No se pudo registrar: " + (e && e.message ? e.message : e));
-      }
+      const m = parseFloat(String(campo.value || "").replace(",", "."));
+      if (!(m > 0)) { toast("Escribe un monto mayor que cero"); campo.focus(); return; }
+      const r = registrarPagoCliente(c.cid, m, s.querySelector("#abn") ? s.querySelector("#abn").value : "");
+      if (!r.ok) { toast(r.error || "No se pudo registrar el pago"); return; }
+      pagoNuevo = r.pago.id;
+      closeSheet();
+      toast("Pago de " + money(r.pago.monto) + " registrado");
+      /* se repinta el detalle en la pestana PAGOS, con la tarjeta nueva arriba */
+      cliVista = "pagos";
+      render();
+      setTimeout(() => { try { verCliente(clienteVivo(c.cid) || c); } catch (_) {} }, 60);
+      setTimeout(() => { pagoNuevo = ""; }, 4000);
     };
   }
 

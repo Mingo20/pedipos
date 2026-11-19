@@ -994,7 +994,7 @@
         if (!p) return;
         addLine(p, 1);
         invToque.set(p.pid, Date.now());
-        tapFuerte();
+        tap();
         el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit");
         render();
         pintar(true);   /* el producto sube solo hacia la parte superior */
@@ -1097,7 +1097,7 @@
       const p = $("#proc"); if (p) p.remove();
       const lines = (r && r.lines) || [];
       if (!lines.length) { toast("No se reconocio ningun producto"); return; }
-      agregarDirecto(r);
+      agregarDirecto(r, { cobrar: true });
       lines.forEach((l) => invToque.set(l.pid, Date.now()));
       micVibra(45);
       toast("Agregado a la bolsa");
@@ -1152,7 +1152,7 @@
       showProc();
       const r = await window.PPVoice.interpret(t, db().products);
       $("#proc") && $("#proc").remove();
-      agregarDirecto(r);
+      agregarDirecto(r, { cobrar: true });
       (r.lines || []).forEach((l) => invToque.set(l.pid, Date.now()));
       if (refrescar) refrescar();
     };
@@ -1257,7 +1257,7 @@
   }
 
   /* ----- Voz: los productos entran directo al talonario ----- */
-  function agregarDirecto(r) {
+  function agregarDirecto(r, opts) {
     const lines = (r && r.lines) || [];
     if (!lines.length) {
       toast("No reconoci productos en el pedido");
@@ -1274,9 +1274,13 @@
     }
     S.save(); render();
     animarNuevas(antes, n);
-    tapFuerte();
+    tap();
     if (n) toast(n + " producto" + (n === 1 ? "" : "s") + " agregado" + (n === 1 ? "" : "s") + " al talonario");
     if (r.missing && r.missing.length) setTimeout(() => toast("No encontre: " + r.missing.join(", ")), 1100);
+    /* modo flash: tras dictar, el cobro queda abierto para confirmar con un toque */
+    if (opts && opts.cobrar && n > 0) {
+      setTimeout(() => { if (!document.getElementById("sheet")) openPay(); }, 520);
+    }
   }
   /* Entrada escalonada de las filas recien agregadas. */
   function animarNuevas(desde, cuantas) {
@@ -1491,7 +1495,7 @@
     try { r = await window.PPVoice.interpret(text, db().products); } catch (_) { r = null; }
     $("#proc") && $("#proc").remove();
     if (!r) return toast("No se pudo procesar el pedido.");
-    agregarDirecto(r);
+    agregarDirecto(r, { cobrar: true });
   }
 
   function toggleVoice() {
@@ -1505,7 +1509,7 @@
         if (!text) { render(); return; }
         voice.phase = "wait"; render(); showProc();
         const r = await window.PPVoice.interpret(text, db().products);
-        voice = { phase: "idle", text: "" }; $("#proc") && $("#proc").remove(); render(); agregarDirecto(r);
+        voice = { phase: "idle", text: "" }; $("#proc") && $("#proc").remove(); render(); agregarDirecto(r, { cobrar: true });
       },
       (e) => { voice = { phase: "idle", text: "" }; render(); toast(e === "not-allowed" ? "Permite el microfono para dictar" : "No se pudo escuchar. Prueba escribiendo."); openOrder(""); });
   }
@@ -1531,7 +1535,7 @@
     showProc();
     const r = await window.PPVoice.interpret(text, db().products);
     $("#proc") && $("#proc").remove();
-    agregarDirecto(r);
+    agregarDirecto(r, { cobrar: true });
   }
 
   function renderListen() {
@@ -2290,7 +2294,10 @@
   }, true);
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
   /* las ventas viven en IndexedDB: se cargan al arrancar y se repinta con ellas */
-  if (window.PPStore && window.PPStore.hydrate) window.PPStore.hydrate().then(() => { render(); });
+  if (window.PPStore && window.PPStore.hydrate) window.PPStore.hydrate().then(() => {
+    if (window.PPCuentas) return window.PPCuentas.init().then(() => render());
+    render();
+  });
   addEventListener("pp:installable", () => { const b = $("#instbar"); if (b && b.hidden && !localStorage.getItem(INS_DONE)) { localStorage.removeItem(INS_OFF); b.hidden = false; } });
   addEventListener("pp:installed", () => { localStorage.setItem(INS_DONE, "1"); const b = $("#instbar"); if (b) { b.hidden = true; } toast("PediPOS instalada"); });
   if (db().settings.pinReq && !db().session) setTimeout(loginScreen, 260);
