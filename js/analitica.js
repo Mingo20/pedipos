@@ -139,6 +139,18 @@
     var sales = usandoDemo ? demoFiltrado() : ventasFiltradas();
     var sum = function (a, k) { return a.reduce(function (x, s) { return x + (Number(s[k]) || 0); }, 0); };
     var total = sum(sales, "total"), itbis = sum(sales, "itbis"), tickets = sales.length;
+    /* ganancia = precio de venta menos costo; inventario = stock por costo */
+    var ganancia = 0;
+    sales.forEach(function (s) {
+      (Array.isArray(s.lineas) ? s.lineas : []).forEach(function (l) {
+        var pr = (db().products || []).filter(function (x) { return x.pid === l.pid; })[0];
+        var costo = Number(l.costo != null ? l.costo : (pr && pr.costo) || 0);
+        ganancia += (Number(l.precio) - costo) * (Number(l.cant) || 0);
+      });
+    });
+    var inventario = (db().products || []).reduce(function (a, p) {
+      return a + (Number(p.costo) || 0) * (Number(p.stock) || 0);
+    }, 0);
     var articulos = 0, porDia = {}, porHora = new Array(24).fill(0), metodos = {}, prods = {}, clientes = {};
     sales.forEach(function (s) {
       var f = new Date(s.fecha);
@@ -190,7 +202,9 @@
       ["Ventas", money(total), vsAnterior === null ? "en el periodo" : (vsAnterior >= 0 ? "+" : "") + vsAnterior + "% vs anterior", vsAnterior],
       ["Tickets", String(tickets), "transacciones", null],
       ["ITBIS", money(itbis), "impuesto generado", null],
-      ["A credito", money(credito), "pendiente de cobro", null]
+      ["A credito", money(credito), "pendiente de cobro", null],
+      ["Ganancias", money(Math.round(ganancia)), "venta menos costo", null],
+      ["Inventario", money(Math.round(inventario)), "valor a costo", null]
     ];
 
     view.innerHTML =

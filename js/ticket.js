@@ -481,6 +481,23 @@
     return { titulo: titu, sub, cuerpo, total, pie: ["FIRMA: ______________________", "Acepto pagar el total indicado", "conforme al acuerdo comercial.", "  Gracias por su compra"] };
   }
 
+  /* Recibo generico (pago de cliente, compra o pago de proveedor). */
+  function lineasRecibo(cfg) {
+    const centrar = (s) => { s = String(s || "").slice(0, 32); const h = Math.max(0, 32 - s.length); return " ".repeat(Math.floor(h / 2)) + s; };
+    const sub = [];
+    if (cfg.direccion) sub.push(centrar(cfg.direccion));
+    if (cfg.telefono) sub.push(centrar(cfg.telefono));
+    sub.push(centrar(new Date(cfg.fecha || Date.now()).toLocaleDateString("es-DO")));
+    const cuerpo = [String(cfg.titulo || "RECIBO").toUpperCase(), ""];
+    (cfg.filas || []).forEach((f) => cuerpo.push(izq(String(f[0]), String(f[1]))));
+    return {
+      titulo: [centrar(String(cfg.negocio || "Mi negocio").toUpperCase())],
+      sub, cuerpo,
+      total: cfg.total ? [izq(String(cfg.totalEtiqueta || "TOTAL:"), String(cfg.total))] : [],
+      pie: ["Gracias por su preferencia"]
+    };
+  }
+
   function lineasEstado(cfg) {
     const centrar = (s) => { s = String(s || "").slice(0, 32); const h = Math.max(0, 32 - s.length); return " ".repeat(Math.floor(h / 2)) + s; };
     const sub = [];
@@ -746,5 +763,5 @@
     return enBloque(L);
   }
 
-  window.PPTicket = { waTicket, waPagoProveedor, waCompraProveedor, waPagoCliente, waNumero, textoPlano, enviarWhatsApp, lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, conectar, imprimirConVentana };
+  window.PPTicket = { waTicket, waPagoProveedor, waCompraProveedor, waPagoCliente, waNumero, textoPlano, enviarWhatsApp, lienzoVenta, lienzoEstado, compartir, imprimir, lineasVenta, lineasEstado, lineasRecibo, conectar, imprimirConVentana };
 })();

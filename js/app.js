@@ -282,7 +282,7 @@
   /* ---------- Panel ---------- */
   let manual = false;
   function manualRow() {
-    return `<div class="row man" id="mrow"><input class="nm" id="mnm" placeholder="Producto" autocomplete="off" enterkeyhint="next"><input id="mq" inputmode="decimal" placeholder="Cant." value="1" enterkeyhint="next"><input id="mp" inputmode="decimal" placeholder="Precio" enterkeyhint="done"><span class="t" id="mt">RD$0</span></div>`;
+    return `<div class="row man" id="mrow"><input class="nm" id="mnm" placeholder="Item" autocomplete="off" enterkeyhint="next"><input id="mq" inputmode="decimal" placeholder="Cant." value="1" enterkeyhint="next"><input id="mp" inputmode="decimal" placeholder="Precio" enterkeyhint="done"><span class="t" id="mt">RD$0</span></div>`;
   }
   /* La seccion manual tambien se elimina deslizandola a la izquierda, igual que un producto. */
   function bindSwipeManual() {
@@ -383,8 +383,11 @@
     f[0].addEventListener("input", sugerir);
     /* al salir del nombre se confirma la coincidencia */
     f[0].addEventListener("blur", () => setTimeout(() => {
+      /* la fila pudo desaparecer (item agregado): no se toca nada */
+      const mp = $("#mp");
+      if (!mp) return;
       const p = buscar(f[0].value || "");
-      if (p && !($("#mp").value || "").trim()) { $("#mp").value = String(Number(p.precio) || 0); upd(); }
+      if (p && !(mp.value || "").trim()) { mp.value = String(Number(p.precio) || 0); upd(); }
     }, 120));
     f.forEach((el, i) => {
       el.oninput = upd;
@@ -509,21 +512,85 @@
       row.addEventListener("touchcancel", soltar);
     });
   }
-  /* Editor compacto de una seccion del talonario. */
+  /* Filtro en tiempo real: al escribir el nombre, se despliegan las tarjetas que coinciden. */
+  function bindSugerencias() {
+    const inp = $("#mnm"), row = $("#mrow");
+    if (!inp || !row) return;
+    let box = $("#msug");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "msug"; box.className = "sug"; box.hidden = true;
+      row.insertAdjacentElement("afterend", box);
+    }
+    const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const cant = () => { const v = parseFloat(String(($("#mq") || {}).value || "1").replace(",", ".")); return v > 0 ? v : 1; };
+    const meter = (p) => {
+      addLine(p, cant()); S.save(); manual = false; render(); tap();
+      toast(p.nombre + " agregado");
+    };
+    const pintar = () => {
+      const q = norm(inp.value);
+      if (q.length < 2) { box.hidden = true; box.innerHTML = ""; return; }
+      const hits = (db().products || []).filter((p) => p.activo !== false && norm(p.nombre).includes(q)).slice(0, 6);
+      if (!hits.length) { box.hidden = true; box.innerHTML = ""; return; }
+      box.innerHTML = hits.map((p) => `<button type="button" class="sug-i" data-p="${p.pid}">
+        <span class="sug-n">${esc(p.nombre)}</span><span class="sug-m">${money(p.precio)} &middot; ${esc(p.unidad || "unidad")}</span></button>`).join("");
+      box.hidden = false;
+      box.querySelectorAll(".sug-i").forEach((b) => {
+        b.onmousedown = (e) => e.preventDefault();
+        b.onclick = () => { const p = (db().products || []).find((x) => x.pid === b.dataset.p); if (p) meter(p); };
+      });
+    };
+    inp.addEventListener("input", pintar);
+    inp.addEventListener("blur", () => setTimeout(() => { box.hidden = true; }, 200));
+    inp.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const q = norm(inp.value);
+      const exacto = (db().products || []).find((p) => norm(p.nombre) === q);
+      if (exacto) { e.preventDefault(); meter(exacto); }
+    });
+  }
+
+  /* Editor completo de un item del talonario: se edita sin salir de la venta. */
   function abrirEditorFila(i) {
     const l = cart().lines[i];
     if (!l) return;
-    const s = sheet(`<div class="sh-h compacta"><h2>Editar nombre</h2><button class="sh-x" id="x">${I.xDown}</button></div>
-      <label class="field"><span>Nombre del producto</span><input id="en" value="${esc(l.nombre)}" autocomplete="off"></label>
-      <div class="sh-f solo"><button class="big" id="eok">${I.check} <span class="bl">Listo</span></button></div>`);
+    const prod = (db().products || []).find((p) => p.pid === l.pid);
+    const costo = l.costo != null ? l.costo : (prod && prod.costo != null ? prod.costo : "");
+    const s = sheet(`<div class="sh-h"><h2>Editar item</h2><button class="sh-x" id="x">${I.xDown}</button></div>
+      <label class="field"><span>Nombre</span><input id="en" value="${esc(l.nombre)}" autocomplete="off"></label>
+      <div class="duo">
+        <label class="field"><span>Cantidad</span><input id="eq" inputmode="decimal" value="${num(l.cant)}"></label>
+        <label class="field"><span>Precio (RD$)</span><input id="ep" inputmode="decimal" value="${num(l.precio)}"></label>
+      </div>
+      <div class="duo">
+        <label class="field"><span>Costo (RD$)</span><input id="ec" inputmode="decimal" value="${costo === "" ? "" : num(costo)}"></label>
+        <label class="field"><span>Unidad</span><select id="eu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena", "hora", "servicio"].map((u) => `<option ${u === (l.unidad || "unidad") ? "selected" : ""}>${u}</option>`).join("")}</select></label>
+      </div>
+      <label class="field"><span>Categoria</span><input id="ek" value="${esc((prod && prod.categoria) || l.categoria || "")}" placeholder="Ej. Bebidas, Corte, Consulta"></label>
+      <div class="sh-f solo"><button class="big" id="eok">${I.check} <span class="bl">Guardar cambios</span></button></div>`);
     $("#x", s).onclick = closeSheet;
     const en = $("#en", s);
     setTimeout(() => { en.focus(); en.select(); }, 240);
+    const num2 = (v) => parseFloat(String(v || "").replace(",", "."));
     const guardar = () => {
       const nom = en.value.trim();
-      if (!nom) return toast("Escribe el nombre del producto");
-      cart().lines[i].nombre = nom;
-      S.save(); closeSheet(); render();
+      if (!nom) return toast("Escribe el nombre del item");
+      const cant = num2($("#eq", s).value), pr = num2($("#ep", s).value), co = num2($("#ec", s).value);
+      if (!(cant > 0)) return toast("La cantidad debe ser mayor que cero");
+      if (!(pr >= 0)) return toast("El precio no es valido");
+      const linea = cart().lines[i];
+      linea.nombre = nom; linea.cant = cant; linea.precio = pr;
+      linea.unidad = $("#eu", s).value;
+      if (isNaN(co)) delete linea.costo; else linea.costo = co;
+      /* si el item viene del catalogo, se actualiza tambien alli */
+      if (prod) {
+        prod.nombre = nom; prod.precio = pr; prod.unidad = linea.unidad;
+        const cat = $("#ek", s).value.trim(); if (cat) prod.categoria = cat;
+        if (!isNaN(co)) prod.costo = co;
+        try { window.PPSync.saveProduct(prod); } catch (_) {}
+      }
+      S.save(); closeSheet(); render(); toast("Item actualizado");
     };
     $("#eok", s).onclick = guardar;
     en.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); guardar(); } };
@@ -543,7 +610,7 @@
     $("#view").innerHTML = `
       <div class="panel-work">
         <div class="pw-bar">
-          <div class="search pw-search">${I.search}<input id="pwq" placeholder="Buscar producto" value="${esc(panelQ)}" autocomplete="off"></div>
+          <div class="search pw-search">${I.search}<input id="pwq" placeholder="Buscar" value="${esc(panelQ)}" autocomplete="off"></div>
           <button class="fbtn ${panelCat ? "on" : ""}" id="pwFil" aria-label="Filtrar por categoría" title="Filtrar por categoría">${I.filtro}</button>
           <div class="filtro-pop" id="pwfp" hidden>
             <button class="fopt ${panelCat === "" ? "on" : ""}" data-cat="">Todas las categorías ${I.check}</button>
@@ -553,8 +620,8 @@
         <div class="pgrid pw-grid" id="pwGrid">${listaProd.length ? listaProd.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:18px">Sin productos que coincidan.</p>'}</div>
       </div>
       <section class="tick">
-        <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
-        <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar productos</div>')}${manual ? manualRow() : ""}</div>
+        <div class="tick-h"><span>ITEM</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
+        <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar items</div>')}${manual ? manualRow() : ""}</div>
         <div class="tick-f">
           <div class="itbis-r"><span>ITBIS ${Math.round(rate() * 100)}%${(c.itbis && window.PPFiscal && window.PPFiscal.activo()) ? ' <i class="ecf-chip">e-CF</i>' : ""}</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
           <div class="line"><span>Subtotal</span><span id="vSub">${money(t.subtotal)}</span></div>
@@ -613,7 +680,7 @@
       /* siempre se puede agregar a mano: el talonario muestra 5 y el resto se desliza */
       manual = true; render(); const f = $("#mnm"); f && f.focus();
     };
-    if (manual) bindManual();
+    if (manual) { bindManual(); bindSugerencias(); }
     $("#swItbis").onclick = () => {
       const a = tot();
       cart().itbis = !cart().itbis; S.save();
@@ -941,7 +1008,7 @@
       <div class="inv-c">
         <div class="invrow">
           <div class="search inv-search">
-            ${I.search}<input id="q" placeholder="Buscar producto" autocomplete="off">
+            ${I.search}<input id="q" placeholder="Buscar" autocomplete="off">
           </div>
           <button class="inv-b rnd" id="invFil" aria-label="Filtrar por categoria">${I.filtro}</button>
         </div>
@@ -1275,11 +1342,15 @@
     S.save(); render();
     animarNuevas(antes, n);
     tap();
-    if (n) toast(n + " producto" + (n === 1 ? "" : "s") + " agregado" + (n === 1 ? "" : "s") + " al talonario");
+    if (n) toast(n + " item" + (n === 1 ? "" : "s") + " agregado" + (n === 1 ? "" : "s") + " al talonario");
     if (r.missing && r.missing.length) setTimeout(() => toast("No encontre: " + r.missing.join(", ")), 1100);
     /* modo flash: tras dictar, el cobro queda abierto para confirmar con un toque */
     if (opts && opts.cobrar && n > 0) {
-      setTimeout(() => { if (!document.getElementById("sheet")) openPay(); }, 520);
+      setTimeout(() => {
+        /* si venia explorando la barra de productos, se oculta antes de cobrar */
+        if (document.getElementById("sheet")) closeSheet(true);
+        openPay();
+      }, 520);
     }
   }
   /* Entrada escalonada de las filas recien agregadas. */
@@ -1757,7 +1828,7 @@
     const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
     $("#view").innerHTML = `<div class="stickbar pegada">
         <div class="searchrow">
-          <div class="search">${I.search}<input id="cq" placeholder="Buscar en el catalogo" value="${esc(catQ)}" autocomplete="off"></div>
+          <div class="search">${I.search}<input id="cq" placeholder="Buscar" value="${esc(catQ)}" autocomplete="off"></div>
           <button class="fbtn ${catCat ? "on" : ""}" id="cfil" aria-label="Filtrar por categoria">${I.filtro}</button>
         </div>
         <div class="filtro-pop" id="cfp" hidden>
@@ -1793,17 +1864,18 @@
 
   function editProduct(p) {
     const n = !p; p = p || { pid: S.uid("P"), nombre: "", precio: 0, unidad: "unidad", categoria: "", stock: 0, itbis: true, activo: true };
-    const s = sheet(`<div class="sh-h"><h2>${n ? "Crear producto" : "Editar producto"}</h2><button class="sh-x" id="x">${I.xDown}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>${n ? "Crear item" : "Editar item"}</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       <label class="field"><span>Nombre</span><input id="fn" value="${esc(p.nombre)}"></label>
       <div class="duo">
         <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
         <label class="field"><span>Precio (RD$)</span><input id="fp" inputmode="decimal" value="${p.precio || ""}"></label>
       </div>
+      <label class="field"><span>Costo (RD$) &middot; lo que te cuesta cada ${esc(p.unidad || "unidad")}</span><input id="fco" inputmode="decimal" value="${p.costo || ""}" placeholder="Para calcular tus ganancias"></label>
       <div class="duo">
         <label class="field"><span>Stock</span><input id="fs" inputmode="decimal" value="${p.stock || 0}"></label>
         <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
       </div>
-      <div class="field"><span>Foto del producto</span>
+      <div class="field"><span>Foto del item</span>
         <div class="upimg"><span class="pv" id="pv">${fotoDe(p)}</span>
           <label class="btn gris fbtn2" style="margin:0">${I.image}<span>Subir</span><input type="file" accept="image/*" id="fi" hidden></label>
           <label class="btn gris fbtn2" style="margin:0">${I.cam}<span>Tomar</span><input type="file" accept="image/*" capture="environment" id="fcam" hidden></label>
@@ -1839,12 +1911,14 @@
     $("#sv", s).onclick = () => {
       const nom = $("#fn", s).value.trim(), pr = parseFloat(String($("#fp", s).value).replace(",", "."));
       if (!nom || !(pr >= 0)) return toast("Falta el nombre o el precio");
+      const co = parseFloat(String(($("#fco", s) || {}).value || "").replace(",", "."));
       Object.assign(p, { nombre: nom, precio: pr, unidad: $("#fu", s).value, categoria: $("#fc", s).value.trim(), stock: parseFloat($("#fs", s).value) || 0, img });
+      if (isNaN(co)) delete p.costo; else p.costo = co;
       if (n) db().products.push(p);
-      S.save(); window.PPSync.saveProduct(p); closeSheet(); toast("Producto guardado"); render();
+      S.save(); window.PPSync.saveProduct(p); closeSheet(); toast("Item guardado"); render();
     };
     const dl = $("#dl", s);
-    if (dl) dl.onclick = () => { db().products = db().products.filter((x) => x.pid !== p.pid); S.save(); window.PPSync.deleteProduct(p.pid); closeSheet(); toast("Producto eliminado"); render(); };
+    if (dl) dl.onclick = () => { db().products = db().products.filter((x) => x.pid !== p.pid); S.save(); window.PPSync.deleteProduct(p.pid); closeSheet(); toast("Item eliminado"); render(); };
   }
 
   /* ---------- Analitica ---------- */
@@ -1987,7 +2061,7 @@
 
     $("#view").innerHTML = `<div class="stickbar pegada">
         <div class="searchrow">
-          <div class="search">${I.search}<input id="pq2" placeholder="Buscar pedido" value="${esc(pedQ)}" autocomplete="off"></div>
+          <div class="search">${I.search}<input id="pq2" placeholder="Buscar" value="${esc(pedQ)}" autocomplete="off"></div>
           <button class="fbtn ${conFiltro ? "on" : ""}" id="pfil" aria-label="Filtrar pedidos">${I.filtro}</button>
         </div>
         <div class="filtro-pop" id="pfp" hidden>
@@ -2072,7 +2146,7 @@
       <div class="mch grande"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
       <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${fechaCorta(s.fecha)}</span></div>
       <div class="dsum"><div class="r"><span>CLIENTE</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
-      <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
+      <div class="dlh"><span>ITEM</span><span>TOTAL</span></div>
       <div class="dls">${lineas}</div>
       <div class="dsum">
         <div class="r"><span>Subtotal</span><span>${money2(s.subtotal)}</span></div>

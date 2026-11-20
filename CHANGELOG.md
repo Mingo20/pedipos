@@ -2,6 +2,26 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.9.0] - 2026-11-20
+
+### Añadido
+- **Editor de item desde el talonario:** al tocar el nombre se abre "Editar item" con nombre, cantidad, precio, costo, unidad y categoría; si viene del catálogo, se actualiza también allí.
+- **Filtro en tiempo real** al crear un item manual: al escribir se despliegan tarjetas de los productos que coinciden y se agregan con un toque; si el texto coincide exacto (sin importar mayúsculas ni acentos) se agrega solo.
+- **Campo Costo** en crear y editar item, para calcular ganancias.
+- **Analítica:** KPIs de Ganancias (venta menos costo) e Inventario (stock por costo); las tarjetas van en fila deslizable y los montos bajan a 18 px.
+- **Recibos imprimibles** en el pago del cliente, la compra y el pago del proveedor, con icono de impresora junto a "Enviar comprobante".
+- **Onboarding:** la categoría del negocio pasa a lista desplegable e incluye servicios (centros de belleza, barberías, tatuajes, consultorios, otros).
+
+### Cambiado
+- Etiqueta CANTIDAD separada de PRECIO en el talonario (solo la etiqueta; los campos no se mueven).
+- Manos libres: al enviar se oculta la barra de productos y se abre COBRAR.
+- "Enviar por WhatsApp" pasa a "Enviar comprobante" en los tres comprobantes.
+- Todos los buscadores dicen solo "Buscar". PRODUCTO pasa a ITEM en la interfaz.
+
+### Corregido
+- Error al confirmar el item manual cuando la fila desaparecía (lectura de un campo ya eliminado).
+- Analítica tolera ventas antiguas sin detalle de líneas.
+
 ## [1.8.0] - 2026-11-20
 
 ### Corregido

@@ -25,7 +25,8 @@
     "Azua": ["Azua de Compostela", "Padre Las Casas", "Las Charcas"]
   };
 
-  const TIPOS = ["Colmado", "Mini Market", "Almacén", "Ventorrillo"];
+  const TIPOS = ["Colmado", "Mini Market", "Almacén", "Ventorrillo", "Centro de belleza", "Barbería",
+    "Centro de tatuajes", "Consultorio", "Otros servicios"];
   const TAMANOS = ["1 a 3 personas", "4 a 10 personas", "11 personas o más"];
   const ICONOS = {
     tipo: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16v11H4z"/><path d="M3 9l1.6-4.2A2 2 0 0 1 6.5 3.5h11a2 2 0 0 1 1.9 1.3L21 9"/><path d="M9 20v-6h6v6"/></svg>',
@@ -102,7 +103,10 @@
     return `
       ${cab("Tipo de negocio", "Cuéntanos sobre tu comercio", ICONOS.tipo)}
       <span class="ob-lbl">Tipo de negocio</span>
-      <div class="ob-opt">${TIPOS.map((t) => `<button type="button" class="ob-b ${datos.tipo === t ? "on" : ""}" data-tipo="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+      <label class="ob-sel"><select id="obTipo" aria-label="Tipo de negocio">
+        <option value="">Seleccionar categoría...</option>
+        ${TIPOS.map((t) => `<option value="${esc(t)}" ${datos.tipo === t ? "selected" : ""}>${esc(t)}</option>`).join("")}
+      </select></label>
       <span class="ob-lbl">Tamaño del negocio</span>
       <div class="ob-opt one">${TAMANOS.map((t) => `<button type="button" class="ob-b ${datos.tamano === t ? "on" : ""}" data-tam="${esc(t)}">${esc(t)}</button>`).join("")}</div>
       <div class="ob-f"><button type="button" class="ob-next" id="obNext" ${datos.tipo && datos.tamano ? "" : "disabled"}>Siguiente ${ICONOS.arrow}</button></div>`;
@@ -162,7 +166,12 @@
   }
 
   function conectar() {
-    nodo.querySelectorAll("[data-tipo]").forEach((b) => b.onclick = () => { datos.tipo = b.dataset.tipo; pintar(); });
+    const selTipo = nodo.querySelector("#obTipo");
+    if (selTipo) selTipo.onchange = () => {
+      datos.tipo = selTipo.value;
+      const nb = nodo.querySelector("#obNext");
+      if (nb) nb.disabled = !(datos.tipo && datos.tamano);
+    };
     nodo.querySelectorAll("[data-tam]").forEach((b) => b.onclick = () => { datos.tamano = b.dataset.tam; pintar(); });
 
     const prov = nodo.querySelector("#obProv");

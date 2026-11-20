@@ -257,8 +257,16 @@
       <div class="mov-tabla">
         ${filas.map(([k, v]) => `<div class="r"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
       </div>
-      <div class="sh-f fijo"><button class="big slim miniwa" id="pgWa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>`);
+      <div class="sh-f fijo" style="gap:8px"><button class="big slim miniwa" id="pgWa">${I.wa} <span class="bl">Enviar comprobante</span></button>
+        <button class="m negro" id="pgPr" aria-label="Imprimir comprobante">${I.print}</button></div>`);
     s.querySelector("[data-x]").onclick = closeSheet;
+    const pgPr = s.querySelector("#pgPr");
+    if (pgPr) pgPr.onclick = () => window.PPTicket.imprimirConVentana(window.PPTicket.lineasRecibo({
+      negocio: neg, direccion: db().settings.direccion || "", telefono: db().settings.telefono || "",
+      fecha: g.fecha, titulo: "RECIBO DE PAGO",
+      filas: [["Cliente", c.nombre], ["Fecha", fecha], ["Monto pagado", money2(g.monto)], ["Saldo actual", money2(saldo)]],
+      total: money2(g.monto), totalEtiqueta: "PAGADO:"
+    }), "comprobante de pago");
     s.querySelector("#pgWa").onclick = () => {
       const tel = c.whatsapp || c.telefono || "";
       if (!tel) return toast("Este cliente no tiene WhatsApp registrado");
@@ -644,9 +652,16 @@
       <div class="mov-tabla">
         ${filas.map(([k, v]) => `<div class="r"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
       </div>
-      <div class="sh-f fijo"><button class="big slim miniwa" id="mvWa">${I.wa} <span class="bl">Enviar por WhatsApp</span></button></div>`);
+      <div class="sh-f fijo" style="gap:8px"><button class="big slim miniwa" id="mvWa">${I.wa} <span class="bl">Enviar comprobante</span></button>
+        <button class="m negro" id="mvPr" aria-label="Imprimir comprobante">${I.print}</button></div>`);
 
     s.querySelector("[data-x]").onclick = closeSheet;
+    const mvPr = s.querySelector("#mvPr");
+    if (mvPr) mvPr.onclick = () => window.PPTicket.imprimirConVentana(window.PPTicket.lineasRecibo({
+      negocio: neg, direccion: db().settings.direccion || "", telefono: db().settings.telefono || "",
+      fecha: m.x.fecha || m.fecha, titulo: compra ? "COMPROBANTE DE COMPRA" : "COMPROBANTE DE PAGO",
+      filas: filas, total: money2(total), totalEtiqueta: compra ? "COMPRA:" : "PAGADO:"
+    }), compra ? "comprobante de compra" : "comprobante de pago");
     s.querySelector("#mvWa").onclick = () => {
       const msg = compra
         ? window.PPTicket.waCompraProveedor(neg, p, m.x, saldo)
