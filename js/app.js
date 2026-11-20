@@ -157,7 +157,7 @@
   let panelCat = "";
 
   /* ---------- Dock ---------- */
-  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"]];
+  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Suplidor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"]];
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
@@ -191,7 +191,7 @@
       go(b.dataset.t);
     }));
   }
-  const TITULOS = { fiscal: "FACTURACION", panel: "PANEL", catalogo: "CATALOGO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
+  const TITULOS = { fiscal: "FACTURACION", panel: "PANEL", catalogo: "INVENTARIO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "SUPLIDORES" };
   /* ----- Avisos de pagos a credito ----- */
   const DIAS = 86400000;
   function avisosPago() {
@@ -631,7 +631,7 @@
         <div class="tools">
           <button class="plus tl" id="bList" aria-label="Lista de pedido">${I.list}<i class="pin ${orderTexto().trim() ? "" : "off"}"></i></button>
           <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}<i class="pin ${manual ? "" : "off"}"></i></button>
-          <button class="plus tl" id="bSearch" aria-label="Productos">${I.box}<i class="bub ${n ? "" : "off"}">${n}</i></button>
+          <button class="plus tl" id="bSearch" aria-label="Catalogo">${I.cart}<i class="bub ${n ? "" : "off"}">${n}</i></button>
         </div>
         ${esPC() ? actHTML : ""}
       </section>
@@ -1002,7 +1002,7 @@
   function openSearch() {
     const s = sheet(`<div class="inv">
       <div class="inv-h">
-        <div class="inv-tt"><span class="hi">${I.box}</span><h2>Productos</h2></div>
+        <div class="inv-tt"><span class="hi">${I.cart}</span><h2>Catalogo</h2></div>
         <button class="inv-b rnd" id="x" aria-label="Cerrar">${I.chev}</button>
       </div>
       <div class="inv-c">
@@ -1344,14 +1344,7 @@
     tap();
     if (n) toast(n + " item" + (n === 1 ? "" : "s") + " agregado" + (n === 1 ? "" : "s") + " al talonario");
     if (r.missing && r.missing.length) setTimeout(() => toast("No encontre: " + r.missing.join(", ")), 1100);
-    /* modo flash: tras dictar, el cobro queda abierto para confirmar con un toque */
-    if (opts && opts.cobrar && n > 0) {
-      setTimeout(() => {
-        /* si venia explorando la barra de productos, se oculta antes de cobrar */
-        if (document.getElementById("sheet")) closeSheet(true);
-        openPay();
-      }, 520);
-    }
+
   }
   /* Entrada escalonada de las filas recien agregadas. */
   function animarNuevas(desde, cuantas) {
@@ -2033,7 +2026,7 @@
 
   /* ---------- Menu lateral ---------- */
   function openMenu() {
-    const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
+    const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Suplidores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
@@ -2195,6 +2188,8 @@
         <div class="line" style="font-size:13px"><span>Sesion</span><b>${db().session ? esc(db().session.nombre + " · " + db().session.rol) : "sin iniciar"}</b></div>
         <label class="field" style="margin-top:8px"><span>Pedir PIN al abrir</span><select id="cr"><option value="0" ${st.pinReq ? "" : "selected"}>No</option><option value="1" ${st.pinReq ? "selected" : ""}>Si</option></select></label>
         <button class="btn sec" id="cses">${db().session ? "Cerrar sesion" : "Iniciar sesion"}</button>
+        <div class="line" style="font-size:13px;margin-top:10px"><span>Avisos del telefono</span><b>${window.PPAvisos ? (window.PPAvisos.permiso() === "granted" ? "activados" : "apagados") : "no disponible"}</b></div>
+        <button class="btn sec" id="cavisos" style="margin-top:8px">${window.PPAvisos && window.PPAvisos.permiso() === "granted" ? "Probar un aviso" : "Activar avisos"}</button>
         <a class="btn sec" id="cadm" href="admin.html" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:8px;text-decoration:none">Administracion de comercios</a>
         <button class="btn sec" id="cbm" style="margin-top:8px">Emparejar impresora Bluetooth</button>
         <div class="cnt" style="font-size:11.5px;margin-top:6px" id="bti">${localStorage.getItem("pedipos.printer") ? "Impresora: " + esc(localStorage.getItem("pedipos.printer")) : "Sin impresora emparejada"}</div>
@@ -2202,6 +2197,15 @@
       <div class="card"><h3>Sincronizacion</h3><div class="cnt" id="syn"></div><button class="btn sec" id="sy">Sincronizar ahora</button></div>`;
     $("#cr").onchange = (e) => { st.pinReq = e.target.value === "1"; S.save(); toast(st.pinReq ? "Se pedira PIN al abrir" : "Sin PIN al abrir"); };
     if (window.PPEmisores && window.PPEmisores.pintarRespaldo) window.PPEmisores.pintarRespaldo($("#cfgRespaldo"));
+    const cav = $("#cavisos");
+    if (cav) cav.onclick = async () => {
+      if (!window.PPAvisos) return toast("Avisos no disponibles en este navegador");
+      const p = await window.PPAvisos.pedirPermiso();
+      if (p !== "granted") return toast("El telefono no autorizo los avisos");
+      toast("Avisos activados");
+      window.PPAvisos.revisar();
+      render();
+    };
     $("#cses").onclick = () => { if (db().session) { db().session = null; S.save(); toast("Sesion cerrada"); render(); } else loginScreen(); };
     $("#cbm").onclick = async () => {
       try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); render(); }
@@ -2407,6 +2411,14 @@
   if (window.PPStore && window.PPStore.hydrate) window.PPStore.hydrate().then(() => {
     if (window.PPCuentas) return window.PPCuentas.init().then(() => render());
     render();
+  });
+  if (window.PPAvisos && window.PPAvisos.arrancar) setTimeout(() => window.PPAvisos.arrancar(), 2500);
+  try {
+    const ir = new URLSearchParams(location.search).get("ir");
+    if (ir) { history.replaceState(null, "", location.pathname); setTimeout(() => go(ir), 400); }
+  } catch (_) {}
+  if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data && e.data.aviso) go(e.data.aviso);
   });
   addEventListener("pp:installable", () => { const b = $("#instbar"); if (b && b.hidden && !localStorage.getItem(INS_DONE)) { localStorage.removeItem(INS_OFF); b.hidden = false; } });
   addEventListener("pp:installed", () => { localStorage.setItem(INS_DONE, "1"); const b = $("#instbar"); if (b) { b.hidden = true; } toast("PediPOS instalada"); });

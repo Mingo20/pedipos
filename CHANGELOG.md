@@ -2,6 +2,23 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.0.0] - 2026-11-20
+
+### Añadido
+- **Avisos del negocio** (`js/avisos.js`): cobros vencidos y por vencer, comprobantes rechazados por la DGII, secuencia e-NCF y certificado por vencer, mas de 24 h sin respaldar y consejo semanal. Se revisan al abrir, al volver a la app y cada minuto. Boton en Configuracion para autorizar y probar. Al tocar el aviso abre la pantalla que corresponde.
+- `notificationclick` en el service worker y apertura por `?ir=`.
+
+### Cambiado
+- Encabezado del talonario: 10 px de aire entre CANTIDAD y PRECIO, sin mover los campos.
+- Icono de carrito en la barra de productos del panel y titulo "Catalogo" en esa barra.
+- Pantalla Catalogo pasa a **Inventario**; Proveedores pasa a **Suplidores** (barra, menu y titulos).
+- Botones "Editar cliente" y "Editar suplidor" con icono.
+- Barra de venta en grabacion: blanco puro, sin tono gris ni degradado.
+- Tarjetas de analitica: etiqueta arriba, monto debajo y detalle en una linea, sin desbordes.
+
+### Eliminado
+- La ventana Cobrar ya no se abre sola al enviar un pedido por voz.
+
 ## [1.9.0] - 2026-11-20
 
 ### Añadido

@@ -206,7 +206,7 @@
         : (pagos.length ? `<div class="cx-list">${pagos.map(filaPago).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin pagos registrados.</p>')}
       </div>
     </div>
-    <div class="subv-foot"><button class="btn sec" id="svEdit">Editar cliente</button></div>`;
+    <div class="subv-foot"><button class="btn sec" id="svEdit">${I.edit}<span>Editar cliente</span></button></div>`;
     animarSub = false; view.scrollTop = 0;
     limpiarEntrada(view);
     const wa = c.whatsapp || c.telefono;
@@ -501,7 +501,7 @@
     view.innerHTML = `
       <div class="stickbar">
         <div class="searchrow">
-          <div class="search">${window.PPUI.I.search}<input id="pq" placeholder="Buscar proveedor" autocomplete="off"></div>
+          <div class="search">${window.PPUI.I.search}<input id="pq" placeholder="Buscar" autocomplete="off"></div>
           <button class="fbtn" id="pvfil" aria-label="Filtrar proveedores">${window.PPUI.I.filtro}</button>
         </div>
         <div class="filtro-pop" id="pvp" hidden>
@@ -527,7 +527,7 @@
               <span class="ico wa wa-end" data-w="${esc(p.prid)}" role="button" aria-label="WhatsApp">${window.PPUI.I.wa}</span>
             </div>`;
           }).join("")
-        : '<p class="cnt" style="text-align:center;padding:20px 0">Sin proveedores con ese filtro.</p>';
+        : '<p class="cnt" style="text-align:center;padding:20px 0">Sin suplidores con ese filtro.</p>';
       $$(".clrow").forEach((el) => (el.onclick = () => verProveedor(list.find((x) => x.prid === el.dataset.pv))));
       $$("[data-w]").forEach((b) => (b.onclick = (e) => {
         e.stopPropagation();
@@ -546,7 +546,7 @@
       provFiltro = b.dataset.e; fb.classList.toggle("on", !!provFiltro);
       pop.hidden = true; marcar(); draw(inp.value);
     }));
-    window.PPUI.setFab(window.PPUI.I.plus, () => editarProveedor(null), "Nuevo proveedor");
+    window.PPUI.setFab(window.PPUI.I.plus, () => editarProveedor(null), "Nuevo suplidor");
     draw();
   }
 
@@ -602,7 +602,7 @@
         ${lista.length ? lista.map((m) => fila(m, mov.indexOf(m))).join("") : `<p class="cnt" style="padding:10px 14px">${provVista === "compra" ? "Sin compras registradas." : "Sin pagos registrados."}</p>`}
       </div>
     </div>
-    <div class="subv-foot"><button class="btn sec" id="svEdit">Editar proveedor</button></div>`;
+    <div class="subv-foot"><button class="btn sec" id="svEdit">${I.edit}<span>Editar suplidor</span></button></div>`;
     animarSub = false; view.scrollTop = 0;
     limpiarEntrada(view);
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
@@ -732,7 +732,7 @@
   function editarProveedor(p) {
     const n = !p;
     p = p || { prid: S.uid("PR"), nombre: "", contacto: "", whatsapp: "", nota: "", activo: true, compras: [], pagos: [] };
-    const s = sheetCliente(`<div class="sh-h"><h2>${n ? "Nuevo proveedor" : "Editar proveedor"}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+    const s = sheetCliente(`<div class="sh-h"><h2>${n ? "Nuevo suplidor" : "Editar suplidor"}</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <label class="field"><span>Nombre</span><input id="pn" value="${esc(p.nombre)}"></label>
       <label class="field"><span>Persona de contacto</span><input id="pc" value="${esc(p.contacto || "")}"></label>
       <label class="field"><span>Numero de WhatsApp</span><input id="pw" inputmode="tel" placeholder="8090000000" value="${esc(p.whatsapp || p.telefono || "")}"></label>

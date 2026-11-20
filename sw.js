@@ -34,3 +34,16 @@ self.addEventListener("fetch", (e) => {
       .catch(() => caches.match(req).then((r) => r || caches.match("index.html")))
   );
 });
+
+
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  var ir = (e.notification.data && e.notification.data.ir) || "";
+  var url = ir ? "./?ir=" + encodeURIComponent(ir) : "./";
+  e.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (lista) {
+    for (var i = 0; i < lista.length; i++) {
+      if ("focus" in lista[i]) { lista[i].postMessage({ aviso: ir }); return lista[i].focus(); }
+    }
+    return clients.openWindow(url);
+  }));
+});

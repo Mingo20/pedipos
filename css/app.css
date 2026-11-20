@@ -1882,3 +1882,21 @@ body.manos-libres.panel-view .tick{transform:none;opacity:1;pointer-events:auto}
   appearance:none;background-image:linear-gradient(45deg,transparent 50%,#8b95a1 50%),linear-gradient(135deg,#8b95a1 50%,transparent 50%);
   background-position:calc(100% - 20px) 22px,calc(100% - 14px) 22px;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
 .ob-sel select:focus{border-color:var(--g);box-shadow:0 0 0 3px #1f9d5c22}
+
+/* ---------- encabezado del talonario: aire entre CANTIDAD y PRECIO ---------- */
+.tick-h span:nth-child(2){padding-left:0!important;padding-right:16px!important}
+.tick-h span:nth-child(3){padding-left:0!important;padding-right:4px!important}
+
+/* ---------- barra de venta en grabacion: blanco puro, sin tono gris ---------- */
+.act.rec,.act.rec.flotante,.act.flotante.rec{
+  background:#fff!important;background-image:none!important;
+  border-color:var(--line)!important;
+  box-shadow:0 16px 40px #00000024!important}
+.act.rec::before,.act.rec::after{background:none!important;display:none!important}
+.act .recbar{background:#fff}
+
+/* ---------- tarjetas de analitica: informacion ordenada ---------- */
+.an-kpi{min-width:142px;padding:11px 13px}
+.an-kpi small{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-kpi b{display:block;font-size:17px!important;line-height:1.2;white-space:nowrap}
+.an-kpi span{display:block;font-size:10.5px;line-height:1.25;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
