@@ -169,7 +169,7 @@
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
     const lista = pc
-      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["emisores", "Emisores", "users"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"],
+      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"],
          ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"],
          ["config", "Ajustes", "gear"], ["soporte", "Soporte", "help"], ["avisos", "Avisos", "bell"]]
       : TABS;
@@ -191,7 +191,7 @@
       go(b.dataset.t);
     }));
   }
-  const TITULOS = { fiscal: "FACTURACION", emisores: "EMISORES", panel: "PANEL", catalogo: "CATALOGO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
+  const TITULOS = { fiscal: "FACTURACION", panel: "PANEL", catalogo: "CATALOGO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "PROVEEDORES" };
   /* ----- Avisos de pagos a credito ----- */
   const DIAS = 86400000;
   function avisosPago() {
@@ -1732,7 +1732,7 @@
       <div class="receipt">${lineasDe(sale).map((l) => `<div class="r"><span>${num(l.cant)} x ${esc(l.nombre)}</span><span>${money(l.cant * l.precio)}</span></div>`).join("")}
       <div class="r"><span>Subtotal</span><span>${money2(sale.subtotal)}</span></div><div class="r"><span>ITBIS</span><span>${money2(sale.itbis)}</span></div><div class="r t"><span>TOTAL</span><span>${money2(sale.total)}</span></div></div>
       <div class="ecf-res" id="ecfRes"></div>
-      <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro ancho" id="pr" aria-label="Imprimir por Bluetooth">${I.print}<span class="bl">Imprimir</span></button><button class="m" id="img" aria-label="Ticket en imagen">${I.ticket}</button></div>
+      <div class="sh-f rcp"><button class="big miniwa" id="wa">${I.wa} <span class="bl">Enviar ticket</span></button><button class="m negro ancho" id="pr" aria-label="Imprimir por Bluetooth">${I.print}<span class="bl">Imprimir</span></button><button class="m" id="img" aria-label="Ticket en imagen" hidden style="display:none">${I.ticket}</button></div>
       <button class="btn sec" id="nw" style="margin-top:14px">Nueva venta</button>`);
     $("#pr", s).onclick = () => {
       window.PPTicket.imprimirConVentana(window.PPTicket.lineasVenta(sale, db().settings.negocio || "Mi negocio", db().settings.direccion || "", db().settings.telefono || ""), "ticket");
@@ -1960,7 +1960,7 @@
   /* ---------- Menu lateral ---------- */
   function openMenu() {
     const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Proveedores", "truck2"],
-      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["emisores", "Emisores", "users"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
+      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
@@ -2116,6 +2116,7 @@
       <label class="field"><span>Municipio</span><select id="cMuni"><option value="">Seleccionar municipio...</option>${munisDe(st.provincia).map((t) => `<option ${st.municipio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
       <button class="btn" id="cs">Guardar</button>
       <button class="btn sec" id="cob" style="margin-top:8px">Volver a configurar mi negocio</button></div>
+      <div id="cfgRespaldo"></div>
       <div class="card"><h3>Caja y acceso</h3>
         <div class="line" style="font-size:13px"><span>Sesion</span><b>${db().session ? esc(db().session.nombre + " · " + db().session.rol) : "sin iniciar"}</b></div>
         <label class="field" style="margin-top:8px"><span>Pedir PIN al abrir</span><select id="cr"><option value="0" ${st.pinReq ? "" : "selected"}>No</option><option value="1" ${st.pinReq ? "selected" : ""}>Si</option></select></label>
@@ -2126,6 +2127,7 @@
       </div>
       <div class="card"><h3>Sincronizacion</h3><div class="cnt" id="syn"></div><button class="btn sec" id="sy">Sincronizar ahora</button></div>`;
     $("#cr").onchange = (e) => { st.pinReq = e.target.value === "1"; S.save(); toast(st.pinReq ? "Se pedira PIN al abrir" : "Sin PIN al abrir"); };
+    if (window.PPEmisores && window.PPEmisores.pintarRespaldo) window.PPEmisores.pintarRespaldo($("#cfgRespaldo"));
     $("#cses").onclick = () => { if (db().session) { db().session = null; S.save(); toast("Sesion cerrada"); render(); } else loginScreen(); };
     $("#cbm").onclick = async () => {
       try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); render(); }
@@ -2161,7 +2163,6 @@
     else if (tab === "config") renderConfig();
     else if (tab === "avisos") renderAvisos();
     else if (tab === "fiscal") { if (window.PPFiscal) window.PPFiscal.render($("#view")); }
-    else if (tab === "emisores") { if (window.PPEmisores) window.PPEmisores.render($("#view")); }
     drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
     const h1t = document.getElementById("title");
     if (h1t && esPC()) h1t.textContent = TITULOS[tab] || "PediPOS";

@@ -2,6 +2,21 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [1.8.0] - 2026-11-20
+
+### Corregido
+- **Primera tarjeta tapada en Catalogo y Pedidos.** El margen negativo que añadi en 1.7.1 montaba la barra de busqueda sobre la primera tarjeta (tapaba 12 y 14 px en un movil de 360 px). Ahora la barra sube sin invadir: solape 0 px.
+
+### Cambiado
+- **Talonario:** Producto mas ancho (88 a 117 px en movil); Cantidad y Precio corridos a la derecha. Columnas con `minmax(0, ...)` para que el texto de la cabecera no las encoja.
+- **Modal Venta registrada:** oculto el icono de documento junto a Imprimir.
+- **Manos libres:** deslizar el microfono a la derecha ya no desliza el talonario; solo activa la grabacion. La barra flota sobre la rejilla y el talonario se queda en su sitio.
+- **Dock movil:** iconos de 21 a 26 px, texto de 9,6 a 11 px y celdas sin separacion extra.
+- **Respaldo en Drive** pasa de Emisores a Configuracion, con todos sus botones.
+
+### Eliminado
+- La pantalla **Emisores** (barra PC, menu movil y enrutador): la sustituye la interfaz administrativa `admin.html`.
+
 ## [1.7.0] - 2026-11-19
 
 ### Añadido

@@ -206,5 +206,20 @@
     };
   }
 
-  global.PPEmisores = { render: render, registrar: registrar, leer: leer, estadoDe: estadoDe };
+  /* la tarjeta de respaldo ahora vive en Configuracion */
+  function pintarRespaldo(contenedor) {
+    if (!contenedor) return;
+    contenedor.innerHTML = tarjetaRespaldo();
+    var again = function () { pintarRespaldo(contenedor); };
+    var R = global.PPRespaldo; if (!R) return;
+    var q = function (s) { return contenedor.querySelector(s); };
+    var id = q("#dr-id"), save = q("#dr-save"), on = q("#dr-on"), off = q("#dr-off"), now = q("#dr-now"), res = q("#dr-res");
+    if (save) save.onclick = function () { var v = (id && id.value || "").trim(); if (!v) { global.toast && global.toast("Pega el ID de cliente de Google"); return; } R.setClienteId(v); again(); global.toast && global.toast("ID guardado: ya puedes conectar"); };
+    if (on) on.onclick = async function () { on.disabled = true; on.textContent = "Conectando..."; await R.conectar(); again(); };
+    if (off) off.onclick = async function () { await R.desconectar(); again(); };
+    if (now) now.onclick = async function () { now.disabled = true; now.textContent = "Subiendo..."; await R.respaldarAhora(); again(); };
+    if (res) res.onclick = async function () { res.disabled = true; res.textContent = "Buscando..."; await R.restaurar(); again(); };
+  }
+
+  global.PPEmisores = { render: render, registrar: registrar, leer: leer, estadoDe: estadoDe, pintarRespaldo: pintarRespaldo };
 })(window);

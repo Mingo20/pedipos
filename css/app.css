@@ -1811,7 +1811,7 @@ body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px)!important}
 .dr-card .em-acc{margin-top:10px}
 
 /* ---------- buscadores pegados al encabezado (pedidos y catalogo) ---------- */
-.stickbar.pegada{top:-4px;padding-top:0;margin-top:-18px}
+.stickbar.pegada,#view > .stickbar.pegada{top:-10px;padding-top:0;padding-bottom:16px;margin-top:-8px;margin-bottom:0}
 
 /* ---------- modo manos libres: la barra flota sobre la rejilla ---------- */
 .act.flotante{position:fixed!important;left:50%!important;right:auto!important;bottom:calc(env(safe-area-inset-bottom) + 14px)!important;
@@ -1819,10 +1819,8 @@ body.panel-view .tick{top:calc(var(--pp-top,66px) + 14px)!important}
   border:1.5px solid var(--line);border-radius:24px;background:#fff;box-shadow:0 16px 40px #0000002b;z-index:70;padding:8px 12px;margin:0!important;
   transition:box-shadow .25s ease, transform .25s ease}
 body.manos-libres .panel-work,body.manos-libres .pw-grid{padding-bottom:112px;transition:padding-bottom .3s ease}
-body.manos-libres.panel-view main#view{padding-right:26px;transition:padding-right .35s cubic-bezier(.22,1,.36,1)}
-body.manos-libres.panel-view .tick{transform:translateX(112%);opacity:0;pointer-events:none;
-  transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .28s ease}
-body.panel-view .tick{transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .28s ease}
+/* el talonario NO se desliza: queda en su sitio mientras se dicta */
+body.manos-libres.panel-view .tick{transform:none;opacity:1;pointer-events:auto}
 
 /* linea en vivo del dictado */
 .rlive{position:absolute;left:0;right:0;top:-34px;margin:0 auto;width:max-content;max-width:92%;display:flex;align-items:center;gap:8px;
@@ -1832,3 +1830,22 @@ body.panel-view .tick{transition:transform .35s cubic-bezier(.22,1,.36,1),opacit
 .rlive.abierta span{white-space:normal;max-width:320px}
 .rver{width:38px;height:38px;border-radius:50%;background:#f2f4f6;display:grid;place-items:center;flex:none}
 .rver svg{width:18px;height:18px}
+
+/* ---------- talonario: producto mas ancho, cantidad y precio corridos a la derecha ---------- */
+.tick-h,.row,.row.man{grid-template-columns:minmax(0,1.7fr) minmax(0,.8fr) minmax(0,.8fr) minmax(0,.9fr);column-gap:4px}
+.tick-h{font-size:13px;letter-spacing:.04em}
+.tick-h span:nth-child(2),.tick-h span:nth-child(3){padding-left:6px}
+.row .q,.row .p{padding-left:6px}
+.row.man input:nth-child(2),.row.man input:nth-child(3){margin-left:6px;width:calc(100% - 6px)}
+@media (min-width:1024px){
+  .tick-h,.row,.row.man{grid-template-columns:minmax(0,1.8fr) minmax(0,.75fr) minmax(0,.85fr) minmax(0,.95fr)}
+}
+
+/* ---------- dock movil: iconos mas grandes y menos separados ---------- */
+@media (max-width:767px){
+  .dock{width:min(calc(100% - 20px),480px);height:64px;
+        grid-template-columns:1fr 1fr 74px 1fr 1fr}
+  .dock button{gap:3px;font-size:11px;letter-spacing:0}
+  .dock button svg{width:26px;height:26px}
+  .dock button.on::after{bottom:6px}
+}
