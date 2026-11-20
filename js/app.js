@@ -169,7 +169,7 @@
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
     const lista = pc
-      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Catalogo", "box"],
+      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"],
          ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"],
          ["config", "Ajustes", "gear"], ["soporte", "Soporte", "help"], ["avisos", "Avisos", "bell"]]
       : TABS;
@@ -2026,7 +2026,7 @@
 
   /* ---------- Menu lateral ---------- */
   function openMenu() {
-    const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Catalogo", "box"], ["proveedores", "Suplidores", "truck2"],
+    const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Inventario", "box"], ["proveedores", "Suplidores", "truck2"],
       ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
