@@ -634,9 +634,8 @@
           <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}<i class="pin ${manual ? "" : "off"}"></i></button>
           <button class="plus tl" id="bSearch" aria-label="Catalogo">${I.cart}<i class="bub ${n ? "" : "off"}">${n}</i></button>
         </div>
-        ${esPC() ? actHTML : ""}
-      </section>
-      ${esPC() ? "" : actHTML}`;
+        ${actHTML}
+      </section>`;
     const pwq = $("#pwq");
     if (pwq) pwq.oninput = (e) => {
       panelQ = e.target.value;
@@ -1123,6 +1122,7 @@
       fab.classList.toggle("libre", modo === "libre");
       const i = fab.querySelector("i");
       if (i) i.innerHTML = modo === "rec" ? I.sendarrow : (modo === "libre" ? I.check : I.bag);
+      if (i && modo === "rec") centrarIconoEnCirculo(i);
       const ind = $("#" + idInd, sheetEl);
       const tx = $("#" + idTx, sheetEl);
       if (ind) {
@@ -1524,26 +1524,26 @@
     }
   }
 
-  /* La barra de grabacion se sale del talonario y flota sobre la rejilla de productos:
-     asi el comerciante sigue explorando mientras dicta el pedido. */
+  /* La barra de venta vive SIEMPRE dentro de la tarjeta del talonario, debajo de los tres iconos.
+     En manos libres solo cambia de aspecto (se vuelve barra de grabacion): ya no se saca del talonario,
+     asi nunca queda encima de los iconos ni flotando sobre la rejilla. */
+  function asegurarBarraEnTalonario() {
+    const bar = document.getElementById("actbar");
+    const tick = document.querySelector(".tick");
+    if (bar && tick && bar.parentElement !== tick) tick.appendChild(bar);
+    if (bar) bar.classList.remove("flotante");
+    return bar;
+  }
   function activarManosLibres() {
     document.body.classList.add("manos-libres");
-    const bar = document.getElementById("actbar");
+    const bar = asegurarBarraEnTalonario();
     if (!bar) return;
-    if (!bar.dataset.casa) bar.dataset.casa = "1";   /* recuerda que hay que devolverla */
-    if (bar.parentElement !== document.body) document.body.appendChild(bar);
-    bar.classList.add("flotante");
     const live = document.getElementById("recLive");
     if (live) live.hidden = false;
   }
   function desactivarManosLibres() {
     document.body.classList.remove("manos-libres");
-    const bar = document.getElementById("actbar");
-    if (bar) {
-      bar.classList.remove("flotante");
-      const tick = document.querySelector(".tick");
-      if (tick && bar.parentElement === document.body) tick.appendChild(bar);
-    }
+    asegurarBarraEnTalonario();
   }
 
   function limpiarGrabacionGesto() {
@@ -1552,18 +1552,13 @@
     /* libera el microfono siempre, pase lo que pase */
     try { window.PPVoice && window.PPVoice.resetRecording && window.PPVoice.resetRecording(); } catch (_) {}
     document.body.classList.remove("grabando", "manos-libres");
-    const bar0 = document.getElementById("actbar");
+    const bar0 = asegurarBarraEnTalonario();
     if (bar0) {
       bar0.classList.remove("rec", "lock", "izq", "flotante");
       const rb0 = bar0.querySelector(".recbar"); if (rb0) rb0.remove();
-      const tk0 = document.querySelector(".tick");
-      if (tk0 && bar0.parentElement === document.body) tk0.appendChild(bar0);
     }
-    /* el microfono vuelve siempre visible (antes quedaba oculto tras cancelar en manos libres) */
+    /* el microfono vuelve siempre visible */
     const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; m.style.display = ""; }
-    transformarBarra(false);
-    desactivarManosLibres();
-    const m2 = $("#bMic"); if (m2) m2.style.display = "";
   }
 
   async function cancelarGrabacionGesto(vibra) {
@@ -1581,6 +1576,40 @@
   window.addEventListener("pointercancel", rescatarGrabacion, true);
   window.addEventListener("blur", rescatarGrabacion);
   document.addEventListener("visibilitychange", () => { if (document.hidden) rescatarGrabacion(); });
+
+  /* Centra un icono dentro de su circulo por su CENTRO DE MASA visual, no por su caja.
+     Un avioncito de papel tiene la punta a la derecha: aunque su caja este centrada, a simple vista
+     se ve corrido a la izquierda. Se dibuja el icono en un lienzo, se calcula donde esta el peso del
+     dibujo y se compensa con un desplazamiento exacto. Es automatico: sirve para cualquier icono. */
+  function centrarIconoEnCirculo(contenedor) {
+    try {
+      const svg = contenedor && contenedor.querySelector("svg");
+      if (!svg) return;
+      const vb = (svg.getAttribute("viewBox") || "0 0 24 24").split(/\s+/).map(Number);
+      const N = 96, k = N / Math.max(vb[2], vb[3]);
+      const cv = document.createElement("canvas"); cv.width = N; cv.height = N;
+      const cx = cv.getContext("2d");
+      const clon = svg.cloneNode(true);
+      clon.setAttribute("width", N); clon.setAttribute("height", N);
+      clon.setAttribute("fill", "#000"); clon.style.cssText = "";
+      const xml = new XMLSerializer().serializeToString(clon).replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+      const img = new Image();
+      img.onload = () => {
+        cx.clearRect(0, 0, N, N); cx.drawImage(img, 0, 0, N, N);
+        const d = cx.getImageData(0, 0, N, N).data;
+        let sx = 0, sy = 0, n = 0;
+        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { if (d[(y * N + x) * 4 + 3] > 40) { sx += x; sy += y; n++; } }
+        if (!n) return;
+        /* diferencia entre el centro del icono y su centro de masa, en unidades del viewBox */
+        const dx = (N / 2 - sx / n) / k, dy = (N / 2 - sy / n) / k;
+        const w = svg.getBoundingClientRect().width || 22;
+        const px = (dx * w / Math.max(vb[2], vb[3])), py = (dy * w / Math.max(vb[2], vb[3]));
+        svg.style.setProperty("transform", "translate(" + px.toFixed(2) + "px," + py.toFixed(2) + "px)", "important");
+        svg.dataset.centrado = px.toFixed(2) + "," + py.toFixed(2);
+      };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(xml);
+    } catch (_) { /* si falla, queda el centrado por caja */ }
+  }
 
   function bloquearGrabacionGesto() {
     if (!MIC.activo) return;
@@ -1603,32 +1632,46 @@
       l2.style.opacity = "1";
       l2.style.transform = "translateY(-50%) scale(1)";
       l2.onclick = (ev) => { ev.stopPropagation(); terminarGrabacionGesto(); };
+      centrarIconoEnCirculo(l2);
     }
 
     $("#recF").hidden = false;
     $("#actbar").classList.add("lock");
   }
 
+  /* Termina la grabacion: PRIMERO se captura el audio y DESPUES se limpia la interfaz.
+     Antes se limpiaba primero (resetRecording destruia la grabadora) y el audio llegaba vacio,
+     por eso decia "no se entendio el audio" aunque el microfono si escuchaba. */
+  let TERMINANDO = false;
   async function terminarGrabacionGesto() {
-    if (!MIC.activo) return;
+    if (!MIC.activo || TERMINANDO) return;
+    TERMINANDO = true;
     try { if (MIC.pausado) window.PPVoice.resumeRecording(); } catch (_) {}
     const seg = MIC.seg;
     micVibra(30);
+    /* 1) capturar el audio con la grabadora todavia viva */
+    let blob = null;
+    try { blob = await window.PPVoice.stopRecording(); } catch (_) { blob = null; }
+    /* 2) ahora si, limpiar la interfaz */
     limpiarGrabacionGesto();
     const m = $("#bMic"); if (m) m.style.display = "";
-    if (seg < 1) { try { await window.PPVoice.stopRecording(); } catch (_) {} return toast("Mantén presionado mas tiempo para grabar"); }
-    voice = { phase: "wait", text: "" }; render(); showProc();
-    let text = "";
-    try { text = await window.PPVoice.recordAndTranscribe(); } catch (_) { text = ""; }
-    $("#proc") && $("#proc").remove();
-    voice = { phase: "idle", text: "" }; render();
-    if (!text) return toast("No se entendio el audio. Intenta de nuevo.");
-    showProc();
-    let r = null;
-    try { r = await window.PPVoice.interpret(text, db().products); } catch (_) { r = null; }
-    $("#proc") && $("#proc").remove();
-    if (!r) return toast("No se pudo procesar el pedido.");
-    agregarDirecto(r, { cobrar: true });
+    try {
+      if (seg < 1 && !blob) { toast("Manten presionado mas tiempo para grabar"); return; }
+      if (!blob) { toast("No se escucho nada. Acerca el telefono y habla mas fuerte."); return; }
+      voice = { phase: "wait", text: "" }; render(); showProc();
+      let text = "";
+      try { text = await window.PPVoice.transcribeBlob(blob); }
+      catch (e) { text = ""; }
+      $("#proc") && $("#proc").remove();
+      voice = { phase: "idle", text: "" }; render();
+      if (!text) { toast("No se entendio el audio. Intenta de nuevo."); return; }
+      showProc();
+      let r = null;
+      try { r = await window.PPVoice.interpret(text, db().products); } catch (_) { r = null; }
+      $("#proc") && $("#proc").remove();
+      if (!r) { toast("No se pudo procesar el pedido."); return; }
+      agregarDirecto(r, { cobrar: true });
+    } finally { TERMINANDO = false; }
   }
 
   function toggleVoice() {
