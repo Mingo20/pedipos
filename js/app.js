@@ -2309,62 +2309,212 @@
     if (bPrt) bPrt.onclick = (ev) => { ev.preventDefault(); imprimirTicket(); };
 
   }
+  /* ============================================================
+     v2.7.0 · Configuracion en tarjetas con subpantallas
+     Cada tarjeta abre su propio modulo. "Administracion" solo la ve
+     el administrador (el respaldo usa el Drive del comerciante, por
+     eso no puede vivir en admin.html, que es del operador DGTech).
+     ============================================================ */
+  let cfgSub = null;                                  /* null = menu de tarjetas */
+  function esAdminSesion() {
+    const s = db().session;
+    return !!(s && String(s.rol || "").toLowerCase().indexOf("admin") === 0);
+  }
+  const CFG_ICONO = { negocio: "home", caja: "wallet", ia: "bolt", sync: "globe", admin: "shield" };
+
+  function cfgCabecera(titulo, sub) {
+    return `<div class="subv-h cfg-top">
+      <button class="subv-back" id="cfgBack" aria-label="Volver a configuracion">${I.back}</button>
+      <div class="subv-tt"><b>${esc(titulo)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</div>
+    </div>`;
+  }
+  function cfgPie() {
+    return `<div class="cfg-foot">PediPOS · ${esc("2.7.0")}</div>`;
+  }
+
   function renderConfig() {
+    document.body.classList.add("config-view");
+    if (cfgSub) return pintarCfgSub(cfgSub);
+    const st = db().settings, ses = db().session;
+    const online = !!(window.PPSync && window.PPSync.state && window.PPSync.state.online);
+    const tarjetas = [
+      ["negocio", "Mi negocio", st.negocio || "Sin nombre", "Nombre, direccion, ITBIS y ubicacion"],
+      ["caja", "Caja y acceso", ses ? (ses.nombre + " · " + ses.rol) : "Sin sesion iniciada", "PIN, avisos, impresora y sesion"],
+      ["ia", "Uso de IA", "Consumo del mes en Puter", "Cuanto se ha gastado y cuanto queda"],
+      ["sync", "Sincronizacion", online ? "Conectado" : "Sin conexion", "Estado y sincronizar ahora"]
+    ];
+    if (esAdminSesion()) tarjetas.push(["admin", "Administracion", "Solo administrador", "Respaldo en Drive y comercios"]);
+    $("#view").innerHTML = `<div class="cfg-hub">${tarjetas.map((t) => `<button class="cfg-card" data-s="${t[0]}">
+        <span class="cfg-ic">${I[CFG_ICONO[t[0]]] || I.gear}</span>
+        <span class="cfg-tt"><b>${esc(t[1])}</b><span>${esc(t[2])}</span></span>
+        <span class="cfg-go">${I.chev}</span>
+      </button>`).join("")}</div>${cfgPie()}`;
+    $$(".cfg-card").forEach((b) => (b.onclick = () => { cfgSub = b.dataset.s; renderConfig(); }));
+  }
+
+  function pintarCfgSub(tipo) {
     const st = db().settings;
     const geo = (window.PPOnboarding && window.PPOnboarding.geo) || { PROVINCIAS: [], MUNIS: {}, TIPOS: [], TAMANOS: [] };
     const munisDe = (prov) => (geo.MUNIS || {})[prov] || [];
-    document.body.classList.add("config-view");
-    $("#view").innerHTML = `<div class="card"><label class="field"><span>Nombre del negocio</span><input id="cn" value="${esc(st.negocio)}"></label>
-      <label class="field"><span>Direccion del negocio</span><input id="cd" value="${esc(st.direccion || "")}" placeholder="Calle, numero, sector"></label>
-      <label class="field"><span>Telefono del negocio</span><input id="ct2" value="${esc(st.telefono || "")}" placeholder="8090000000"></label>
-      <label class="field"><span>ITBIS (%)</span><input id="ci" inputmode="decimal" value="${Math.round(st.itbisRate * 100)}"></label>
-      <label class="field"><span>Tipo de negocio</span><select id="cTipo">${(geo.TIPOS || []).map((t) => `<option ${st.tipo_negocio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
-      <label class="field"><span>Tamaño del negocio</span><select id="cTam">${(geo.TAMANOS || []).map((t) => `<option ${st.tamano_negocio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
-      <label class="field"><span>Ciudad / Provincia</span><select id="cProv"><option value="">Seleccionar provincia...</option>${(geo.PROVINCIAS || []).map((t) => `<option ${st.provincia === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
-      <label class="field"><span>Municipio</span><select id="cMuni"><option value="">Seleccionar municipio...</option>${munisDe(st.provincia).map((t) => `<option ${st.municipio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
-      <button class="btn" id="cs">Guardar</button>
-      <button class="btn sec" id="cob" style="margin-top:8px">Volver a configurar mi negocio</button></div>
-      <div id="cfgRespaldo"></div>
-      <div class="card"><h3>Caja y acceso</h3>
-        <div class="line" style="font-size:13px"><span>Sesion</span><b>${db().session ? esc(db().session.nombre + " · " + db().session.rol) : "sin iniciar"}</b></div>
-        <label class="field" style="margin-top:8px"><span>Pedir PIN al abrir</span><select id="cr"><option value="0" ${st.pinReq ? "" : "selected"}>No</option><option value="1" ${st.pinReq ? "selected" : ""}>Si</option></select></label>
-        <button class="btn sec" id="cses">${db().session ? "Cerrar sesion" : "Iniciar sesion"}</button>
-        <div class="line" style="font-size:13px;margin-top:10px"><span>Avisos del telefono</span><b>${window.PPAvisos ? (window.PPAvisos.permiso() === "granted" ? "activados" : "apagados") : "no disponible"}</b></div>
-        <button class="btn sec" id="cavisos" style="margin-top:8px">${window.PPAvisos && window.PPAvisos.permiso() === "granted" ? "Probar un aviso" : "Activar avisos"}</button>
-        <a class="btn sec" id="cadm" href="admin.html" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:8px;text-decoration:none">Administracion de comercios</a>
-        <button class="btn sec" id="cbm" style="margin-top:8px">Emparejar impresora Bluetooth</button>
-        <div class="cnt" style="font-size:11.5px;margin-top:6px" id="bti">${localStorage.getItem("pedipos.printer") ? "Impresora: " + esc(localStorage.getItem("pedipos.printer")) : "Sin impresora emparejada"}</div>
-      </div>
-      <div class="card"><h3>Sincronizacion</h3><div class="cnt" id="syn"></div><button class="btn sec" id="sy">Sincronizar ahora</button></div>`;
-    $("#cr").onchange = (e) => { st.pinReq = e.target.value === "1"; S.save(); toast(st.pinReq ? "Se pedira PIN al abrir" : "Sin PIN al abrir"); };
-    if (window.PPEmisores && window.PPEmisores.pintarRespaldo) window.PPEmisores.pintarRespaldo($("#cfgRespaldo"));
-    const cav = $("#cavisos");
-    if (cav) cav.onclick = async () => {
-      if (!window.PPAvisos) return toast("Avisos no disponibles en este navegador");
-      const p = await window.PPAvisos.pedirPermiso();
-      if (p !== "granted") return toast("El telefono no autorizo los avisos");
-      toast("Avisos activados");
-      window.PPAvisos.revisar();
-      render();
-    };
-    $("#cses").onclick = () => { if (db().session) { db().session = null; S.save(); toast("Sesion cerrada"); render(); } else loginScreen(); };
-    $("#cbm").onclick = async () => {
-      try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); render(); }
-      catch (e) { toast(String(e.message || e)); }
-    };
-    const prov2 = $("#cProv"), muni2 = $("#cMuni");
-    if (prov2 && muni2) prov2.onchange = () => {
-      const lista = (geo.MUNIS || {})[prov2.value] || [];
-      muni2.innerHTML = '<option value="">Seleccionar municipio...</option>' + lista.map((t) => `<option>${esc(t)}</option>`).join("");
-    };
-    const cob = $("#cob"); if (cob) cob.onclick = () => { if (window.PPOnboarding) window.PPOnboarding.abrir(true); };
-    $("#cs").onclick = () => { st.negocio = $("#cn").value.trim() || "Mi negocio"; st.direccion = ($("#cd") ? $("#cd").value.trim() : ""); st.telefono = ($("#ct2") ? $("#ct2").value.trim() : "");
-      st.tipo_negocio = $("#cTipo") ? $("#cTipo").value : st.tipo_negocio;
-      st.tamano_negocio = $("#cTam") ? $("#cTam").value : st.tamano_negocio;
-      st.provincia = prov2 ? prov2.value : st.provincia;
-      st.municipio = muni2 ? muni2.value : st.municipio; const r = parseFloat($("#ci").value); if (r >= 0 && r <= 100) st.itbisRate = r / 100; S.save(); toast("Guardado"); };
-    const paint = () => ($("#syn") && ($("#syn").textContent = (window.PPSync.state.online ? "Conectado" : "Sin conexion") + " · " + window.PPSync.state.pending + " pendiente(s)"));
-    paint(); $("#sy").onclick = async () => { await window.PPSync.flush(); await window.PPSync.pull(); paint(); toast("Sincronizado"); };
+    const volver = () => { cfgSub = null; renderConfig(); };
+
+    if (tipo === "negocio") {
+      $("#view").innerHTML = `<div class="cfg-panel">
+        ${cfgCabecera("Mi negocio", "Datos del comercio")}
+        <div class="card"><label class="field"><span>Nombre del negocio</span><input id="cn" value="${esc(st.negocio)}"></label>
+          <label class="field"><span>Direccion del negocio</span><input id="cd" value="${esc(st.direccion || "")}" placeholder="Calle, numero, sector"></label>
+          <label class="field"><span>Telefono del negocio</span><input id="ct2" value="${esc(st.telefono || "")}" placeholder="8090000000"></label>
+          <label class="field"><span>ITBIS (%)</span><input id="ci" inputmode="decimal" value="${Math.round(st.itbisRate * 100)}"></label>
+          <label class="field"><span>Tipo de negocio</span><select id="cTipo">${(geo.TIPOS || []).map((t) => `<option ${st.tipo_negocio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+          <label class="field"><span>Tamaño del negocio</span><select id="cTam">${(geo.TAMANOS || []).map((t) => `<option ${st.tamano_negocio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+          <label class="field"><span>Ciudad / Provincia</span><select id="cProv"><option value="">Seleccionar provincia...</option>${(geo.PROVINCIAS || []).map((t) => `<option ${st.provincia === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+          <label class="field"><span>Municipio</span><select id="cMuni"><option value="">Seleccionar municipio...</option>${munisDe(st.provincia).map((t) => `<option ${st.municipio === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+          <button class="btn" id="cs">Guardar</button>
+          <button class="btn sec" id="cob" style="margin-top:8px">Volver a configurar mi negocio</button></div>
+        ${cfgPie()}</div>`;
+      const prov2 = $("#cProv"), muni2 = $("#cMuni");
+      if (prov2 && muni2) prov2.onchange = () => {
+        const lista = (geo.MUNIS || {})[prov2.value] || [];
+        muni2.innerHTML = '<option value="">Seleccionar municipio...</option>' + lista.map((t) => `<option>${esc(t)}</option>`).join("");
+      };
+      $("#cfgBack").onclick = volver;
+      const cob = $("#cob"); if (cob) cob.onclick = () => { if (window.PPOnboarding) window.PPOnboarding.abrir(true); };
+      $("#cs").onclick = () => {
+        st.negocio = $("#cn").value.trim() || "Mi negocio";
+        st.direccion = ($("#cd") ? $("#cd").value.trim() : "");
+        st.telefono = ($("#ct2") ? $("#ct2").value.trim() : "");
+        st.tipo_negocio = $("#cTipo") ? $("#cTipo").value : st.tipo_negocio;
+        st.tamano_negocio = $("#cTam") ? $("#cTam").value : st.tamano_negocio;
+        st.provincia = prov2 ? prov2.value : st.provincia;
+        st.municipio = muni2 ? muni2.value : st.municipio;
+        const r = parseFloat($("#ci").value); if (r >= 0 && r <= 100) st.itbisRate = r / 100;
+        S.save(); toast("Guardado");
+      };
+      return;
+    }
+
+    if (tipo === "caja") {
+      $("#view").innerHTML = `<div class="cfg-panel">
+        ${cfgCabecera("Caja y acceso", "Sesion, PIN y equipos")}
+        <div class="card"><h3>Caja y acceso</h3>
+          <div class="line" style="font-size:13px"><span>Sesion</span><b>${db().session ? esc(db().session.nombre + " · " + db().session.rol) : "sin iniciar"}</b></div>
+          <label class="field" style="margin-top:8px"><span>Pedir PIN al abrir</span><select id="cr"><option value="0" ${st.pinReq ? "" : "selected"}>No</option><option value="1" ${st.pinReq ? "selected" : ""}>Si</option></select></label>
+          <button class="btn sec" id="cses">${db().session ? "Cerrar sesion" : "Iniciar sesion"}</button>
+          <div class="line" style="font-size:13px;margin-top:10px"><span>Avisos del telefono</span><b>${window.PPAvisos ? (window.PPAvisos.permiso() === "granted" ? "activados" : "apagados") : "no disponible"}</b></div>
+          <button class="btn sec" id="cavisos" style="margin-top:8px">${window.PPAvisos && window.PPAvisos.permiso() === "granted" ? "Probar un aviso" : "Activar avisos"}</button>
+          <button class="btn sec" id="cbm" style="margin-top:8px">Emparejar impresora Bluetooth</button>
+          <div class="cnt" style="font-size:11.5px;margin-top:6px" id="bti">${localStorage.getItem("pedipos.printer") ? "Impresora: " + esc(localStorage.getItem("pedipos.printer")) : "Sin impresora emparejada"}</div>
+        </div>${cfgPie()}</div>`;
+      $("#cfgBack").onclick = volver;
+      $("#cr").onchange = (e) => { st.pinReq = e.target.value === "1"; S.save(); toast(st.pinReq ? "Se pedira PIN al abrir" : "Sin PIN al abrir"); };
+      const cav = $("#cavisos");
+      if (cav) cav.onclick = async () => {
+        if (!window.PPAvisos) return toast("Avisos no disponibles en este navegador");
+        const p = await window.PPAvisos.pedirPermiso();
+        if (p !== "granted") return toast("El telefono no autorizo los avisos");
+        toast("Avisos activados"); window.PPAvisos.revisar(); renderConfig();
+      };
+      $("#cses").onclick = () => { if (db().session) { db().session = null; S.save(); toast("Sesion cerrada"); render(); } else loginScreen(); };
+      $("#cbm").onclick = async () => {
+        try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); renderConfig(); }
+        catch (e) { toast(String(e.message || e)); }
+      };
+      return;
+    }
+
+    if (tipo === "sync") {
+      $("#view").innerHTML = `<div class="cfg-panel">
+        ${cfgCabecera("Sincronizacion", "Conexion con la nube")}
+        <div class="card"><h3>Sincronizacion</h3><div class="cnt" id="syn"></div>
+          <button class="btn sec" id="sy">Sincronizar ahora</button></div>
+        ${cfgPie()}</div>`;
+      $("#cfgBack").onclick = volver;
+      const paint = () => ($("#syn") && ($("#syn").textContent = (window.PPSync.state.online ? "Conectado" : "Sin conexion") + " · " + window.PPSync.state.pending + " pendiente(s)"));
+      paint();
+      $("#sy").onclick = async () => { await window.PPSync.flush(); await window.PPSync.pull(); paint(); toast("Sincronizado"); };
+      return;
+    }
+
+    if (tipo === "admin") {
+      if (!esAdminSesion()) { cfgSub = null; return renderConfig(); }
+      $("#view").innerHTML = `<div class="cfg-panel">
+        ${cfgCabecera("Administracion", "Solo administrador")}
+        <div id="cfgRespaldo"></div>
+        <div class="card"><h3>Comercios</h3>
+          <p class="cnt" style="font-size:12.5px">Panel del operador DGTech para revisar los comercios registrados.</p>
+          <a class="btn sec" id="cadm" href="admin.html" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:8px;text-decoration:none">Abrir administracion de comercios</a>
+        </div>${cfgPie()}</div>`;
+      $("#cfgBack").onclick = volver;
+      if (window.PPEmisores && window.PPEmisores.pintarRespaldo) window.PPEmisores.pintarRespaldo($("#cfgRespaldo"));
+      return;
+    }
+
+    if (tipo === "ia") { pintarUsoIA(); return; }
+
+    cfgSub = null; renderConfig();
+  }
+
+  /* ---------- Uso de IA: consumo real desde la cuenta Puter ---------- */
+  const MC_A_USD = 1e8;                       /* 1,000,000 microcentavos = 0.01 USD */
+  const usd = (mc) => "$" + (Number(mc || 0) / MC_A_USD).toFixed(2);
+  function pintarUsoIA() {
+    $("#view").innerHTML = `<div class="cfg-panel">
+      ${cfgCabecera("Uso de IA", "Consumo mensual en Puter")}
+      <div class="card" id="iaCaja"><p class="cnt">Leyendo tu consumo en Puter...</p></div>
+      <div class="card"><h3>Panel de Puter</h3>
+        <p class="cnt" style="font-size:12.5px">El saldo y los cargos los maneja Puter con tu propia cuenta. Aqui ves el resumen del mes; el detalle completo esta en tu panel.</p>
+        <a class="btn sec" href="https://puter.com/dashboard" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:8px;text-decoration:none">Abrir mi consumo en Puter</a>
+      </div>${cfgPie()}</div>`;
+    $("#cfgBack").onclick = () => { cfgSub = null; renderConfig(); };
+    cargarUsoIA($("#iaCaja"));
+  }
+
+  async function cargarUsoIA(caja) {
+    if (!caja) return;
+    const P = window.puter;
+    if (!P || !P.auth) {
+      caja.innerHTML = `<h3>Uso de IA</h3><p class="cnt">Puter no esta disponible en este navegador. La venta por voz y los avisos con IA necesitan conexion.</p>`;
+      return;
+    }
+    let dentro = false;
+    try { dentro = !!P.auth.isSignedIn(); } catch (e) { dentro = false; }
+    if (dentro && typeof dentro.then === "function") dentro = await dentro;
+    if (!dentro) {
+      caja.innerHTML = `<h3>Uso de IA</h3>
+        <p class="cnt">Para ver tu consumo real necesitas entrar con tu cuenta de Puter. Es la misma cuenta que paga la IA que ya usa la app.</p>
+        <button class="btn" id="iaIn">Conectar con Puter</button>`;
+      const b = $("#iaIn");
+      if (b) b.onclick = async () => {
+        b.disabled = true; b.textContent = "Conectando...";
+        try { await P.auth.signIn(); cargarUsoIA(caja); }
+        catch (e) { b.disabled = false; b.textContent = "Conectar con Puter"; toast("No se pudo entrar a Puter"); }
+      };
+      return;
+    }
+    try {
+      const u = await P.auth.getMonthlyUsage();
+      const al = (u && u.allowanceInfo) || {};
+      const total = Number(al.monthUsageAllowance || 0);
+      const queda = Number(al.remaining || 0);
+      const usado = Math.max(0, total - queda);
+      const pct = total > 0 ? Math.min(100, Math.round((usado / total) * 100)) : 0;
+      const apis = Object.keys((u && u.usage) || {}).map((k) => ({ k, ...u.usage[k] }))
+        .sort((a, b) => Number(b.cost || 0) - Number(a.cost || 0)).slice(0, 6);
+      const user = (() => { try { const x = P.auth.getUser && P.auth.getUser(); return x && x.username ? x.username : ""; } catch (e) { return ""; } })();
+      caja.innerHTML = `<h3>Consumo del mes${user ? " · " + esc(user) : ""}</h3>
+        <div class="ia-num"><span>Gastado este mes</span><b>${usd(usado)}</b></div>
+        <div class="ia-num"><span>Saldo disponible</span><b style="color:#0B6B45">${usd(queda)}</b></div>
+        <div class="ia-num"><span>Permiso del mes</span><b>${usd(total)}</b></div>
+        <div class="ia-bar"><i style="width:${pct}%"></i></div>
+        <p class="cnt" style="font-size:11.5px">${pct}% del permiso mensual usado. Montos reales leidos de tu cuenta Puter.</p>
+        ${apis.length ? `<h3 style="margin-top:14px">Por servicio</h3>${apis.map((a) => `<div class="ia-api"><span>${esc(a.k)}${a.count ? " · " + a.count + " llamadas" : ""}</span><b>${usd(a.cost)}</b></div>`).join("")}` : ""}
+        <button class="btn sec" id="iaRe" style="margin-top:12px">Actualizar</button>`;
+      const re = $("#iaRe"); if (re) re.onclick = () => { re.disabled = true; re.textContent = "Actualizando..."; cargarUsoIA(caja); };
+    } catch (e) {
+      caja.innerHTML = `<h3>Uso de IA</h3><p class="cnt">No se pudo leer el consumo ahora mismo. Revisa tu conexion o entra a tu panel de Puter.</p>
+        <button class="btn sec" id="iaRe2">Reintentar</button>`;
+      const r2 = $("#iaRe2"); if (r2) r2.onclick = () => cargarUsoIA(caja);
+    }
   }
 
   function render() {

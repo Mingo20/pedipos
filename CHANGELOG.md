@@ -2,6 +2,19 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.7.0] - 2026-11-21
+
+### Añadido
+- **Configuracion en tarjetas**: la pantalla de Ajustes pasa a ser un menu de modulos (Mi negocio, Caja y acceso, Uso de IA, Sincronizacion y Administracion). Cada tarjeta abre su subpantalla con boton de volver, en vez de una sola pagina larga.
+- **Modulo Uso de IA**: lee el consumo real del mes con `puter.auth.getMonthlyUsage()` (gastado, saldo del permiso y desglose por servicio en dolares), permite conectar la cuenta de Puter desde la app y trae un boton directo al panel de consumo de Puter.
+- **Administracion solo para el administrador**: el respaldo en Drive se movio aqui; un cajero con sesion no ve la tarjeta. Se aclara en pantalla por que el respaldo vive en la app y no en `admin.html` (usa el Drive del comerciante, no el del operador).
+
+### Cambiado
+- La tarjeta superior de cliente y de suplidor ocupa todo el ancho de la pantalla en PC, tableta y telefono.
+- En movil las tarjetas y los botones ganan ancho (margen lateral de 10 px en vez de 14).
+- El boton flotante (+) baja 24 px en inventario, clientes y suplidores; la bolsa flotante y su aviso se reacomodan.
+- Cache del service worker a `pedipos-v112`.
+
 ## [2.2.0] - 2026-11-21
 
 ### Añadido

@@ -2147,3 +2147,73 @@ body.manos-libres .panel-work,body.manos-libres .pw-grid{padding-bottom:0!import
 .act .recbar .rdel,.act .recbar .rpause,.act .recbar .rsend,.act .recbar .rlock2.enviar{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
 /* la barra de grabacion nunca puede quedar bloqueando toques cuando ya no hay grabacion */
 body:not(.grabando) .act .recbar{display:none!important}
+
+/* ============================================================
+   v2.7.0 · Configuracion en tarjetas, detalle a todo el ancho,
+   boton flotante mas abajo y tarjetas un poco mas anchas en movil
+   ============================================================ */
+
+/* --- ancho de referencia del margen lateral de la vista --- */
+:root{--pp-padx:14px}
+@media (min-width:768px){:root{--pp-padx:18px}}
+
+/* --- en movil, tarjetas y botones ganan ancho (margen lateral 10px) --- */
+@media (max-width:767px){
+  main#view{padding-left:10px;padding-right:10px}
+  body.focus main#view{padding-left:10px;padding-right:10px}
+  .subv{margin:-14px -10px 0}
+  .subv.conbarra .subv-h{margin:0 -10px}
+  .subv > .kpis,.subv > .lbl,.subv > .hrow,.subv > .cnt,.subv-acc{margin-left:10px;margin-right:10px}
+  .subv.conbarra > .kpis{margin-left:10px;margin-right:10px}
+  .stickbar{margin:-14px 0 4px}
+  .card{padding-left:14px;padding-right:14px}
+  .btn,.btn.sec,.btn.mini2{width:100%}
+}
+
+/* --- detalle de cliente y suplidor: la tarjeta superior ocupa todo el ancho --- */
+.subv.conbarra > .subv-h{
+  margin-left:calc(var(--pp-padx) * -1);
+  margin-right:calc(var(--pp-padx) * -1);
+  border-radius:0;
+}
+@media (min-width:768px) and (max-width:1023px){
+  .subv.conbarra > .subv-h{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px}
+}
+@media (min-width:1024px){
+  body.focus main#view{padding-left:0;padding-right:0}
+  .subv.conbarra{padding:18px 26px 26px}
+  .subv.conbarra > .subv-h{margin:0 -26px;padding-left:26px;padding-right:26px;top:0}
+  .subv-foot{left:118px;right:0;max-width:none}
+}
+
+/* --- boton flotante (+) mas abajo --- */
+.fab{bottom:calc(env(safe-area-inset-bottom) + 64px)}
+body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 14px)}
+.bag-fab.fab2{bottom:calc(env(safe-area-inset-bottom) + 128px)}
+body.has-dock #view .bag-ind{right:18px;bottom:calc(env(safe-area-inset-bottom) + 190px)}
+body.has-dock #view .sel-bar{bottom:calc(env(safe-area-inset-bottom) + 64px)}
+@media (max-width:380px){.bag-fab.fab2{bottom:calc(env(safe-area-inset-bottom) + 124px)}}
+
+/* --- menu de configuracion en tarjetas --- */
+.cfg-hub{display:grid;gap:10px;padding-bottom:10px}
+.cfg-card{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);
+  border-radius:18px;padding:15px 14px;box-shadow:0 1px 2px #0b141c0a;transition:transform .12s ease,box-shadow .18s ease}
+.cfg-card:active{transform:scale(.988)}
+.cfg-ic{width:44px;height:44px;border-radius:14px;background:var(--g-soft);color:#0B7A52;display:grid;place-items:center;flex:none}
+.cfg-tt{flex:1;min-width:0}
+.cfg-tt b{display:block;font-size:15.5px;color:var(--ink);margin-bottom:2px}
+.cfg-tt span{display:block;font-size:12.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfg-go{color:#B3BCC4;flex:none;display:grid;place-items:center}
+.cfg-foot{text-align:center;color:var(--mut);font-size:11.5px;padding:14px 0 4px}
+.cfg-top{position:sticky;top:-14px;z-index:8}
+.cfg-panel{padding:14px 0 8px}
+.cfg-panel .card{margin-bottom:10px}
+.ia-num{display:flex;align-items:baseline;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line)}
+.ia-num:last-child{border-bottom:0}
+.ia-num span{color:var(--mut);font-size:13px}
+.ia-num b{font-size:16px}
+.ia-bar{height:9px;border-radius:99px;background:#EDF1F4;overflow:hidden;margin:10px 0 6px}
+.ia-bar i{display:block;height:100%;border-radius:99px;background:var(--g);transition:width .4s ease}
+.ia-api{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:12.5px;border-bottom:1px dashed var(--line)}
+.ia-api:last-child{border-bottom:0}
+.ia-api span{color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
