@@ -2021,3 +2021,19 @@ button,.btn,.ecf-btn,.rc-btn,.rc-mini{transition:transform .16s cubic-bezier(.22
 .ct-mas[open] summary::before{content:"–"}
 .ct-mas .ct-list{padding-top:2px}
 .ct-item{padding:10px 12px!important}
+
+/* ===== Modulo Fiscal: tarjetas de acceso ===== */
+.fis-acc{display:grid;grid-template-columns:1fr;gap:12px;margin:16px 0}
+.fis-card{position:relative;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:4px;cursor:pointer}
+.fis-card:active{transform:scale(.99)}
+.fis-ic{width:42px;height:42px;border-radius:12px;background:#F3F6F5;color:#2F3E37;display:grid;place-items:center;margin-bottom:6px}
+.fis-card b{font-size:16px}
+.fis-card span{font-size:13px;color:var(--mut)}
+@media (min-width:768px){.fis-acc{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* ===== Barra inferior movil: esquinas redondeadas, sin flotar ===== */
+@media (max-width:767px){
+  .dock{left:0;right:0;transform:none;width:100%;max-width:none;bottom:0;margin:0;
+    border-radius:22px 22px 0 0;border-left:0;border-right:0;border-bottom:0;
+    padding-bottom:env(safe-area-inset-bottom)}
+}

@@ -265,8 +265,14 @@
           "</div>" +
         "</section>" +
 
+        '<section class="fis-acc">' +
+          '<button class="fis-card" data-fis="certificacion"><span class="fis-ic">' + ((UI().I || {}).ok || "") + '</span><b>Certificacion DGII</b><span>Revisa y prueba antes de solicitar</span></button>' +
+          '<button class="fis-card" data-fis="rechazos"><span class="fis-ic">' + ((UI().I || {}).alert || "") + '</span><b>Rechazos</b><span>Corrige lo que la DGII devolvio</span></button>' +
+          '<button class="fis-card" data-fis="formulario"><span class="fis-ic">' + ((UI().I || {}).ticket || "") + '</span><b>Formulario e-CF</b><span>Datos, secuencia y emision</span></button>' +
+        "</section>" +
+
         (listo ? "" :
-          '<section class="ecf-card">' +
+          '<section class="ecf-card" id="ecf-form">' +
             '<div class="ecf-sec"><h3>Datos del emisor</h3><p>Como aparece el negocio en la factura.</p></div>' +
             '<div class="ecf-two">' +
               '<label>RNC del comerciante<input id="f-rnc" inputmode="numeric" placeholder="131234567" value="' + (c.rnc || "") + '"></label>' +
@@ -371,6 +377,18 @@
       var lista = (geo().MUNIS || {})[provSel.value] || [];
       muni.innerHTML = lista.length ? opciones(lista, "") : '<option value="">Sin municipios</option>';
     };
+    $$("[data-fis]", view).forEach(function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute("data-fis");
+        if (k === "formulario") {
+          var sec = $("#ecf-form", view);
+          if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+          else if (UI().toast) UI().toast("Completa los datos del emisor");
+          return;
+        }
+        if (global.PPUI) global.PPUI.go(k);
+      };
+    });
     var bcert = $("#f-cert", view);
     if (bcert) bcert.onclick = function () { if (global.PPUI) global.PPUI.go("certificacion"); };
     var save = $("#f-save", view);

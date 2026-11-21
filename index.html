@@ -9,9 +9,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="img/logo-96.png" type="image/png">
 <link rel="apple-touch-icon" href="img/logo-192.png">
-<link rel="stylesheet" href="css/app.css?v=101">
-<link rel="stylesheet" href="css/fiscal.css?v=101">
-<link rel="stylesheet" href="css/analitica.css?v=101">
+<link rel="stylesheet" href="css/app.css?v=102">
+<link rel="stylesheet" href="css/fiscal.css?v=102">
+<link rel="stylesheet" href="css/analitica.css?v=102">
 </head>
 <body>
 <div id="app">
@@ -36,27 +36,27 @@
 <div class="toast" id="toast" hidden></div>
 <script>/* captura temprana: el aviso de instalacion puede llegar antes que la app */window.__ppInstallPrompt=null;addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__ppInstallPrompt=e;dispatchEvent(new Event("pp:installable"))});addEventListener("appinstalled",function(){window.__ppInstallPrompt=null;dispatchEvent(new Event("pp:installed"))});</script>
 <script src="https://js.puter.com/v2/"></script>
-<script src="js/store.js?v=101"></script>
+<script src="js/store.js?v=102"></script>
 <script src="js/vendor/forge.min.js"></script>
 <script src="js/vendor/qrcode.js"></script>
-<script src="js/ecf.js?v=101"></script>
-<script src="js/certificacion.js?v=101"></script>
-  <script src="js/rechazos.js?v=101"></script>
-  <script src="js/fiscal.js?v=101"></script>
-<script src="js/avisos.js?v=101"></script>
-  <script src="js/cuentas.js?v=101"></script>
-  <script src="js/ventas.js?v=101"></script>
-  <script src="js/respaldo.js?v=101"></script>
-  <script src="js/comprobantes.js?v=101"></script>
-<script src="js/analitica.js?v=101"></script>
-<script src="js/emisores.js?v=101"></script>
-<script src="js/sync.js?v=101"></script>
-<script src="js/voice.js?v=101"></script>
-<script src="js/ticket.js?v=101"></script>
-<script src="js/extra.js?v=101"></script>
-<script src="js/sound.js?v=101"></script>
-<script src="js/onboarding.js?v=101"></script>
-<script src="js/app.js?v=101"></script>
+<script src="js/ecf.js?v=102"></script>
+<script src="js/certificacion.js?v=102"></script>
+  <script src="js/rechazos.js?v=102"></script>
+  <script src="js/fiscal.js?v=102"></script>
+<script src="js/avisos.js?v=102"></script>
+  <script src="js/cuentas.js?v=102"></script>
+  <script src="js/ventas.js?v=102"></script>
+  <script src="js/respaldo.js?v=102"></script>
+  <script src="js/comprobantes.js?v=102"></script>
+<script src="js/analitica.js?v=102"></script>
+<script src="js/emisores.js?v=102"></script>
+<script src="js/sync.js?v=102"></script>
+<script src="js/voice.js?v=102"></script>
+<script src="js/ticket.js?v=102"></script>
+<script src="js/extra.js?v=102"></script>
+<script src="js/sound.js?v=102"></script>
+<script src="js/onboarding.js?v=102"></script>
+<script src="js/app.js?v=102"></script>
 <script>
 /* Capa responsive: ocultar navegacion y abrir el buscador central del panel. */
 /* al girar o cambiar de tamano se rehace la navegacion (5 iconos en movil, 8 en PC) */
@@ -78,7 +78,7 @@ document.addEventListener("click", function (e) {
 <script>
 /* Siempre la ultima version: el service worker se revisa al abrir y cada vez que se vuelve a la app. */
 (function(){
-  var VERSION="101";
+  var VERSION="102";
   if(!("serviceWorker"in navigator))return;
   var recargando=false;
   navigator.serviceWorker.addEventListener("controllerchange",function(){
