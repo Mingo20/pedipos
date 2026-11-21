@@ -2153,8 +2153,7 @@ body:not(.grabando) .act .recbar{display:none!important}
    boton flotante mas abajo y tarjetas un poco mas anchas en movil
    ============================================================ */
 
-/* --- ancho de referencia del margen lateral de la vista --- */
-:root{--pp-padx:14px}
+:root{--pp-padx:14px;--hdr-l:-14px;--hdr-r:-14px}
 @media (min-width:768px){:root{--pp-padx:18px}}
 
 /* --- en movil, tarjetas y botones ganan ancho (margen lateral 10px) --- */
@@ -2162,40 +2161,41 @@ body:not(.grabando) .act .recbar{display:none!important}
   main#view{padding-left:10px;padding-right:10px}
   body.focus main#view{padding-left:10px;padding-right:10px}
   .subv{margin:-14px -10px 0}
-  .subv.conbarra .subv-h{margin:0 -10px}
   .subv > .kpis,.subv > .lbl,.subv > .hrow,.subv > .cnt,.subv-acc{margin-left:10px;margin-right:10px}
   .subv.conbarra > .kpis{margin-left:10px;margin-right:10px}
   .stickbar{margin:-14px 0 4px}
   .card{padding-left:14px;padding-right:14px}
-  .btn,.btn.sec,.btn.mini2{width:100%}
 }
 
-/* --- detalle de cliente y suplidor: la tarjeta superior ocupa todo el ancho --- */
-.subv.conbarra > .subv-h{
-  margin-left:calc(var(--pp-padx) * -1);
-  margin-right:calc(var(--pp-padx) * -1);
-  border-radius:0;
+/* --- detalle de cliente y suplidor: la tarjeta superior de lado a lado ---
+   La cabecera es fija (v63), asi que el ancho se resuelve con left/right. */
+/* la cabecera fija se mide contra la caja de contenido de #view, asi que el
+   ancho completo se logra compensando el relleno con valores negativos */
+body.focus .subv.conbarra .subv-h{
+  left:var(--hdr-l);right:var(--hdr-r);margin:0;max-width:none;width:auto;
+  padding-left:var(--pp-padx);padding-right:var(--pp-padx);
 }
-@media (min-width:768px) and (max-width:1023px){
-  .subv.conbarra > .subv-h{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px}
-}
+@media (max-width:767px){:root{--hdr-l:-10px;--hdr-r:-10px}}
+@media (min-width:768px) and (max-width:1023px){:root{--hdr-l:-18px;--hdr-r:-14px}}
 @media (min-width:1024px){
-  body.focus main#view{padding-left:0;padding-right:0}
+  :root{--hdr-l:0px;--hdr-r:0px}
+  body.focus main#view{padding-left:118px;padding-right:0}
   .subv.conbarra{padding:18px 26px 26px}
-  .subv.conbarra > .subv-h{margin:0 -26px;padding-left:26px;padding-right:26px;top:0}
   .subv-foot{left:118px;right:0;max-width:none}
 }
 
-/* --- boton flotante (+) mas abajo --- */
-.fab{bottom:calc(env(safe-area-inset-bottom) + 64px)}
+/* --- boton flotante (+) y su columna, 14 px mas abajo --- */
+body.has-dock #float{bottom:calc(env(safe-area-inset-bottom) + 132px)}
+body.has-dock .bag-fab.fab2{bottom:calc(env(safe-area-inset-bottom) + 198px)}
+body.has-dock #view .bag-ind{bottom:calc(env(safe-area-inset-bottom) + 260px)}
+body.has-dock #view .sel-bar{bottom:calc(env(safe-area-inset-bottom) + 76px)}
 body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 14px)}
-.bag-fab.fab2{bottom:calc(env(safe-area-inset-bottom) + 128px)}
-body.has-dock #view .bag-ind{right:18px;bottom:calc(env(safe-area-inset-bottom) + 190px)}
-body.has-dock #view .sel-bar{bottom:calc(env(safe-area-inset-bottom) + 64px)}
-@media (max-width:380px){.bag-fab.fab2{bottom:calc(env(safe-area-inset-bottom) + 124px)}}
+@media (max-width:380px){body.has-dock .bag-fab.fab2{bottom:calc(env(safe-area-inset-bottom) + 194px)}}
 
-/* --- menu de configuracion en tarjetas --- */
+/* --- configuracion: una sola columna de tarjetas, tambien en PC --- */
+body.config-view main#view{display:block}
 .cfg-hub{display:grid;gap:10px;padding-bottom:10px}
+@media (min-width:1024px){.cfg-hub{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cfg-card{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);
   border-radius:18px;padding:15px 14px;box-shadow:0 1px 2px #0b141c0a;transition:transform .12s ease,box-shadow .18s ease}
 .cfg-card:active{transform:scale(.988)}
@@ -2205,9 +2205,9 @@ body.has-dock #view .sel-bar{bottom:calc(env(safe-area-inset-bottom) + 64px)}
 .cfg-tt span{display:block;font-size:12.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cfg-go{color:#B3BCC4;flex:none;display:grid;place-items:center}
 .cfg-foot{text-align:center;color:var(--mut);font-size:11.5px;padding:14px 0 4px}
-.cfg-top{position:sticky;top:-14px;z-index:8}
 .cfg-panel{padding:14px 0 8px}
 .cfg-panel .card{margin-bottom:10px}
+.cfg-top{position:sticky;top:-14px;z-index:8}
 .ia-num{display:flex;align-items:baseline;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line)}
 .ia-num:last-child{border-bottom:0}
 .ia-num span{color:var(--mut);font-size:13px}
