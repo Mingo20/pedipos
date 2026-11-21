@@ -266,9 +266,9 @@
         "</section>" +
 
         '<section class="fis-acc">' +
-          '<button class="fis-card" data-fis="certificacion"><span class="fis-ic">' + ((UI().I || {}).ok || "") + '</span><b>Certificacion DGII</b><span>Revisa y prueba antes de solicitar</span></button>' +
-          '<button class="fis-card" data-fis="rechazos"><span class="fis-ic">' + ((UI().I || {}).alert || "") + '</span><b>Rechazos</b><span>Corrige lo que la DGII devolvio</span></button>' +
-          '<button class="fis-card" data-fis="formulario"><span class="fis-ic">' + ((UI().I || {}).ticket || "") + '</span><b>Formulario e-CF</b><span>Datos, secuencia y emision</span></button>' +
+          '<button class="fis-card" data-fis="certificacion"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).ok || "") + '</span><b>Certificacion DGII</b><span>Revisa y prueba antes de solicitar</span></button>' +
+          '<button class="fis-card" data-fis="rechazos"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).alert || "") + '</span><b>Rechazos</b><span>Corrige lo que la DGII devolvio</span></button>' +
+          '<button class="fis-card" data-fis="formulario"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).ticket || "") + '</span><b>Formulario e-CF</b><span>Datos, secuencia y emision</span></button>' +
         "</section>" +
 
         (listo ? "" :
@@ -383,7 +383,7 @@
         if (k === "formulario") {
           var sec = $("#ecf-form", view);
           if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
-          else if (UI().toast) UI().toast("Completa los datos del emisor");
+          else if ((global.PPUI || {}).toast) (global.PPUI || {}).toast("Completa los datos del emisor");
           return;
         }
         if (global.PPUI) global.PPUI.go(k);
