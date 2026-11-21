@@ -1827,8 +1827,6 @@ body.manos-libres.panel-view .tick{transform:none;opacity:1;pointer-events:auto}
 .rlive b{font-variant-numeric:tabular-nums;opacity:.85}
 .rlive span{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92}
 .rlive.abierta span{white-space:normal;max-width:320px}
-.rver{width:38px;height:38px;border-radius:50%;background:#f2f4f6;display:grid;place-items:center;flex:none}
-.rver svg{width:18px;height:18px}
 
 /* ---------- talonario: producto mas ancho, cantidad y precio corridos a la derecha ---------- */
 .tick-h,.row,.row.man{grid-template-columns:minmax(0,1.7fr) minmax(0,.8fr) minmax(0,.8fr) minmax(0,.9fr);column-gap:4px}
@@ -2133,3 +2131,19 @@ body.manos-libres .panel-work,body.manos-libres .pw-grid{padding-bottom:0!import
 @media(min-width:1024px){
   body.panel-view .tick .act{margin:14px 0 4px!important}
 }
+
+
+/* =====================================================================
+   v2.6.1 · Microfono tipo WhatsApp: papelera y candado se excluyen entre si.
+   - Deslizar a la IZQUIERDA: solo se ve la papelera, el candado desaparece.
+   - Deslizar a la DERECHA: solo se ve el candado, la papelera desaparece.
+   - Sin lupa en la barra de grabacion.
+   ===================================================================== */
+.act .recbar .rtrash[hidden],.act .recbar .rlock2[hidden]{display:none!important}
+.act .recbar .rtrash,.act .recbar .rlock2{transition:opacity .16s ease,transform .16s ease,background .15s,color .15s}
+.act.izq .recbar .rlock2:not(.enviar){opacity:0!important;visibility:hidden}
+.act.der .recbar .rtrash{opacity:0!important;visibility:hidden}
+/* los botones de la barra de grabacion siempre se pueden tocar, sin retardo de doble toque */
+.act .recbar .rdel,.act .recbar .rpause,.act .recbar .rsend,.act .recbar .rlock2.enviar{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+/* la barra de grabacion nunca puede quedar bloqueando toques cuando ya no hay grabacion */
+body:not(.grabando) .act .recbar{display:none!important}

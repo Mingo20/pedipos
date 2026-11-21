@@ -1380,69 +1380,115 @@
   }
 
   /* ----- Voz directa desde el boton negro ----- */
-  /* ====== Microfono estilo nota de voz ======
-     Toque corto: dicta (como antes).
-     Mantener 1 s: vibra y la barra se transforma en grabadora.
-       soltar            -> termina y procesa
-       deslizar izquierda -> cancela
-       deslizar derecha   -> bloquea (manos libres) con opcion de eliminar o procesar */
-  const MIC = { t: null, activo: false, bloqueado: false, x0: 0, dx: 0, hold: false, seg: 0, tick: null, rec: null, usaDictado: false, pausado: false };
+  /* ====== Microfono estilo nota de voz de WhatsApp ======
+     Modo 1 (mantener): se mantiene pulsado el microfono mientras se habla y se suelta para enviar.
+     Modo 2 (manos libres): sin soltar, se desliza hacia la derecha y la grabacion queda sola.
+     Deslizar hacia la izquierda y soltar cancela.
+
+     MAQUINA DE ESTADOS (una sola fuente de verdad, solo avanza en este orden):
+       libre -> arrancando -> grabando -> bloqueado -> cerrando -> libre
+     - "arrancando": se pidio el microfono y el navegador todavia no responde. Si el dedo se
+       suelta aqui, el gesto NO se pierde: queda anotado en MIC.pendiente y se resuelve en cuanto
+       el microfono responde (antes la barra quedaba en rojo, con el microfono vivo y sin dueño).
+     - Todo cierre limpia PRIMERO la interfaz y libera el microfono sin esperar a nadie.
+     - Hay un salvavidas: si el estado no coincide con la realidad, la interfaz se restablece sola. */
+  const MIC = { fase: "libre", activo: false, bloqueado: false, dx: 0, seg: 0, tick: null, pausado: false,
+                pendiente: null, dedo: false, token: 0, freno: null };
 
   function micVibra(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (_) {} }
+  const UMBRAL = 70;   /* px de deslizamiento para cancelar o bloquear */
 
   function bindMicGestos() {
     const mic = $("#bMic");
     if (!mic) return;
-    let down = false, largo = false, x0 = 0, y0 = 0, tmr = null;
+    let x0 = 0, t0 = 0, idPuntero = null;
 
-    let t0 = 0;
-    const inicio = (x, y) => { down = true; largo = false; x0 = x; y0 = y; t0 = Date.now(); micVibra(18);
-      /* modo venta por voz INMEDIATO: mantener pulsado activa la grabacion al instante, sin espera */
-      if (!MIC.activo) { largo = true; micVibra([30, 20, 60]); iniciarGrabacionGesto(); } };
+    const inicio = (x) => {
+      if (MIC.fase !== "libre") return;          /* ya hay una grabacion en curso: se ignora */
+      MIC.dedo = true; MIC.dx = 0; MIC.pendiente = null;
+      x0 = x; t0 = Date.now();
+      micVibra([30, 20, 60]);
+      iniciarGrabacionGesto();
+    };
     const mueve = (x) => {
-      if (!down || !largo || MIC.bloqueado) return;
+      if (!MIC.dedo || MIC.fase === "bloqueado" || MIC.fase === "cerrando") return;
       MIC.dx = x - x0;
-      actualizarArrastre();
+      if (MIC.fase === "grabando") actualizarArrastre();
     };
     const fin = () => {
-      if (!down) return;
-      down = false; clearTimeout(tmr);
-      if (!largo) return;          /* un toque corto ya no activa nada */
-      if (MIC.bloqueado) return;
-      /* un roce muy corto no debe generar un audio vacio */
-      if (Date.now() - t0 < 160) { micVibra(10); cancelarGrabacionGesto(false); return; }
-      /* soltar: segun hacia donde quedo el dedo */
-      if (MIC.dx < -70) { micVibra([30, 20, 45]); cancelarGrabacionGesto(true); }
-      else if (MIC.dx > 70) bloquearGrabacionGesto();
-      else terminarGrabacionGesto();
+      if (!MIC.dedo) return;
+      MIC.dedo = false;
+      const dur = Date.now() - t0, dx = MIC.dx;
+      if (MIC.fase === "bloqueado" || MIC.fase === "cerrando" || MIC.fase === "libre") return;
+      if (MIC.fase === "arrancando") { MIC.pendiente = { dur, dx }; return; }   /* se resuelve al arrancar */
+      resolverSoltar(dur, dx);
     };
-    mic.addEventListener("touchstart", (e) => { e.preventDefault(); const t = e.touches[0]; inicio(t.clientX, t.clientY); }, { passive: false });
-    mic.addEventListener("touchmove", (e) => { const t = e.touches[0]; mueve(t.clientX); }, { passive: true });
+    /* la decision unica de que hacer cuando el dedo se suelta */
+    function resolverSoltar(dur, dx) {
+      if (dur < 350) { micVibra(10); return cancelarGrabacionGesto(false, true); }      /* roce: no es un pedido */
+      if (dx < -UMBRAL) { micVibra([30, 20, 45]); return cancelarGrabacionGesto(true); }  /* izquierda: cancelar */
+      if (dx > UMBRAL) return bloquearGrabacionGesto();                                   /* derecha: manos libres */
+      return terminarGrabacionGesto();                                                    /* soltar: enviar */
+    }
+    MIC.resolver = resolverSoltar;
+
+    mic.addEventListener("touchstart", (e) => { e.preventDefault(); const t = e.touches[0]; inicio(t.clientX); }, { passive: false });
+    mic.addEventListener("touchmove", (e) => { const t = e.touches[0]; if (t) mueve(t.clientX); }, { passive: true });
     mic.addEventListener("touchend", (e) => { e.preventDefault(); fin(); });
-    mic.addEventListener("touchcancel", () => { if (down && largo && !MIC.bloqueado) cancelarGrabacionGesto(false); down = false; clearTimeout(tmr); });
+    mic.addEventListener("touchcancel", () => {
+      /* el sistema se llevo el gesto (llamada, notificacion): no se deja grabando sin dedo */
+      if (!MIC.dedo) return;
+      MIC.dedo = false;
+      if (MIC.fase === "arrancando") MIC.pendiente = { dur: 0, dx: 0, cancelar: true };
+      else if (MIC.fase === "grabando") cancelarGrabacionGesto(false);
+    });
     /* raton (pruebas en computadora) */
-    mic.addEventListener("mousedown", (e) => { inicio(e.clientX, e.clientY);
-      const mm = (ev) => mueve(ev.clientX), up = () => { document.removeEventListener("mousemove", mm); document.removeEventListener("mouseup", up); fin(); };
-      document.addEventListener("mousemove", mm); document.addEventListener("mouseup", up); });
+    mic.addEventListener("mousedown", (e) => {
+      inicio(e.clientX);
+      const mm = (ev) => mueve(ev.clientX);
+      const up = () => { document.removeEventListener("mousemove", mm); document.removeEventListener("mouseup", up); fin(); };
+      document.addEventListener("mousemove", mm); document.addEventListener("mouseup", up);
+    });
   }
 
   const fmtSeg = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 
   async function iniciarGrabacionGesto() {
-    if (MIC.activo) return;
+    if (MIC.fase !== "libre") return;
     if (voice.phase !== "idle" && voice.phase !== undefined) { try { window.PPVoice.stopDictation(); } catch (_) {} voice = { phase: "idle", text: "" }; renderListen(); }
-    if (!window.PPVoice.canRecord()) { toast("Este telefono no permite grabar audio"); return; }
+    if (!window.PPVoice.canRecord()) { toast("Este telefono no permite grabar audio"); MIC.dedo = false; return; }
+    MIC.fase = "arrancando"; MIC.activo = true; MIC.bloqueado = false; MIC.seg = 0; MIC.pausado = false;
+    const mi = ++MIC.token;
+    /* salvavidas: si el microfono no responde en 4 s se libera todo, nunca queda en rojo */
+    clearTimeout(MIC.freno);
+    MIC.freno = setTimeout(() => {
+      if (MIC.token === mi && MIC.fase === "arrancando") { limpiarGrabacionGesto(); toast("El microfono no respondio. Intenta de nuevo."); }
+    }, 4000);
     try { await window.PPVoice.startRecording(); }
-    catch (_) { toast("Permite el microfono para grabar"); return; }
-    MIC.activo = true; MIC.bloqueado = false; MIC.dx = 0; MIC.seg = 0;
+    catch (_) {
+      if (MIC.token === mi) { limpiarGrabacionGesto(); toast("Permite el microfono para grabar"); }
+      else { try { window.PPVoice.resetRecording(); } catch (__) {} }
+      return;
+    }
+    clearTimeout(MIC.freno);
+    /* durante la espera el gesto pudo cancelarse o la pantalla cambiar: no se enciende nada huerfano */
+    if (MIC.token !== mi || MIC.fase !== "arrancando") { try { window.PPVoice.resetRecording(); } catch (_) {} return; }
+    MIC.fase = "grabando";
     transformarBarra(true);
     MIC.tick = setInterval(() => {
       MIC.seg++;
-      const s = document.getElementById("recSeg");
-      if (s) s.textContent = fmtSeg(MIC.seg);
+      const sg = document.getElementById("recSeg");
+      if (sg) sg.textContent = fmtSeg(MIC.seg);
       const tx = document.getElementById("recTxt");
       if (tx && voice && voice.text) tx.textContent = String(voice.text).slice(-70);
     }, 1000);
+    /* el dedo ya se habia soltado mientras arrancaba: se resuelve ahora */
+    const pen = MIC.pendiente; MIC.pendiente = null;
+    if (pen) {
+      if (pen.cancelar) return cancelarGrabacionGesto(false);
+      if (!MIC.dedo) return MIC.resolver(Math.max(pen.dur, 0), pen.dx);
+    }
+    if (MIC.dedo) actualizarArrastre();
   }
 
   /* la barra de venta se convierte en la barra de grabacion */
@@ -1450,64 +1496,66 @@
     const bar = $("#actbar");
     if (!bar) return;
     document.body.classList.toggle("grabando", on);
-    if (!on) { bar.classList.remove("rec", "lock", "izq"); bar.querySelector(".recbar") && bar.querySelector(".recbar").remove(); const m = $("#bMic"); m && (m.style.transform = ""); return; }
+    if (!on) { bar.classList.remove("rec", "lock", "izq", "der"); bar.querySelector(".recbar") && bar.querySelector(".recbar").remove(); const m = $("#bMic"); m && (m.style.transform = ""); return; }
     bar.classList.add("rec");
     let rb = bar.querySelector(".recbar");
     if (!rb) {
       rb = document.createElement("div"); rb.className = "recbar";
       rb.innerHTML = `<span class="rtrash" id="recX" aria-hidden="true">${I.trashAnim}</span>
         <span class="rlock2" id="recLock" aria-hidden="true">${I.lockAnim}</span>
-
-
         <div class="rlive" id="recLive" hidden><b id="recSeg">0:00</b><span id="recTxt">Escuchando...</span></div>
         <div class="rfree" id="recF" hidden>
           <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
-          <button class="rver" id="recVer" aria-label="Ver lo dictado">${I.eye || I.search}</button>
           <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
           <button class="rpause" id="recP" aria-label="Pausar">${I.pausa}</button>
           <button class="rsend" id="recSend" aria-label="Guardar pedido">${I.bag}</button>
         </div>`;
       bar.append(rb);
-      $("#recDel").onclick = () => cancelarGrabacionGesto(true);
-      $("#recSend").onclick = () => terminarGrabacionGesto();
-      $("#recP").onclick = alternarPausa;
-      const vv = $("#recVer");
-      if (vv) vv.onclick = () => { const l = $("#recLive"); if (l) l.classList.toggle("abierta"); };
+      /* los botones responden tambien al toque directo (touchend) para no depender del "clic" retardado */
+      const enlazar = (el, fn) => { if (!el) return; let usado = 0;
+        const ir = (e) => { e.preventDefault(); e.stopPropagation(); if (Date.now() - usado < 400) return; usado = Date.now(); fn(); };
+        el.addEventListener("click", ir); el.addEventListener("touchend", ir, { passive: false }); };
+      enlazar($("#recDel"), () => cancelarGrabacionGesto(true));
+      enlazar($("#recSend"), () => terminarGrabacionGesto());
+      enlazar($("#recP"), alternarPausa);
     }
     const m = $("#bMic"); m && m.classList.add("grab");
     /* los dos avisos aparecen desde el primer instante, en modo suave */
     const X0 = $("#recX"), L0 = $("#recLock");
-    if (X0) { X0.style.opacity = "0.45"; X0.classList.add("sutil"); }
-    if (L0) { L0.style.opacity = "0.45"; L0.classList.add("sutil"); }
+    if (X0) { X0.hidden = false; X0.style.opacity = "0.45"; X0.classList.add("sutil"); }
+    if (L0) { L0.hidden = false; L0.style.opacity = "0.45"; L0.classList.add("sutil"); }
   }
 
+  /* El arrastre decide que aviso se ve: hacia la izquierda solo la papelera, hacia la derecha solo el candado.
+     El aviso contrario se oculta del todo (antes el candado se quedaba visible al ir a la izquierda). */
   function actualizarArrastre() {
+    if (MIC.fase !== "grabando") return;
     const m = $("#bMic");
     const dx = MIC.dx;
     if (m) m.style.transform = "translateX(" + Math.max(-110, Math.min(110, dx)) + "px) scale(1.18)";
-    const X = $("#recX"), bar = $("#actbar");
+    const X = $("#recX"), L2 = $("#recLock"), bar = $("#actbar");
+    const kIzq = Math.min(1, Math.max(0, -dx / UMBRAL)), kDer = Math.min(1, Math.max(0, dx / UMBRAL));
+    const izq = dx < -6, der = dx > 6;
     if (X) {
-      const k = Math.min(1, Math.max(0, -dx / 70));          /* 0 a 1 segun lo que se desliza */
-      X.style.opacity = String(0.45 + 0.55 * k);
-      X.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * k) + ")";
+      /* se oculta cuando el dedo va a la derecha */
+      X.style.opacity = der ? "0" : String(0.45 + 0.55 * kIzq);
+      X.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * kIzq) + ")";
       X.classList.toggle("on", dx < -34);
-      if (dx < -6) X.classList.remove("sutil");
+      if (izq) X.classList.remove("sutil");
     }
-    if (bar) bar.classList.toggle("izq", dx < -6);
-    /* candado: aparece al empezar a deslizar a la derecha y se apaga al completar */
-    const L2 = $("#recLock");
-    if (L2) {
-      const k = Math.min(1, Math.max(0, dx / 70));
-      L2.style.opacity = String(0.45 + 0.55 * k);
-      L2.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * k) + ")";
-      L2.classList.toggle("on", k > 0.38);
-      if (dx > 6) L2.classList.remove("sutil");
+    if (L2 && !L2.classList.contains("enviar")) {
+      /* se oculta del todo cuando el dedo va a la izquierda */
+      L2.style.opacity = izq ? "0" : String(0.45 + 0.55 * kDer);
+      L2.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * kDer) + ")";
+      L2.classList.toggle("on", kDer > 0.38);
+      if (der) L2.classList.remove("sutil");
     }
+    if (bar) { bar.classList.toggle("izq", izq); bar.classList.toggle("der", der); }
   }
 
   /* pausar / continuar la grabacion a manos libres */
   function alternarPausa() {
-    if (!MIC.activo) return;
+    if (MIC.fase !== "bloqueado") return;
     const b = $("#recP"), onda = $(".rwave"), dot = $(".rdot");
     if (!MIC.pausado) {
       if (!window.PPVoice.pauseRecording()) return;
@@ -1518,7 +1566,8 @@
     } else {
       if (!window.PPVoice.resumeRecording()) return;
       MIC.pausado = false; micVibra(20);
-      MIC.tick = setInterval(() => { MIC.seg++; }, 1000);
+      clearInterval(MIC.tick);
+      MIC.tick = setInterval(() => { MIC.seg++; const sg = document.getElementById("recSeg"); if (sg) sg.textContent = fmtSeg(MIC.seg); }, 1000);
       if (b) { b.innerHTML = I.pausa; b.setAttribute("aria-label", "Pausar"); b.classList.remove("on"); }
       onda && onda.classList.remove("quieta"); dot && dot.classList.remove("quieto");
     }
@@ -1546,36 +1595,52 @@
     asegurarBarraEnTalonario();
   }
 
+  /* Cierre total e INMEDIATO: libera el microfono, apaga la barra y deja el boton listo.
+     No espera ninguna promesa, asi nunca puede quedarse a medias. Es seguro llamarlo varias veces. */
   function limpiarGrabacionGesto() {
+    MIC.token++;                                   /* invalida cualquier arranque que siga esperando */
+    clearTimeout(MIC.freno); MIC.freno = null;
     clearInterval(MIC.tick); MIC.tick = null;
-    MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.pausado = false; MIC.hold = false; MIC.seg = 0;
-    /* libera el microfono siempre, pase lo que pase */
+    MIC.fase = "libre"; MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.pausado = false;
+    MIC.seg = 0; MIC.pendiente = null; MIC.dedo = false;
     try { window.PPVoice && window.PPVoice.resetRecording && window.PPVoice.resetRecording(); } catch (_) {}
     document.body.classList.remove("grabando", "manos-libres");
     const bar0 = asegurarBarraEnTalonario();
     if (bar0) {
-      bar0.classList.remove("rec", "lock", "izq", "flotante");
+      bar0.classList.remove("rec", "lock", "izq", "der", "flotante");
       const rb0 = bar0.querySelector(".recbar"); if (rb0) rb0.remove();
     }
-    /* el microfono vuelve siempre visible */
+    /* el microfono vuelve siempre visible y tocable */
     const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; m.style.display = ""; }
   }
 
-  async function cancelarGrabacionGesto(vibra) {
-    /* aunque el estado se haya perdido, deja todo limpio y responde */
+  /* Cancelar: primero se limpia todo (sin esperar), el audio simplemente se descarta. */
+  function cancelarGrabacionGesto(vibra, silencio) {
     if (vibra) micVibra([30, 40, 30]);
-    try { await window.PPVoice.stopRecording(); } catch (_) {}
+    const habia = MIC.fase !== "libre";
     limpiarGrabacionGesto();
-    toast("Grabacion cancelada");
+    if (habia && !silencio) toast("Grabacion cancelada");
+    else if (habia && silencio) toast("Manten presionado para grabar");
   }
 
-  /* si el gesto se pierde (llamada entrante, cambio de app, puntero cancelado) no queda en rojo */
+  /* Red de seguridad: si el gesto se pierde (llamada, cambio de app, puntero cancelado) no queda en rojo. */
   function rescatarGrabacion() {
-    if (document.body.classList.contains("grabando") || MIC.activo || MIC.bloqueado) limpiarGrabacionGesto();
+    if (MIC.fase === "libre" && !document.body.classList.contains("grabando")) return;
+    if (MIC.fase === "cerrando") return;
+    limpiarGrabacionGesto();
   }
   window.addEventListener("pointercancel", rescatarGrabacion, true);
   window.addEventListener("blur", rescatarGrabacion);
   document.addEventListener("visibilitychange", () => { if (document.hidden) rescatarGrabacion(); });
+
+  /* Salvavidas de coherencia: cada 1.5 s comprueba que lo que se ve coincida con el estado real.
+     Si la barra esta en rojo pero ya no hay grabacion viva (o al reves), se restablece sola. */
+  setInterval(() => {
+    const rojo = document.body.classList.contains("grabando");
+    const viva = !!(window.PPVoice && window.PPVoice.recording);
+    if (MIC.fase === "libre" && (rojo || viva)) limpiarGrabacionGesto();
+    else if (MIC.fase === "grabando" && !viva && !MIC.dedo) limpiarGrabacionGesto();
+  }, 1500);
 
   /* Centra un icono dentro de su circulo por su CENTRO DE MASA visual, no por su caja.
      Un avioncito de papel tiene la punta a la derecha: aunque su caja este centrada, a simple vista
@@ -1612,14 +1677,15 @@
   }
 
   function bloquearGrabacionGesto() {
-    if (!MIC.activo) return;
-    MIC.bloqueado = true; MIC.dx = 0;
+    if (MIC.fase !== "grabando") return;
+    MIC.fase = "bloqueado"; MIC.bloqueado = true; MIC.dx = 0; MIC.dedo = false;
     micVibra(40);
     activarManosLibres();
-    /* el icono de la barra se retira: el boton de guardar ya es una bolsa verde */
+    /* el icono del microfono se retira: en manos libres mandan la papelera, la pausa y enviar */
     const m = $("#bMic"); if (m) { m.style.transform = ""; m.style.display = "none"; }
-    const hh = $("#recH"); if (hh) hh.hidden = true;
-    const ll = $("#recL"); if (ll) ll.hidden = true;
+    const bar = $("#actbar"); if (bar) bar.classList.remove("izq", "der");
+    /* la papelera de arrastre desaparece del todo: ahora existe el boton eliminar de manos libres */
+    const X = $("#recX"); if (X) { X.hidden = true; X.style.opacity = "0"; }
     /* el candado se transforma en enviar: ya quedo bloqueado y se puede mandar */
     const l2 = $("#recLock");
     if (l2) {
@@ -1631,47 +1697,42 @@
       l2.setAttribute("role", "button");
       l2.style.opacity = "1";
       l2.style.transform = "translateY(-50%) scale(1)";
-      l2.onclick = (ev) => { ev.stopPropagation(); terminarGrabacionGesto(); };
+      let usado = 0;
+      const ir = (ev) => { ev.preventDefault(); ev.stopPropagation(); if (Date.now() - usado < 400) return; usado = Date.now(); terminarGrabacionGesto(); };
+      l2.onclick = ir; l2.ontouchend = ir;
       centrarIconoEnCirculo(l2);
     }
-
-    $("#recF").hidden = false;
-    $("#actbar").classList.add("lock");
+    const rf = $("#recF"); if (rf) rf.hidden = false;
+    if (bar) bar.classList.add("lock");
   }
 
   /* Termina la grabacion: PRIMERO se captura el audio y DESPUES se limpia la interfaz.
-     Antes se limpiaba primero (resetRecording destruia la grabadora) y el audio llegaba vacio,
-     por eso decia "no se entendio el audio" aunque el microfono si escuchaba. */
-  let TERMINANDO = false;
+     Si la captura se cuelga, el tope de 2.5 s de stopRecording la libera igual. */
   async function terminarGrabacionGesto() {
-    if (!MIC.activo || TERMINANDO) return;
-    TERMINANDO = true;
+    if (MIC.fase !== "grabando" && MIC.fase !== "bloqueado") return;
+    MIC.fase = "cerrando";
     try { if (MIC.pausado) window.PPVoice.resumeRecording(); } catch (_) {}
     const seg = MIC.seg;
     micVibra(30);
     /* 1) capturar el audio con la grabadora todavia viva */
     let blob = null;
     try { blob = await window.PPVoice.stopRecording(); } catch (_) { blob = null; }
-    /* 2) ahora si, limpiar la interfaz */
+    /* 2) ahora si, limpiar la interfaz (suceda lo que suceda con el audio) */
     limpiarGrabacionGesto();
-    const m = $("#bMic"); if (m) m.style.display = "";
-    try {
-      if (seg < 1 && !blob) { toast("Manten presionado mas tiempo para grabar"); return; }
-      if (!blob) { toast("No se escucho nada. Acerca el telefono y habla mas fuerte."); return; }
-      voice = { phase: "wait", text: "" }; render(); showProc();
-      let text = "";
-      try { text = await window.PPVoice.transcribeBlob(blob); }
-      catch (e) { text = ""; }
-      $("#proc") && $("#proc").remove();
-      voice = { phase: "idle", text: "" }; render();
-      if (!text) { toast("No se entendio el audio. Intenta de nuevo."); return; }
-      showProc();
-      let r = null;
-      try { r = await window.PPVoice.interpret(text, db().products); } catch (_) { r = null; }
-      $("#proc") && $("#proc").remove();
-      if (!r) { toast("No se pudo procesar el pedido."); return; }
-      agregarDirecto(r, { cobrar: true });
-    } finally { TERMINANDO = false; }
+    if (seg < 1 && !blob) { toast("Manten presionado mas tiempo para grabar"); return; }
+    if (!blob) { toast("No se escucho nada. Acerca el telefono y habla mas fuerte."); return; }
+    voice = { phase: "wait", text: "" }; render(); showProc();
+    let text = "";
+    try { text = await window.PPVoice.transcribeBlob(blob); } catch (e) { text = ""; }
+    $("#proc") && $("#proc").remove();
+    voice = { phase: "idle", text: "" }; render();
+    if (!text) { toast("No se entendio el audio. Intenta de nuevo."); return; }
+    showProc();
+    let r = null;
+    try { r = await window.PPVoice.interpret(text, db().products); } catch (_) { r = null; }
+    $("#proc") && $("#proc").remove();
+    if (!r) { toast("No se pudo procesar el pedido."); return; }
+    agregarDirecto(r, { cobrar: true });
   }
 
   function toggleVoice() {
