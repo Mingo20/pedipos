@@ -1956,3 +1956,68 @@ button,.btn,.ecf-btn,.rc-btn,.rc-mini{transition:transform .16s cubic-bezier(.22
 #view>*{animation:ppIn .28s cubic-bezier(.22,1,.36,1) both}
 @keyframes ppIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ================= Certificación DGII ================= */
+.ct-hero{background:linear-gradient(180deg,#fff,#f7f9fa);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px #0b141c0a}
+.ct-hero.bien{border-color:#bfe3cd;background:linear-gradient(180deg,#fff,#f2fbf6)}
+.ct-hero.mal{border-color:#f2cdc7;background:linear-gradient(180deg,#fff,#fdf5f3)}
+.ct-hero.avi{border-color:#f0e0b8;background:linear-gradient(180deg,#fff,#fdfaf0)}
+.ct-pill{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:#eef2f5;color:#41505d}
+.ct-hero.bien .ct-pill{background:#e2f6ea;color:#12734a}
+.ct-hero.mal .ct-pill{background:#fde8e4;color:#a3352a}
+.ct-hero.avi .ct-pill{background:#fdf3d8;color:#8a6a12}
+.ct-hero h2{margin:10px 0 6px;font-size:20px;letter-spacing:.02em}
+.ct-hero p{margin:0;font-size:13px;color:var(--mut);line-height:1.5}
+.ct-bar{height:6px;border-radius:99px;background:#e8edf1;overflow:hidden;margin:12px 0 6px}
+.ct-bar i{display:block;height:100%;border-radius:99px;background:var(--g);transition:width .5s cubic-bezier(.22,1,.36,1)}
+.ct-min{margin:0;font-size:11.5px;color:var(--mut)}
+.ct-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px #0b141c08}
+.ct-card h3{margin:0 0 10px;font-size:15px;letter-spacing:.01em}
+.ct-card p{margin:0 0 12px;font-size:13px;color:var(--mut);line-height:1.55}
+.ct-list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.ct-item{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1px solid #f1f4f6}
+.ct-item:last-child{border-bottom:0}
+.ct-dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;flex:none;background:#eef2f5;color:#68757f}
+.ct-item.ok .ct-dot{background:#e2f6ea;color:#12734a}
+.ct-item.mal .ct-dot{background:#fde8e4;color:#a3352a}
+.ct-item.avi .ct-dot{background:#fdf3d8;color:#8a6a12}
+.ct-tx{flex:1;min-width:0}
+.ct-tx b{display:block;font-size:13.5px;font-weight:700;line-height:1.25}
+.ct-tx span{display:block;font-size:12px;color:var(--mut);line-height:1.35;overflow:hidden;text-overflow:ellipsis}
+.ct-fix{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:11.5px;font-weight:700;color:#41505d;flex:none;transition:background .18s,border-color .18s}
+.ct-fix:active{background:#f2f5f7}
+.ct-btn{display:block;width:100%;height:46px;border-radius:14px;border:0;background:var(--g);color:#fff;font-size:14.5px;font-weight:700;transition:transform .16s,box-shadow .16s,background .16s;box-shadow:0 6px 16px #1f9d5c33;text-align:center;line-height:46px;text-decoration:none}
+.ct-btn:active{transform:scale(.985)}
+.ct-btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.ct-acc{display:grid;gap:8px}
+.ct-res{margin:10px 0 0!important;font-size:12.5px;font-weight:700}
+.ct-res.ok{color:#12734a}
+.ct-res.mal{color:#a3352a}
+.ct-check{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px;color:#41505d}
+.ct-check input{width:20px;height:20px;accent-color:var(--g)}
+.ct-next{border-style:dashed;background:#fbfcfd}
+@media (prefers-reduced-motion:reduce){.ct-bar i,.ct-btn,.ct-fix{transition:none}}
+
+/* ---------- portal DGII embebido ---------- */
+.ct-port{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;margin:4px 0 12px}
+.ct-port-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f6f8f9;border-bottom:1px solid var(--line);font-size:12.5px}
+.ct-port-bar b{font-weight:700;letter-spacing:.01em}
+.ct-port-tip{margin-left:auto;color:var(--mut);font-size:11.5px}
+.ct-live{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 0 3px #1f9d5c22;flex:none}
+.ct-port iframe{width:100%;height:min(58vh,440px);border:0;display:block;background:#fff}
+.ct-port iframe.sinmarco{display:none}
+.ct-port-load{padding:26px 14px;text-align:center;color:var(--mut);font-size:13px}
+.ct-port-fb{padding:16px 14px;background:#fffaf0;border-top:1px solid #f3e3c3}
+.ct-port-fb b{display:block;font-size:13.5px;margin-bottom:4px}
+.ct-port-fb p{margin:0;font-size:12.5px;line-height:1.45;color:#5c5346}
+.ct-port-acc{display:flex;gap:8px;flex-wrap:wrap}
+.ct-port-acc .ct-btn{flex:1;min-width:150px}
+
+/* ---------- certificacion: lista compacta ---------- */
+.ct-mas{list-style:none;padding:0;margin-top:6px}
+.ct-mas summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--g);padding:10px 2px;list-style:none;display:flex;align-items:center;gap:6px}
+.ct-mas summary::-webkit-details-marker{display:none}
+.ct-mas summary::before{content:"+";width:18px;height:18px;border-radius:50%;background:#eef6f1;color:var(--g);display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+.ct-mas[open] summary::before{content:"–"}
+.ct-mas .ct-list{padding-top:2px}
+.ct-item{padding:10px 12px!important}

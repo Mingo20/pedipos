@@ -170,7 +170,7 @@
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
     const lista = pc
-      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["rechazos", "Rechazos", "alert"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"],
+      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["rechazos", "Rechazos", "alert"], ["certificacion", "Certificacion", "ok"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"],
          ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"],
          ["config", "Ajustes", "gear"], ["soporte", "Soporte", "help"], ["avisos", "Avisos", "bell"]]
       : TABS;
@@ -192,7 +192,7 @@
       go(b.dataset.t);
     }));
   }
-  const TITULOS = { fiscal: "FACTURACION", rechazos: "RECHAZOS", panel: "PANEL", catalogo: "INVENTARIO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "SUPLIDORES" };
+  const TITULOS = { fiscal: "FACTURACION", rechazos: "RECHAZOS", certificacion: "CERTIFICACION DGII", panel: "PANEL", catalogo: "INVENTARIO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "SUPLIDORES" };
   /* ----- Avisos de pagos a credito ----- */
   const DIAS = 86400000;
   function avisosPago() {
@@ -2028,7 +2028,7 @@
   /* ---------- Menu lateral ---------- */
   function openMenu() {
     const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Inventario", "box"], ["proveedores", "Suplidores", "truck2"],
-      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["rechazos", "Rechazos", "alert"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
+      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["rechazos", "Rechazos", "alert"], ["certificacion", "Certificacion", "ok"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
@@ -2243,6 +2243,7 @@
     else if (tab === "avisos") renderAvisos();
     else if (tab === "fiscal") { if (window.PPFiscal) window.PPFiscal.render($("#view")); }
     else if (tab === "rechazos") { if (window.PPRechazos) window.PPRechazos.render($("#view")); }
+    else if (tab === "certificacion") { if (window.PPCertificacion) window.PPCertificacion.render($("#view")); }
     drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
     const h1t = document.getElementById("title");
     if (h1t && esPC()) h1t.textContent = TITULOS[tab] || "PediPOS";

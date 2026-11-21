@@ -257,6 +257,7 @@
           "<p>" + (listo
             ? "Cada venta se emite como e-CF desde esta computadora: la firma y el envio salen de aqui, sin servidores de por medio."
             : "Configura tu RNC y tu secuencia una sola vez. Después solo cobras.") + "</p>" +
+          '<button class="ecf-btn ghost" id="f-cert">Certificacion inteligente</button>' +
           '<div class="ecf-kpis">' +
             '<div><b>' + aceptados + "</b><small>Aceptadas</small></div>" +
             '<div><b>' + pendientes + "</b><small>Enviadas</small></div>" +
@@ -370,6 +371,8 @@
       var lista = (geo().MUNIS || {})[provSel.value] || [];
       muni.innerHTML = lista.length ? opciones(lista, "") : '<option value="">Sin municipios</option>';
     };
+    var bcert = $("#f-cert", view);
+    if (bcert) bcert.onclick = function () { if (global.PPUI) global.PPUI.go("certificacion"); };
     var save = $("#f-save", view);
     if (save) save.onclick = function () {
       var ncfNuevo = ($("#f-ncf", view).value || "").trim().toUpperCase();

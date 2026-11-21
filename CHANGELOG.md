@@ -2,6 +2,16 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.2.0] - 2026-11-21
+
+### Añadido
+- **Certificacion como emisor** (`js/certificacion.js`): 14 revisiones automaticas antes de pedir nada (RNC con digito verificador, razon social, direccion, provincia y municipio, telefono, correo, ambiente, formato y rango del e-NCF, vencimiento, certificado, clave), prueba real contra certecf con firma y envio, descarga de evidencias y estado guardado.
+- **Portal de la DGII dentro de la app**: se intenta embeber la Oficina Virtual; si la DGII bloquea el marco, aparece el aviso y el boton de ventana segura sin salir del flujo, con "Ya lo hice" que marca el paso.
+- Pantalla en la barra lateral de PC y en el menu del telefono, y acceso desde Fiscal.
+
+### Cambiado
+- Lista de revisiones compacta: primero lo pendiente y lo que ya esta en orden plegado.
+
 ## [2.1.0] - 2026-11-21
 
 ### Añadido
