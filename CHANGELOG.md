@@ -2,6 +2,20 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.1.0] - 2026-11-21
+
+### Añadido
+- **Pantalla Rechazos** (`js/rechazos.js`): cada comprobante rechazado con el motivo de la DGII, que paso, que hacer y el boton Corregir y reenviar. DeepSeek (Puter) redacta la explicacion con el catalogo como contexto y cache local por motivo; si Puter no esta, responde el catalogo. Reenvio individual con correccion del comprador, que reconstruye el XML desde la venta.
+- `PPFiscal.reenviar(id, cambios)` y reenvio de un solo comprobante.
+- Icono `alert` y entrada Rechazos en la barra de PC y en el menu movil.
+
+### Cambiado
+- **Formulario fiscal en tarjetas**: datos del emisor (RNC, telefono, razon social, nombre comercial, correo), ubicacion (provincia, municipio, direccion), comprobante y secuencia (ambiente, tipo, proximo e-NCF, ultimo autorizado, vencimiento, sucursal) y certificado. Se guardan los campos nuevos y el municipio se repuebla al cambiar la provincia.
+- Pulido premium: transiciones suaves en botones y campos, foco con halo verde, entrada de pantallas y respeto a `prefers-reduced-motion`.
+
+### Corregido
+- `VERSION` de index.html estaba en 95 mientras version.json iba en 99: la app se recargaba sola a los 4 segundos. Ahora index.html, version.json y sw.js van juntos en 99.
+
 ## [2.0.0] - 2026-11-20
 
 ### Añadido

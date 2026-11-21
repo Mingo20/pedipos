@@ -10,6 +10,18 @@
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
 
+  function geo() { return (global.PPOnboarding && global.PPOnboarding.geo) || { PROVINCIAS: [], MUNIS: {} }; }
+  function opciones(lista, sel) {
+    return (lista || []).map(function (t) {
+      return '<option' + (t === sel ? " selected" : "") + ">" + t + "</option>";
+    }).join("");
+  }
+  function restantes(c) {
+    if (!c.ncf || !c.ncfHasta) return "Escribe el proximo e-NCF y el ultimo autorizado para ver cuantos quedan.";
+    var a = parseInt(String(c.ncf).replace(/\D/g, ""), 10), b = parseInt(String(c.ncfHasta).replace(/\D/g, ""), 10);
+    if (!(b >= a)) return "El ultimo autorizado debe ser mayor o igual al proximo e-NCF.";
+    return "Quedan " + (b - a + 1) + " comprobantes en la secuencia.";
+  }
   function cfg() {
     var d = db();
     d.fiscal = d.fiscal || {
@@ -132,6 +144,52 @@
 
 
   /* ---------- cola de contingencia: reintenta lo que no salio ---------- */
+  /* Reenvia UN comprobante. Si vienen datos del comprador, reconstruye el XML. */
+  async function reenviar(id, cambios) {
+    var c = cfg();
+    var todos = global.PPComprobantes ? global.PPComprobantes.all() : (db().ecf || []);
+    var r = (todos || []).filter(function (x) { return x.id === id; })[0];
+    if (!r) return { ok: false, error: "Comprobante no encontrado" };
+    cambios = cambios || {};
+    if (cambios.compradorRnc || cambios.compradorNombre) {
+      var venta = (db().sales || []).filter(function (s) { return s.vid === r.saleId; })[0];
+      if (venta) {
+        venta.compradorRnc = cambios.compradorRnc || venta.compradorRnc || "";
+        venta.compradorNombre = cambios.compradorNombre || venta.compradorNombre || "";
+        try { r.xml = global.ECF.buildEcf(venta, c); } catch (e) {}
+        guardar();
+      }
+    }
+    var cred = null;
+    if (!c.demo) {
+      try { cred = global.ECF.cargarP12(c.p12, global.__ppFiscalPass || ""); }
+      catch (e) { return { ok: false, error: "No se pudo abrir el certificado: " + e.message }; }
+    }
+    var tk = "";
+    if (cred) { try { tk = await global.ECF.token(c, cred); } catch (e) { return { ok: false, error: String(e.message || e) }; } }
+    try {
+      if (c.demo) {
+        var d = global.ECF.demo("aceptado");
+        r.trackId = d.trackId; r.estado = d.estado; r.mensaje = d.mensaje;
+      } else {
+        var env = await global.ECF.enviar(c, r.xml, tk);
+        r.trackId = env.trackId; r.mensaje = env.mensaje;
+        if (env.trackId) {
+          var est = await global.ECF.estado(c, env.trackId, tk);
+          r.estado = est.estado; r.mensaje = est.detalle || r.mensaje;
+        } else { r.estado = "encola"; }
+      }
+      if (r.estado === "aceptado" || r.estado === "enviado") c.ncf = siguienteNcf(c);
+      if (global.PPComprobantes && global.PPComprobantes.update) global.PPComprobantes.update(r);
+      guardar();
+      return { ok: r.estado === "aceptado" || r.estado === "enviado", reg: r };
+    } catch (e) {
+      r.mensaje = String(e.message || e);
+      guardar();
+      return { ok: false, error: r.mensaje };
+    }
+  }
+
   async function reintentar() {
     var c = cfg();
     var pend = (global.PPComprobantes ? global.PPComprobantes.all() : (db().ecf || [])).filter(function (r) { return r.estado === "encola" || r.estado === "error"; });
@@ -208,25 +266,51 @@
 
         (listo ? "" :
           '<section class="ecf-card">' +
-            "<h3>Configuración fiscal</h3>" +
-            '<label>RNC del comerciante<input id="f-rnc" inputmode="numeric" placeholder="131234567" value="' + (c.rnc || "") + '"></label>' +
-            '<label>Razón social<input id="f-razon" placeholder="Colmado La Esquina SRL" value="' + (c.razonSocial || "") + '"></label>' +
+            '<div class="ecf-sec"><h3>Datos del emisor</h3><p>Como aparece el negocio en la factura.</p></div>' +
+            '<div class="ecf-two">' +
+              '<label>RNC del comerciante<input id="f-rnc" inputmode="numeric" placeholder="131234567" value="' + (c.rnc || "") + '"></label>' +
+              '<label>Telefono<input id="f-tel" inputmode="tel" placeholder="809-000-0000" value="' + (c.telefono || "") + '"></label>' +
+            '</div>' +
+            '<label>Razon social<input id="f-razon" placeholder="Colmado La Esquina SRL" value="' + (c.razonSocial || "") + '"></label>' +
             '<label>Nombre comercial<input id="f-nombre" placeholder="Colmado La Esquina" value="' + (c.nombreComercial || "") + '"></label>' +
-            '<label>Dirección<input id="f-dir" placeholder="Calle, sector, provincia" value="' + (c.direccion || "") + '"></label>' +
+            '<label>Correo electronico<input id="f-mail" type="email" inputmode="email" placeholder="facturas@negocio.do" value="' + (c.email || "") + '"></label>' +
+          "</section>" +
+
+          '<section class="ecf-card">' +
+            '<div class="ecf-sec"><h3>Ubicacion</h3><p>La direccion que la DGII vera en el comprobante.</p></div>' +
             '<div class="ecf-two">' +
-              '<label>Ambiente<select id="f-amb"><option value="certecf"' + (c.ambiente === "certecf" ? " selected" : "") + '>Certificación</option><option value="testecf"' + (c.ambiente === "testecf" ? " selected" : "") + '>Pruebas (testecf)</option><option value="ecf"' + (c.ambiente === "ecf" ? " selected" : "") + ">Producción</option></select></label>" +
-              '<label>Tipo<select id="f-tipo"><option value="32"' + (c.tipo === "32" ? " selected" : "") + '>Consumo (32)</option><option value="31"' + (c.tipo === "31" ? " selected" : "") + ">Crédito fiscal (31)</option></select></label>" +
+              '<label>Provincia<select id="f-prov">' + opciones(geo().PROVINCIAS || [], c.provincia || "") + "</select></label>" +
+              '<label>Municipio<select id="f-muni">' + opciones((geo().MUNIS || {})[c.provincia] || [], c.municipio || "") + "</select></label>" +
+            "</div>" +
+            '<label>Direccion<input id="f-dir" placeholder="Calle, numero, sector" value="' + (c.direccion || "") + '"></label>' +
+          "</section>" +
+
+          '<section class="ecf-card">' +
+            '<div class="ecf-sec"><h3>Comprobante y secuencia</h3><p>Una secuencia pertenece a un solo equipo emisor.</p></div>' +
+            '<div class="ecf-two">' +
+              '<label>Ambiente<select id="f-amb"><option value="certecf"' + (c.ambiente === "certecf" ? " selected" : "") + '>Certificacion</option><option value="testecf"' + (c.ambiente === "testecf" ? " selected" : "") + '>Pruebas (testecf)</option><option value="ecf"' + (c.ambiente === "ecf" ? " selected" : "") + ">Produccion</option></select></label>" +
+              '<label>Tipo<select id="f-tipo"><option value="32"' + (c.tipo === "32" ? " selected" : "") + '>Consumo (32)</option><option value="31"' + (c.tipo === "31" ? " selected" : "") + ">Credito fiscal (31)</option></select></label>" +
             "</div>" +
             '<div class="ecf-two">' +
-              '<label>Próximo e-NCF<input id="f-ncf" placeholder="E320000000001" value="' + (c.ncf || "") + '"></label>' +
-              '<label>Vence secuencia<input id="f-venc" type="date" value="' + (c.vencimientoSecuencia || "") + '"></label>' +
+              '<label>Proximo e-NCF<input id="f-ncf" placeholder="E320000000001" value="' + (c.ncf || "") + '"></label>' +
+              '<label>Ultimo e-NCF autorizado<input id="f-ncf2" placeholder="E320000050000" value="' + (c.ncfHasta || "") + '"></label>' +
             "</div>" +
+            '<div class="ecf-two">' +
+              '<label>Vence la secuencia<input id="f-venc" type="date" value="' + (c.vencimientoSecuencia || "") + '"></label>' +
+              '<label>Sucursal<input id="f-suc" inputmode="numeric" placeholder="1" value="' + (c.sucursal || "1") + '"></label>' +
+            "</div>" +
+            '<p class="ecf-hint" id="f-rest">' + restantes(c) + "</p>" +
+          "</section>" +
+
+          '<section class="ecf-card">' +
+            '<div class="ecf-sec"><h3>Certificado digital</h3><p>La firma sale de este equipo, nunca de un servidor.</p></div>' +
             '<label class="ecf-file">Certificado (.p12)<input id="f-p12" type="file" accept=".p12,.pfx"></label>' +
+            '<p class="ecf-hint">' + (c.p12 ? "Certificado cargado" : "Sin certificado cargado") + "</p>" +
             '<label>Clave del certificado<input id="f-pass" type="password" placeholder="Se pide al firmar"></label>' +
-            '<label class="ecf-check"><input id="f-demo" type="checkbox"' + (c.demo ? " checked" : "") + "> Modo demostración (no envía a la DGII)</label>" +
+            '<label class="ecf-check"><input id="f-demo" type="checkbox"' + (c.demo ? " checked" : "") + "> Modo demostracion (no envia a la DGII)</label>" +
             '<div class="ecf-emi"><span>Equipo emisor: <b>' + (c.emisorId || deviceId()) + "</b></span>" +
               (emisorBloqueado(c) ? '<button class="ecf-mini" id="f-libre">Liberar para este equipo</button>' : "") + "</div>" +
-            '<button class="ecf-btn" id="f-save">Guardar configuración</button>' +
+            '<button class="ecf-btn" id="f-save">Guardar configuracion</button>' +
           "</section>") +
 
         '<section class="ecf-card">' +
@@ -278,6 +362,14 @@
       if (global.render) global.render();
     };
 
+    /* al cambiar la provincia se repueblan los municipios */
+    var provSel = $("#f-prov", view);
+    if (provSel) provSel.onchange = function () {
+      var muni = $("#f-muni", view);
+      if (!muni) return;
+      var lista = (geo().MUNIS || {})[provSel.value] || [];
+      muni.innerHTML = lista.length ? opciones(lista, "") : '<option value="">Sin municipios</option>';
+    };
     var save = $("#f-save", view);
     if (save) save.onclick = function () {
       var ncfNuevo = ($("#f-ncf", view).value || "").trim().toUpperCase();
@@ -285,6 +377,12 @@
       c.razonSocial = $("#f-razon", view).value.trim();
       c.nombreComercial = $("#f-nombre", view).value.trim();
       c.direccion = $("#f-dir", view).value.trim();
+      c.telefono = ($("#f-tel", view) || {}).value ? $("#f-tel", view).value.trim() : "";
+      c.email = ($("#f-mail", view) || {}).value ? $("#f-mail", view).value.trim() : "";
+      c.provincia = ($("#f-prov", view) || {}).value || "";
+      c.municipio = ($("#f-muni", view) || {}).value || "";
+      c.ncfHasta = ($("#f-ncf2", view) || {}).value ? $("#f-ncf2", view).value.trim().toUpperCase() : "";
+      c.sucursal = ($("#f-suc", view) || {}).value || "1";
       c.ambiente = $("#f-amb", view).value;
       c.tipo = $("#f-tipo", view).value;
       c.ncf = ncfNuevo;
@@ -428,6 +526,6 @@
   global.PPFiscal = {
     render: render, emitir: emitir, cfg: cfg, ventaEjemplo: ventaEjemplo, reintentar: reintentar,
     activo: activo, setActivo: setActivo,
-    siguienteNcf: siguienteNcf
+    siguienteNcf: siguienteNcf, reenviar: reenviar
   };
 })(window);

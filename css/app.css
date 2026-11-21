@@ -1900,3 +1900,59 @@ body.manos-libres.panel-view .tick{transform:none;opacity:1;pointer-events:auto}
 .an-kpi small{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .an-kpi b{display:block;font-size:17px!important;line-height:1.2;white-space:nowrap}
 .an-kpi span{display:block;font-size:10.5px;line-height:1.25;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ================= Rechazos ================= */
+.rc-hero{background:linear-gradient(180deg,#fff,#f7f9fa);border:1px solid var(--line);border-radius:20px;padding:18px 18px 14px;margin-bottom:14px;box-shadow:0 2px 10px #0b141c0a}
+.rc-hero-t{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.rc-dot{width:7px;height:7px;border-radius:50%;background:#e0a03a;box-shadow:0 0 0 4px #e0a03a22}
+.rc-hero h2{margin:8px 0 4px;font-size:23px;letter-spacing:-.01em}
+.rc-hero p{margin:0;font-size:13.5px;color:var(--mut);line-height:1.45;max-width:52ch}
+.rc-kpis{display:flex;gap:10px;margin-top:14px}
+.rc-kpis>div{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.rc-kpis b{display:block;font-size:19px;line-height:1.1}
+.rc-kpis small{font-size:10.5px;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+.rc-list{display:grid;gap:12px}
+.rc-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px 16px;box-shadow:0 1px 2px #0b141c0a;transition:box-shadow .22s ease,transform .22s ease}
+.rc-card:hover{box-shadow:0 8px 22px #0b141c12}
+.rc-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.rc-h b{font-size:15px}
+.rc-m{margin-left:auto;font-weight:700;font-size:15px}
+.rc-pill{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8a4a12;background:#fdf0e2;border:1px solid #f3dcc3;border-radius:999px;padding:3px 8px}
+.rc-f{margin:6px 0 12px;font-size:11.5px;color:var(--mut)}
+.rc-b{margin-bottom:10px}
+.rc-lb{display:block;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-bottom:3px}
+.rc-txt{margin:0;font-size:13.5px;line-height:1.5}
+.rc-txt.ia{animation:rcIn .35s ease}
+@keyframes rcIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.rc-code{margin:0 0 12px;font-size:11px;color:#6b7580;background:#f6f8f9;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;word-break:break-word}
+.rc-code span{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:9.5px;color:#8a949e;margin-right:6px}
+.rc-acc{display:flex;gap:8px;flex-wrap:wrap}
+.rc-btn{flex:1;min-width:150px;height:42px;border:0;border-radius:12px;background:var(--g);color:#fff;font-weight:700;font-size:14px;box-shadow:0 6px 16px #1f9d5c2e;transition:transform .16s ease,box-shadow .2s ease}
+.rc-btn:active{transform:scale(.985)}
+.rc-mini{height:42px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:13px;color:var(--ink)}
+.rc-empty{background:#fff;border:1px dashed var(--line);border-radius:18px;padding:34px 20px;text-align:center}
+.rc-empty b{font-size:16px}
+.rc-empty p{margin:6px 0 0;font-size:13px;color:var(--mut);line-height:1.5}
+.rc-xml{max-height:52vh;overflow:auto;background:#0f1418;color:#dfe6ec;border-radius:14px;padding:14px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-all}
+
+/* ================= Fiscal: formulario en tarjetas ================= */
+.ecf-sec{margin:0 0 12px}
+.ecf-sec h3{margin:0 0 3px;font-size:16px}
+.ecf-sec p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.45}
+.ecf-hint{margin:8px 0 0;font-size:12px;color:var(--mut)}
+.ecf-card label{display:block;margin-bottom:11px}
+.ecf-card label>input,.ecf-card label>select{width:100%}
+.ecf-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.ecf-two{grid-template-columns:1fr}}
+
+/* ================= Pulido premium ================= */
+:root{--r:16px}
+.card,.an-card,.ecf-card,.rc-card{border-radius:18px}
+button,.btn,.ecf-btn,.rc-btn,.rc-mini{transition:transform .16s cubic-bezier(.22,1,.36,1),box-shadow .22s ease,background .2s ease,color .2s ease,border-color .2s ease}
+.btn:active,.ecf-btn:active,.rc-btn:active{transform:scale(.985)}
+.field input,.field select,.ecf-card input,.ecf-card select{transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+.field input:focus,.field select:focus,.ecf-card input:focus,.ecf-card select:focus{border-color:var(--g);box-shadow:0 0 0 3.5px #1f9d5c1f;background:#fff}
+.tick,.dock,.act,.sheet{backdrop-filter:saturate(1.1)}
+#view>*{animation:ppIn .28s cubic-bezier(.22,1,.36,1) both}
+@keyframes ppIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

@@ -19,6 +19,7 @@
   const I = {
     shield: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
     bell: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a1.9 1.9 0 0 0 3.4 0"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5L2.8 19.5h18.4L12 3.5z"/><path d="M12 9.5v4.2"/><circle cx="12" cy="16.6" r=".9" fill="currentColor" stroke="none"/></svg>',
     menu: '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h11M4 17h16"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
     list: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
@@ -169,7 +170,7 @@
     d.classList.remove("hide");
     document.body.classList.add("has-dock");
     const lista = pc
-      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"],
+      ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["rechazos", "Rechazos", "alert"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"],
          ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"],
          ["config", "Ajustes", "gear"], ["soporte", "Soporte", "help"], ["avisos", "Avisos", "bell"]]
       : TABS;
@@ -191,7 +192,7 @@
       go(b.dataset.t);
     }));
   }
-  const TITULOS = { fiscal: "FACTURACION", panel: "PANEL", catalogo: "INVENTARIO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "SUPLIDORES" };
+  const TITULOS = { fiscal: "FACTURACION", rechazos: "RECHAZOS", panel: "PANEL", catalogo: "INVENTARIO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "SUPLIDORES" };
   /* ----- Avisos de pagos a credito ----- */
   const DIAS = 86400000;
   function avisosPago() {
@@ -2027,7 +2028,7 @@
   /* ---------- Menu lateral ---------- */
   function openMenu() {
     const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Inventario", "box"], ["proveedores", "Suplidores", "truck2"],
-      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
+      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["rechazos", "Rechazos", "alert"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
@@ -2241,6 +2242,7 @@
     else if (tab === "config") renderConfig();
     else if (tab === "avisos") renderAvisos();
     else if (tab === "fiscal") { if (window.PPFiscal) window.PPFiscal.render($("#view")); }
+    else if (tab === "rechazos") { if (window.PPRechazos) window.PPRechazos.render($("#view")); }
     drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
     const h1t = document.getElementById("title");
     if (h1t && esPC()) h1t.textContent = TITULOS[tab] || "PediPOS";
