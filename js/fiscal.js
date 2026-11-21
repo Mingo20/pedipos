@@ -257,7 +257,7 @@
           "<p>" + (listo
             ? "Cada venta se emite como e-CF desde esta computadora: la firma y el envio salen de aqui, sin servidores de por medio."
             : "Configura tu RNC y tu secuencia una sola vez. Después solo cobras.") + "</p>" +
-          '<button class="ecf-btn ghost" id="f-cert">Certificacion inteligente</button>' +
+
           '<div class="ecf-kpis">' +
             '<div><b>' + aceptados + "</b><small>Aceptadas</small></div>" +
             '<div><b>' + pendientes + "</b><small>Enviadas</small></div>" +
@@ -268,6 +268,7 @@
         '<section class="fis-acc">' +
           '<button class="fis-card" data-fis="certificacion"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).ok || "") + '</span><b>Certificacion DGII</b><span>Revisa y prueba antes de solicitar</span></button>' +
           '<button class="fis-card" data-fis="rechazos"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).alert || "") + '</span><b>Rechazos</b><span>Corrige lo que la DGII devolvio</span></button>' +
+          '<button class="fis-card" data-fis="lote"><span class="fis-ic">' + ((global.PPUI || {}).I || {}).list + '</span><b>Set de pruebas</b><span>Sube el Excel y envia los e-CF</span></button>' +
           '<button class="fis-card" data-fis="formulario"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).ticket || "") + '</span><b>Formulario e-CF</b><span>Datos, secuencia y emision</span></button>' +
         "</section>" +
 
@@ -386,6 +387,7 @@
           else if ((global.PPUI || {}).toast) (global.PPUI || {}).toast("Completa los datos del emisor");
           return;
         }
+        if (k === "lote") { if (global.PPLote) global.PPLote.render(view); return; }
         if (global.PPUI) global.PPUI.go(k);
       };
     });

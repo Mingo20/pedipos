@@ -2037,3 +2037,52 @@ button,.btn,.ecf-btn,.rc-btn,.rc-mini{transition:transform .16s cubic-bezier(.22
     border-radius:22px 22px 0 0;border-left:0;border-right:0;border-bottom:0;
     padding-bottom:env(safe-area-inset-bottom)}
 }
+
+/* ===== v104 · Set de pruebas y ajustes pedidos ===== */
+.subv-foot #svEdit{background:var(--g);color:#fff;border-color:var(--g)}
+.subv-foot #svEdit svg{color:#fff}
+.hx-hero{background:var(--g);border-color:var(--g)}
+.hx-hero h2,.hx-hero p,.hx-hero .hx-st{color:#fff}
+.hx-hero .hx-ic{background:#ffffff26;color:#fff}
+.hx-hero .hx-srch{background:#fff;color:var(--ink)}
+.hx-hero .hx-st .dot{background:#B7F5D6}
+.fab{bottom:calc(env(safe-area-inset-bottom) + 72px)}
+body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 16px)}
+.tick-h{gap:14px;font-size:13.5px;letter-spacing:.04em}
+.tick-h span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* set de pruebas */
+.lote-wrap{padding:16px;max-width:1100px;margin:0 auto}
+.lote-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+.lote-back{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--line);background:#fff;display:grid;place-items:center;flex:none}
+.lote-h h2{font-size:22px;font-weight:800;margin:0 0 4px}
+.lote-h p{margin:0;color:var(--mut);font-size:14px}
+.lote-card{background:#fff;border:1.5px solid var(--line);border-radius:22px;padding:18px;margin-bottom:18px}
+.lote-drop{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;text-align:center;
+  border:2px dashed #CBD9D2;border-radius:18px;padding:28px 16px;cursor:pointer;background:#FAFCFB}
+.lote-drop b{font-size:16px;color:#0B6F4C}
+.lote-drop span{font-size:13px;color:var(--mut)}
+.lote-info{margin:14px 0;font-size:13.5px;color:#3E4C45}
+.lote-warn{color:#B42318;font-weight:600}
+.lote-btn{width:100%;height:56px;border-radius:16px;background:var(--g);color:#fff;font-weight:800;font-size:16px}
+.lote-btn:disabled{opacity:.45}
+.lote-prog{display:flex;align-items:center;gap:12px;margin-top:14px}
+.lote-bar{flex:1;height:10px;border-radius:999px;background:#E8EEEA;overflow:hidden}
+.lote-bar i{display:block;height:100%;width:0;background:var(--g);transition:width .3s}
+.lote-prog span{font-size:12.5px;font-weight:700;color:#0B6F4C;min-width:96px;text-align:right}
+.lote-res-h{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 10px;font-size:13.5px;color:var(--mut)}
+.lote-res-h b{font-size:15px;color:var(--ink)}
+.lote-tabla{display:flex;flex-direction:column;gap:8px}
+.lote-row{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:10px 14px}
+.lote-row.ok{border-left:4px solid #12B76A}
+.lote-row.mal{border-left:4px solid #D92D20}
+.lote-n{width:26px;font-size:12px;font-weight:800;color:var(--mut)}
+.lote-d{flex:1;min-width:0}
+.lote-d b{display:block;font-size:14px}
+.lote-d small{display:block;font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lote-est{font-size:11px;font-weight:800;text-transform:uppercase;color:#0B6F4C}
+.lote-row.mal .lote-est{color:#B42318}
+.lote-x{border:1.5px solid var(--line);border-radius:10px;padding:6px 10px;font-size:11.5px;font-weight:700;background:#fff}
+@media (min-width:1024px){
+  .lote-tabla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+}
