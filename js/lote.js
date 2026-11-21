@@ -31,25 +31,38 @@
 
   /* ---------- XLSX (zip + xml, sin librerias externas) ---------- */
   async function descomprimir(buf) {
-    var u = new Uint8Array(buf), dv = new DataView(buf), out = {}, i = 0;
-    while (i < u.length - 4) {
-      if (dv.getUint32(i, true) !== 0x04034b50) break;
-      var metodo = dv.getUint16(i + 8, true);
-      var comp = dv.getUint32(i + 18, true);
-      var nLen = dv.getUint16(i + 26, true), eLen = dv.getUint16(i + 28, true);
-      var nombre = new TextDecoder().decode(u.subarray(i + 30, i + 30 + nLen));
-      var ini = i + 30 + nLen + eLen, datos = u.subarray(ini, ini + comp);
+    /* Se recorre el indice central del zip: Excel escribe los tamanos ahi,
+       no en la cabecera local (que queda a cero cuando usa descriptor de datos). */
+    var u = new Uint8Array(buf), dv = new DataView(buf), out = {};
+    var eocd = -1;
+    for (var k = u.length - 22; k >= 0 && k > u.length - 70000; k--) {
+      if (dv.getUint32(k, true) === 0x06054b50) { eocd = k; break; }
+    }
+    if (eocd < 0) return out;
+    var total = dv.getUint16(eocd + 10, true);
+    var pos = dv.getUint32(eocd + 16, true);
+    for (var n = 0; n < total; n++) {
+      if (dv.getUint32(pos, true) !== 0x02014b50) break;
+      var metodo = dv.getUint16(pos + 10, true);
+      var comp = dv.getUint32(pos + 20, true);
+      var nLen = dv.getUint16(pos + 28, true);
+      var eLen = dv.getUint16(pos + 30, true);
+      var cLen = dv.getUint16(pos + 32, true);
+      var local = dv.getUint32(pos + 42, true);
+      var nombre = new TextDecoder().decode(u.subarray(pos + 46, pos + 46 + nLen));
+      var lNLen = dv.getUint16(local + 26, true), lELen = dv.getUint16(local + 28, true);
+      var ini = local + 30 + lNLen + lELen;
+      var datos = u.subarray(ini, ini + comp);
       if (comp > 0) {
         if (metodo === 0) out[nombre] = datos;
         else if (metodo === 8 && typeof DecompressionStream !== "undefined") {
           try {
-            var ds = new DecompressionStream("deflate-raw");
-            var flujo = new Blob([datos]).stream().pipeThrough(ds);
+            var flujo = new Blob([datos]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
             out[nombre] = new Uint8Array(await new Response(flujo).arrayBuffer());
-          } catch (e) { /* entrada no descomprimible: se omite */ }
+          } catch (e) { /* entrada ilegible: se omite */ }
         }
       }
-      i = ini + comp;
+      pos += 46 + nLen + eLen + cLen;
     }
     return out;
   }
@@ -187,6 +200,7 @@
             '<b>Selecciona el Excel del set</b><span id="loteName">.xlsx o .csv que te dio la DGII</span>' +
           '</label>' +
           '<div class="lote-info" id="loteInfo">Aun no hay archivo cargado.</div>' +
+          '<label class="lote-pass" id="lotePassBox"' + (global.__ppFiscalPass ? " hidden" : "") + '>Contrasena del certificado<input type="password" id="lotePass" placeholder="la del .p12" autocomplete="off"></label>' +
           '<button class="lote-btn" id="loteRun" disabled>Procesar registros</button>' +
           '<div class="lote-prog" id="loteProg" hidden><div class="lote-bar"><i id="loteBar"></i></div><span id="lotePct">0%</span></div>' +
         '</div>' +
@@ -218,6 +232,8 @@
 
     $("#loteRun", view).onclick = async function () {
       var b = this; b.disabled = true;
+      var pi = $("#lotePass", view);
+      if (pi && pi.value && !global.__ppFiscalPass) global.__ppFiscalPass = pi.value;
       $("#loteProg", view).hidden = false;
       try {
         await procesar(filas, cols, function (st) {

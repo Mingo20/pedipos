@@ -2086,3 +2086,5 @@ body:not(.has-dock) .fab{bottom:calc(env(safe-area-inset-bottom) + 16px)}
 @media (min-width:1024px){
   .lote-tabla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 }
+.lote-pass{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:#3E4C45;margin:0 0 12px}
+.lote-pass input{height:50px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;font-size:15px;font-weight:400}
