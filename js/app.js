@@ -1530,7 +1530,17 @@
 
   function limpiarGrabacionGesto() {
     clearInterval(MIC.tick); MIC.tick = null;
-    MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.pausado = false;
+    MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.pausado = false; MIC.hold = false; MIC.seg = 0;
+    /* libera el microfono siempre, pase lo que pase */
+    try { window.PPVoice && window.PPVoice.resetRecording && window.PPVoice.resetRecording(); } catch (_) {}
+    document.body.classList.remove("grabando", "manos-libres");
+    const bar0 = document.getElementById("actbar");
+    if (bar0) {
+      bar0.classList.remove("rec", "lock", "izq", "flotante");
+      const rb0 = bar0.querySelector(".recbar"); if (rb0) rb0.remove();
+      const tk0 = document.querySelector(".tick");
+      if (tk0 && bar0.parentElement === document.body) tk0.appendChild(bar0);
+    }
     /* el microfono vuelve siempre visible (antes quedaba oculto tras cancelar en manos libres) */
     const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; m.style.display = ""; }
     transformarBarra(false);
@@ -1539,12 +1549,20 @@
   }
 
   async function cancelarGrabacionGesto(vibra) {
-    if (!MIC.activo) return;
+    /* aunque el estado se haya perdido, deja todo limpio y responde */
     if (vibra) micVibra([30, 40, 30]);
-    limpiarGrabacionGesto();
     try { await window.PPVoice.stopRecording(); } catch (_) {}
+    limpiarGrabacionGesto();
     toast("Grabacion cancelada");
   }
+
+  /* si el gesto se pierde (llamada entrante, cambio de app, puntero cancelado) no queda en rojo */
+  function rescatarGrabacion() {
+    if (document.body.classList.contains("grabando") || MIC.activo || MIC.bloqueado) limpiarGrabacionGesto();
+  }
+  window.addEventListener("pointercancel", rescatarGrabacion, true);
+  window.addEventListener("blur", rescatarGrabacion);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) rescatarGrabacion(); });
 
   function bloquearGrabacionGesto() {
     if (!MIC.activo) return;

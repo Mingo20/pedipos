@@ -269,7 +269,6 @@
           '<button class="fis-card" data-fis="certificacion"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).ok || "") + '</span><b>Certificacion DGII</b><span>Revisa y prueba antes de solicitar</span></button>' +
           '<button class="fis-card" data-fis="rechazos"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).alert || "") + '</span><b>Rechazos</b><span>Corrige lo que la DGII devolvio</span></button>' +
           '<button class="fis-card" data-fis="lote"><span class="fis-ic">' + ((global.PPUI || {}).I || {}).list + '</span><b>Set de pruebas</b><span>Sube el Excel y envia los e-CF</span></button>' +
-          '<button class="fis-card" data-fis="formulario"><span class="fis-ic">' + (((global.PPUI || {}).I || {}).ticket || "") + '</span><b>Formulario e-CF</b><span>Datos, secuencia y emision</span></button>' +
         "</section>" +
 
         (listo ? "" :

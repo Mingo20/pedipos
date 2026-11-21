@@ -7,6 +7,12 @@
   var CLAVE = "pp:avisos:v1";
   var sonando = false;
 
+  function fiscalCfg() {
+    try {
+      var d = window.PPStore && window.PPStore.db;
+      return (d && d.fiscal) || null;
+    } catch (e) { return null; }
+  }
   function hoyISO() { return new Date().toISOString().slice(0, 10); }
   function leidos() { try { return JSON.parse(localStorage.getItem(CLAVE) || "{}"); } catch (e) { return {}; } }
   function guardar(o) { try { localStorage.setItem(CLAVE, JSON.stringify(o)); } catch (e) {} }
@@ -153,6 +159,19 @@
         : "Hace " + r.horas + " horas sin respaldar" + (r.pendientes ? " y " + r.pendientes + " pendiente(s)" : "") + ".";
       tareas.push(mostrar("Respaldo en Drive", txt + " Toca para resolverlo.", "respaldo", "config")
         .then(function (ok) { if (ok) marcar("respaldo"); }));
+    }
+
+    /* vencimiento del certificado digital: avisa con 30 dias o menos */
+    var cf = fiscalCfg();
+    if (cf && cf.certVence && !yaHoy("certvence")) {
+      var dias = Math.ceil((new Date(String(cf.certVence).length <= 10 ? cf.certVence + "T00:00:00" : cf.certVence).getTime() - Date.now()) / 86400000);
+      if (dias <= 30) {
+        var txtc = dias < 0 ? "El certificado digital vencio hace " + Math.abs(dias) + " dia(s). Los envios a la DGII fallaran."
+          : dias === 0 ? "El certificado digital vence hoy."
+          : "Al certificado digital le quedan " + dias + " dia(s).";
+        tareas.push(mostrar("Certificado digital", txtc + " Renuevalo con tu entidad certificadora.", "certvence", "fiscal")
+          .then(function (ok) { if (ok) marcar("certvence"); }));
+      }
     }
 
     var c = consejo();

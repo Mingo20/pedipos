@@ -85,7 +85,11 @@
 
   async function startRecording() {
     if (!canRecord()) throw new Error("grabadora no disponible");
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    /* nunca abrir una grabacion encima de otra: era la causa del microfono pegado en rojo */
+    if (mediaRec) { try { resetRecording(); } catch (_) {} }
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { mediaRec = null; listening = false; throw e; }
     chunks = []; stopping = false;
     mediaRec = new MediaRecorder(stream);
     mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
@@ -101,15 +105,40 @@
   function stopRecording() {
     stopping = true; listening = false;
     return new Promise((resolve) => {
-      if (!mediaRec) return resolve(null);
-      mediaRec.onstop = () => {
-        try { mediaRec.stream.getTracks().forEach((t) => t.stop()); } catch (_) {}
+      const r = mediaRec;
+      if (!r) { mediaRec = null; return resolve(null); }
+      let cerrado = false;
+      const terminar = () => {
+        if (cerrado) return; cerrado = true;
+        clearTimeout(freno);
+        try { r.stream && r.stream.getTracks().forEach((t) => t.stop()); } catch (_) {}
         const blob = new Blob(chunks, { type: (chunks[0] && chunks[0].type) || "audio/webm" });
-        mediaRec = null;
-        resolve(blob.size > 1200 ? blob : null);
+        if (mediaRec === r) mediaRec = null;
+        resolve(blob && blob.size > 1200 ? blob : null);
       };
-      try { mediaRec.stop(); } catch (_) { resolve(null); }
+      /* si el navegador nunca avisa, se libera igual: antes se quedaba colgado en rojo */
+      const freno = setTimeout(terminar, 2500);
+      r.onstop = terminar;
+      r.onerror = terminar;
+      try {
+        if (r.state === "inactive") terminar();
+        else r.stop();
+      } catch (_) { terminar(); }
     });
+  }
+
+  /* libera el microfono de inmediato, sin esperar promesas (boton de emergencia) */
+  function resetRecording() {
+    listening = false; stopping = false;
+    try {
+      if (mediaRec) {
+        try { mediaRec.onstop = null; mediaRec.onerror = null; } catch (_) {}
+        try { mediaRec.stream && mediaRec.stream.getTracks().forEach((t) => t.stop()); } catch (_) {}
+        try { if (mediaRec.state !== "inactive") mediaRec.stop(); } catch (_) {}
+      }
+    } catch (_) {}
+    mediaRec = null; chunks = [];
+    return true;
   }
 
   async function recordAndTranscribe() {
@@ -238,5 +267,5 @@
     return out;
   }
 
-  window.PPVoice = { dedupe, supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, pauseRecording, resumeRecording, recordAndTranscribe, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
+  window.PPVoice = { dedupe, supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, pauseRecording, resumeRecording, recordAndTranscribe, resetRecording, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
 })();
