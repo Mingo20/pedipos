@@ -1325,6 +1325,23 @@
   }
 
   /* ----- Voz: los productos entran directo al talonario ----- */
+  /* Marca en el catalogo los productos que acaban de entrar por voz, con la cantidad. */
+  function marcarRecien(lines) {
+    (lines || []).forEach((l) => {
+      if (!l || !l.pid) return;
+      const card = document.querySelector('.pcard[data-p="' + l.pid + '"]');
+      if (!card) return;
+      const enCarrito = cart().lines.find((x) => x.pid === l.pid);
+      const cant = enCarrito ? enCarrito.cant : (l.cant || 1);
+      card.classList.add("recien");
+      let b = card.querySelector(".recien-q");
+      if (!b) { b = document.createElement("span"); b.className = "recien-q"; card.appendChild(b); }
+      b.textContent = "+" + (Math.round(Number(cant) * 100) / 100);
+      clearTimeout(card._rt);
+      card._rt = setTimeout(() => { card.classList.remove("recien"); const q = card.querySelector(".recien-q"); if (q) q.remove(); }, 7000);
+    });
+  }
+
   function agregarDirecto(r, opts) {
     const lines = (r && r.lines) || [];
     if (!lines.length) {
@@ -1334,6 +1351,7 @@
     }
     const antes = cart().lines.length;
     let n = 0;
+    marcarRecien(lines);
     for (const l of lines) {
       const p = db().products.find((x) => x.pid === l.pid);
       if (!p) continue;
