@@ -2,6 +2,22 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.8.1] - 2026-11-22
+
+### Corregido
+- **Analitica**: la fila de KPIs vuelve a mostrar las siete tarjetas completas, incluidas Ventas e ITBIS, en PC y en movil. Se quitaron los recortes (`overflow`, `white-space:nowrap`) que dejaban cifras fuera de la tarjeta y se fijo una rejilla de dos columnas en movil.
+- **Arranque estable**: durante el primer segundo y medio la app descarta los redibujos repetidos con el mismo estado, que eran los que hacian "pestanear" la pantalla al abrir una seccion.
+
+### Anadido
+- **Notificaciones**: barra inferior con buscador por nombre de cliente y filtro por estado (vencidas, por vencer).
+- **Detalle del cliente**: las fechas de pago se muestran como 20/11/2026 a las 2:58 p. m. y la etiqueta paso a "Saldo pendiente:".
+
+### Cambiado
+- El boton flotante (+) baja un poco mas en Clientes, Suplidores e Inventario.
+- **Soporte**: el boton dice "Escribir WhatsApp" y se ocultaron los datos de contacto y el horario.
+- **Configuracion**: las subpantallas se abren sin el encabezado principal ni la barra inferior, la cabecera pierde el fondo blanco y el boton de volver queda en la esquina izquierda.
+- Cache del service worker a `pedipos-v113`.
+
 ## [2.8.0] - 2026-11-22
 
 ### Añadido

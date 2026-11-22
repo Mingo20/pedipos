@@ -162,7 +162,7 @@
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
-    if (tab !== "config") document.body.classList.remove("config-view");
+    if (tab !== "config") { document.body.classList.remove("config-view"); document.body.classList.remove("config-sub"); }
     if (tab !== "avisos") document.body.classList.remove("avisos-view");
     const pc = esPC();
     /* en el telefono el panel de venta usa su propia barra; en PC la navegacion vive a la izquierda */
@@ -261,11 +261,40 @@
         <span class="av-go">${I.chev}</span>
       </button>`;
     };
-    $("#view").innerHTML = `${av.length ? av.map(fila).join("") : '<div class="card"><div class="cnt" style="text-align:center;padding:26px 10px">No hay pagos proximos a vencer ni vencidos.</div></div>'}`;
-    $$(".aviso", $("#view")).forEach((b) => (b.onclick = () => {
-      const s = (db().sales || []).find((x) => x.vid === b.dataset.v);
-      if (s) openDetalle(s);
-    }));
+    let avFiltro = "";
+    $("#view").innerHTML = `
+      <div id="avLista"></div>
+      <div class="av-bar">
+        <div class="search">${I.search}<input id="avq" placeholder="Buscar notificacion..." autocomplete="off"></div>
+        <button class="fbtn" id="avf" aria-label="Filtrar notificaciones">${I.filtro}</button>
+        <div class="filtro-pop" id="avfp" hidden>
+          <button class="fopt" data-e="">Todas las notificaciones ${I.check}</button>
+          <button class="fopt" data-e="vencido">Vencidas ${I.check}</button>
+          <button class="fopt" data-e="proximo">Por vencer ${I.check}</button>
+        </div>
+      </div>`;
+    const pinta = (q) => {
+      const t = String(q || "").toLowerCase().trim();
+      const lista = av.filter((a) => (!avFiltro || a.tipo === avFiltro) &&
+        (!t || String(a.s.cliente || "sin cliente").toLowerCase().includes(t)));
+      $("#avLista").innerHTML = lista.length ? lista.map(fila).join("")
+        : '<div class="card"><div class="cnt" style="text-align:center;padding:26px 10px">No hay notificaciones que coincidan.</div></div>';
+      $$(".aviso", $("#avLista")).forEach((b) => (b.onclick = () => {
+        const s = (db().sales || []).find((x) => x.vid === b.dataset.v);
+        if (s) openDetalle(s);
+      }));
+    };
+    pinta("");
+    const inp = $("#avq");
+    if (inp) inp.oninput = () => pinta(inp.value);
+    const fb = $("#avf"), fp = $("#avfp");
+    if (fb && fp) {
+      fb.onclick = (e) => { e.stopPropagation(); fp.hidden = !fp.hidden; };
+      $$("[data-e]", fp).forEach((b) => (b.onclick = () => {
+        avFiltro = b.dataset.e; fb.classList.toggle("on", !!avFiltro); fp.hidden = true;
+        pinta(inp ? inp.value : "");
+      }));
+    }
   }
 
   function go(t) {
@@ -2103,10 +2132,7 @@
 
       <h3 class="hx-h">Soporte directo</h3>
       <div class="hx-contact">
-        <div class="hx-ct"><span class="hx-ib">${I.wa}</span><div><b>WhatsApp</b><span>829-646-9885</span></div></div>
-        <div class="hx-ct"><span class="hx-ib">${I.mail}</span><div><b>Correo</b><span>domingoguerra688@gmail.com</span></div></div>
-        <div class="hx-ct"><span class="hx-ib">${I.clock}</span><div><b>Horario</b><span>Lun a Sab &middot; 8:00 AM a 8:00 PM</span></div></div>
-        <div class="hx-btns"><a href="https://wa.me/18296469885" target="_blank" rel="noopener" class="hx-b1">${I.wa} Escribir por WhatsApp</a><a href="mailto:domingoguerra688@gmail.com" class="hx-b2">${I.mail} Enviar correo</a></div>
+        <div class="hx-btns"><a href="https://wa.me/18296469885" target="_blank" rel="noopener" class="hx-b1">${I.wa} Escribir WhatsApp</a><a href="mailto:domingoguerra688@gmail.com" class="hx-b2">${I.mail} Enviar correo</a></div>
       </div>
       <p class="hx-foot">PediPOS &middot; Sistema de gestion de pedidos para colmados, mini markets y almacenes. Hecho para el comercio dominicano.</p>`;
 
@@ -2334,6 +2360,7 @@
 
   function renderConfig() {
     document.body.classList.add("config-view");
+    document.body.classList.toggle("config-sub", !!cfgSub);
     if (cfgSub) return pintarCfgSub(cfgSub);
     const st = db().settings, ses = db().session;
     const online = !!(window.PPSync && window.PPSync.state && window.PPSync.state.online);
@@ -2517,7 +2544,16 @@
     }
   }
 
+  /* Arranque estable: durante el primer segundo y medio se descartan los redibujos
+     repetidos con el mismo estado, que eran los que hacian "pestanear" la pantalla. */
+  const ARRANQUE = Date.now();
+  let _arranqueClave = "";
   function render() {
+    if (Date.now() - ARRANQUE < 1500) {
+      const k = tab + "|" + (sub ? sub.id : "") + "|" + JSON.stringify(db()).length;
+      if (k === _arranqueClave) return;
+      _arranqueClave = k;
+    }
     clearFab();
     /* el alto del encabezado se mide primero: el talonario arranca justo debajo */
     const tp0 = document.getElementById("top");

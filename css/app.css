@@ -2271,3 +2271,32 @@ body.focus .subv.conbarra .subv-h .ico.wa{margin-left:auto;flex:none}
   body.panel-view .tick{top:var(--pp-top,66px);padding-top:0}
   body.panel-view .tick .tick-h{padding-top:15px}
 }
+
+/* ============================================================
+   v2.8.1 · analitica completa, FAB mas abajo, buscador de avisos,
+   configuracion sin encabezado ni barra en subpantallas
+   ============================================================ */
+
+body.has-dock #float{bottom:calc(env(safe-area-inset-bottom) + 126px)}
+
+body.avisos-view main#view{padding-bottom:calc(env(safe-area-inset-bottom) + 96px)}
+.av-bar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;align-items:center;gap:8px;
+  width:min(100%,560px);margin:0 auto;padding:10px 14px calc(env(safe-area-inset-bottom) + 10px);
+  background:#fff;border-top:1.5px solid var(--line);box-shadow:0 -6px 18px #0000000f}
+.av-bar .search{flex:1;margin:0;height:44px}
+.av-bar .fbtn{margin-left:0;flex:none}
+
+body.config-sub #top,body.config-sub .dock,body.config-sub .act{display:none!important}
+body.config-sub main#view{padding-top:calc(env(safe-area-inset-top) + 10px)!important;padding-bottom:24px}
+body.config-sub .cfg-top{background:transparent;border-bottom:0;box-shadow:none;padding-left:0;padding-right:0;top:0}
+body.config-sub .cfg-top .subv-back{margin-left:-6px}
+
+.an-kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))!important;max-width:none;width:100%;
+  overflow:visible;align-items:stretch}
+.an-kpi{min-height:74px;overflow:visible;display:flex;flex-direction:column;justify-content:center}
+.an-kpi b{white-space:normal;overflow:visible;text-overflow:clip;font-size:18px;line-height:1.15;word-break:break-word}
+@media (max-width:767px){
+  .an-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px}
+  .an-kpi b{font-size:17px}
+  .an-kpi small{font-size:10px}
+}

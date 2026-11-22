@@ -175,6 +175,15 @@
   let cliVista = "compras";   /* compras | pagos */
   let pagoNuevo = "";         /* id del ultimo pago, para resaltar su tarjeta */
 
+  /* Fecha y hora cortas: 20/11/2026 a las 2:58 p. m. */
+  function fechaHora(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const f = d.toLocaleDateString("es-DO", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const h = d.toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit", hour12: true });
+    return f + " a las " + h;
+  }
+
   function pintarCliente(c) {
     const view = document.getElementById("view");
     const d = deudaDe(c.cid), vs = ventasDe(c.cid);
@@ -196,9 +205,9 @@
     const pagos = pagosDeCliente(c);
     const filaPago = (g) => `<div class="cx pago${g.id === pagoNuevo ? " nuevo" : ""}" role="button" tabindex="0" data-p="${esc(g.id)}">
         <div class="hi"><b>${Number(g.saldoDespues) > 0 ? "Abono registrado" : "Pago completo registrado"}</b>
-          <span>${new Date(g.fecha).toLocaleString("es-DO", { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+          <span>${fechaHora(g.fecha)}</span>
           ${g.nota ? `<span class="fpago">${esc(g.nota)}</span>` : ""}
-          ${typeof g.saldoDespues === "number" ? `<span class="fpago">Saldo despues: ${money(g.saldoDespues)}</span>` : ""}</div>
+          ${typeof g.saldoDespues === "number" ? `<span class="fpago">Saldo pendiente: ${money(g.saldoDespues)}</span>` : ""}</div>
         <b class="green">-${money(g.monto)}</b></div>`;
     const listaHTML = () => cliVista === "compras"
       ? (vs.length ? `<div class="cx-list">${vs.map(fila).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>')
