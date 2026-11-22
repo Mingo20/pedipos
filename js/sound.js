@@ -15,7 +15,13 @@
     } catch (_) { return null; }
   }
 
+  let ultimoTock = 0;
   function tock() {
+    /* el mismo toque puede llegar desde el listener global y desde el codigo:
+       se ignora el segundo disparo para que suene una sola vez */
+    const ahora = Date.now();
+    if (ahora - ultimoTock < 70) return;
+    ultimoTock = ahora;
     const c = audio();
     if (!c) return;
     const t = c.currentTime;

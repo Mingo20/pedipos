@@ -2452,6 +2452,14 @@
     if (tipo === "sync") {
       $("#view").innerHTML = `<div class="cfg-panel">
         ${cfgCabecera("Sincronizacion", "Conexion con la nube")}
+        <div class="card"><h3>Donde se guardan las facturas</h3>
+          <p class="cnt" style="font-size:12.5px;margin:0 0 10px">Elige la nube donde PediPOS archiva tus comprobantes electronicos.</p>
+          <div class="pp-switch" id="ppDest">
+            <button class="pp-opt" data-n="google">Google Drive</button>
+            <button class="pp-opt" data-n="puter">Puter Drive</button>
+          </div>
+          <p class="cnt" style="font-size:11.5px;margin:8px 0 0" id="ppDestTxt"></p>
+        </div>
         <div class="card"><h3>Sincronizacion</h3><div class="cnt" id="syn"></div>
           <button class="btn sec" id="sy">Sincronizar ahora</button></div>
         ${cfgPie()}</div>`;
@@ -2459,6 +2467,21 @@
       const paint = () => ($("#syn") && ($("#syn").textContent = (window.PPSync.state.online ? "Conectado" : "Sin conexion") + " · " + window.PPSync.state.pending + " pendiente(s)"));
       paint();
       $("#sy").onclick = async () => { await window.PPSync.flush(); await window.PPSync.pull(); paint(); toast("Sincronizado"); };
+      /* donde se guardan las facturas */
+      const pintaDestino = () => {
+        const d = window.PPNube ? window.PPNube.destino() : "google";
+        $$("#ppDest .pp-opt").forEach((b) => b.classList.toggle("on", b.dataset.n === d));
+        const t = $("#ppDestTxt");
+        if (t) t.textContent = d === "puter"
+          ? "Las facturas se guardan en tu propia nube de Puter, en la carpeta PediPOS/facturas."
+          : "Las facturas se guardan en tu Google Drive cuando la sincronizacion esta conectada.";
+      };
+      $$("#ppDest .pp-opt").forEach((b) => (b.onclick = () => {
+        if (!window.PPNube) return;
+        window.PPNube.setDestino(b.dataset.n);
+        pintaDestino(); toast("Facturas en " + (b.dataset.n === "puter" ? "Puter Drive" : "Google Drive"));
+      }));
+      pintaDestino();
       return;
     }
 
@@ -2485,6 +2508,7 @@
   const MC_A_USD = 1e8;                       /* 1,000,000 microcentavos = 0.01 USD */
   const usd = (mc) => "$" + (Number(mc || 0) / MC_A_USD).toFixed(2);
   function pintarUsoIA() {
+    if (window.PPConsumo) { window.PPConsumo.render($("#view")); return; }
     $("#view").innerHTML = `<div class="cfg-panel">
       ${cfgCabecera("Uso de IA", "Consumo mensual en Puter")}
       <div class="card" id="iaCaja"><p class="cnt">Leyendo tu consumo en Puter...</p></div>
@@ -2729,7 +2753,7 @@
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno en el navegador. Tus ventas ya estan a salvo."));
   window.render = render; window.toast = toast; window.go = go;
   window.PPMic = { bloquear: bloquearGrabacionGesto, activar: activarManosLibres, desactivar: desactivarManosLibres, estado: () => ({ ...MIC }) };
-  window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
+  window.PPUI = { volverConfig: () => { cfgSub = null; renderConfig(); }, sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
 
   /* Sonido del sistema en toda accion: botones, tarjetas, iconos y accesos. */
   (function sonidoGlobal() {
@@ -2754,6 +2778,7 @@
     e.stopPropagation();          /* evita que el mismo toque cuente dos veces */
     window.PPImprimirTicket();
   }, true);
+  if (window.PPNube) window.PPNube.engancharContador();
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
   /* las ventas viven en IndexedDB: se cargan al arrancar y se repinta con ellas */
   if (window.PPStore && window.PPStore.hydrate) window.PPStore.hydrate().then(() => {
