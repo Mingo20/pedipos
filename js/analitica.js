@@ -204,7 +204,9 @@
       ["ITBIS", money(itbis), "impuesto generado", null],
       ["A credito", money(credito), "pendiente de cobro", null],
       ["Ganancias", money(Math.round(ganancia)), "venta menos costo", null],
-      ["Inventario", money(Math.round(inventario)), "valor a costo", null]
+      ["Inventario", money(Math.round(inventario)), "valor a costo", null],
+      ["Ticket promedio", money(Math.round(promedio)), "por venta", null],
+      ["Clientes", String(Object.keys(clientes).length), "atendidos", null]
     ];
 
     view.innerHTML =

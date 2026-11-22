@@ -96,3 +96,13 @@
 .ecf-emi{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:4px 0 10px;
   font-size:11px;color:#5A6779;background:#F7F9FC;border-radius:9px;padding:8px 10px}
 .ecf-emi b{color:#0B2545;letter-spacing:.4px}
+
+/* --- v2.8.0: KPIs de analitica centrados y un poco mas anchos --- */
+.an-kpis{justify-content:center;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));
+  max-width:1320px;margin:0 auto 14px}
+.an-kpi{text-align:center;padding:14px 16px}
+.an-kpi small,.an-kpi b,.an-kpi span{text-align:center}
+.an-kpi b{margin-left:auto;margin-right:auto}
+@media (min-width:1024px){
+  .an-kpis{grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:12px}
+}

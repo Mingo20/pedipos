@@ -140,6 +140,33 @@
         .then(function (ok) { if (ok) marcar("cobros"); }));
     }
 
+    /* pagos a suplidores: avisa un dia antes y el dia limite */
+    (function () {
+      var S = window.PPStore; if (!S || !S.db) return;
+      var base = new Date(); base.setHours(0, 0, 0, 0);
+      var fmt = function (n) { return "RD$" + (Number(n) || 0).toLocaleString("es-DO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+      var lista = [];
+      (S.db.providers || []).forEach(function (p) {
+        (p.compras || []).forEach(function (c) {
+          var debe = (Number(c.total) || 0) - (Number(c.pagado) || 0);
+          if (debe <= 0.001 || !c.fecha_pago) return;
+          var f = new Date(String(c.fecha_pago) + "T00:00:00");
+          if (isNaN(f.getTime())) return;
+          var dif = Math.round((f - base) / 86400000);
+          if (dif === 0 || dif === 1) lista.push({ dif: dif, p: p, c: c, debe: debe });
+        });
+      });
+      lista.forEach(function (x) {
+        var k = "prov-" + x.c.id + "-" + x.dif;
+        if (yaHoy(k)) return;
+        var txt = x.dif === 0
+          ? "Hoy vence el pago a " + x.p.nombre + " por " + fmt(x.debe) + "."
+          : "Manana vence el pago a " + x.p.nombre + " por " + fmt(x.debe) + ".";
+        tareas.push(mostrar("Pago a suplidor", txt + " Toca para abrirlo.", k, "proveedores")
+          .then(function (ok) { if (ok) marcar(k); }));
+      });
+    })();
+
     tareas.push(rechazados().then(function (rs) {
       if (!rs.length || yaHoy("rechazos")) return;
       return mostrar("Comprobante rechazado", rs.length + " comprobante(s) con problema. Corrigelo antes de seguir emitiendo.", "rechazos", "fiscal")

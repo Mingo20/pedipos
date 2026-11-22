@@ -2217,3 +2217,57 @@ body.config-view main#view{display:block}
 .ia-api{display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:12.5px;border-bottom:1px dashed var(--line)}
 .ia-api:last-child{border-bottom:0}
 .ia-api span{color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ============================================================
+   v2.8.0 · KPIs deslizables, cabecera sin fondo blanco,
+   filtro a la derecha, transiciones suaves y panel sin margen
+   ============================================================ */
+
+/* --- fila de KPIs de cantidad variable: en PC se reparten, en movil se deslizan --- */
+.kpis.din{grid-template-columns:repeat(auto-fit,minmax(124px,1fr))}
+.kpis.din .kpi{padding:16px 12px;text-align:center}
+.kpis.din .kpi b{font-size:21px}
+.kpis.din .kpi small{font-size:12px}
+@media (min-width:1024px){
+  .kpis.din{grid-template-columns:repeat(auto-fit,minmax(152px,1fr))}
+}
+@media (max-width:767px){
+  .kpis.din{
+    display:flex;flex-wrap:nowrap;gap:10px;
+    overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+    padding:2px 10px 8px;margin:0 0 12px!important;
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .kpis.din::-webkit-scrollbar{display:none;height:0}
+  .kpis.din .kpi{flex:0 0 auto;min-width:138px;scroll-snap-align:start;padding:14px 12px}
+  .kpis.din .kpi b{font-size:19px}
+  .kpis.din .kpi small{font-size:11px;letter-spacing:.04em}
+}
+
+/* --- el boton de filtro siempre pegado a la esquina derecha --- */
+.searchrow .fbtn{margin-left:auto}
+.stickbar .searchrow{justify-content:space-between}
+.stickbar .searchrow .search{max-width:none;flex:1 1 auto}
+
+/* --- detalle de cliente y suplidor: la cabecera pierde el fondo blanco --- */
+body.focus .subv.conbarra .subv-h{
+  background:var(--bg,#F4F6F8);border-bottom:0;box-shadow:none;
+  padding-left:6px;padding-right:6px;
+}
+body.focus .subv.conbarra .subv-h .subv-back{margin-left:0}
+body.focus .subv.conbarra .subv-h .subv-tt{text-align:left}
+body.focus .subv.conbarra .subv-h .subv-tt b{font-size:17.5px}
+body.focus .subv.conbarra .subv-h .ico.wa{margin-left:auto;flex:none}
+
+/* --- transicion suave entre ventas/compras y pagos --- */
+#cxCaja,#movCaja{transition:opacity .13s ease,transform .13s ease}
+#cxCaja.cambiando,#movCaja.cambiando{opacity:0;transform:translateY(8px)}
+#cxCaja.entrando,#movCaja.entrando{animation:cxEntra .28s cubic-bezier(.22,.9,.3,1) both}
+@keyframes cxEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* --- panel de venta: el talonario sube hasta la esquina interior --- */
+@media (min-width:768px){
+  body.panel-view .tick{top:var(--pp-top,66px);padding-top:0}
+  body.panel-view .tick .tick-h{padding-top:15px}
+}

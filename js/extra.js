@@ -43,6 +43,20 @@
   let cliFiltro = "";   /* "", "debe", "aldia" */
   let provFiltro = "";
 
+  /* Clientes con un credito que vence entre hoy y los proximos N dias. */
+  function porVencer(dias) {
+    const base = new Date(); base.setHours(0, 0, 0, 0);
+    const lim = new Date(base.getTime() + (dias || 7) * 86400000);
+    const ids = new Set();
+    (db().sales || []).forEach((v) => {
+      if (v.metodo !== "credito" || v.pagada || !v.fecha_pago || !v.cliente_id) return;
+      const f = new Date(String(v.fecha_pago) + "T00:00:00");
+      if (isNaN(f.getTime())) return;
+      if (f >= base && f <= lim) ids.add(v.cliente_id);
+    });
+    return ids.size;
+  }
+
   function renderClientes() {
     const view = document.getElementById("view");
     if (sub && sub.tipo === "cliente") {
@@ -67,9 +81,11 @@
           <button class="fopt" data-e="aldia">Al dia ${window.PPUI.I.check}</button>
         </div>
       </div>
-      <div class="kpis" style="margin-bottom:12px">
+      <div class="kpis din">
         <div class="kpi"><small>Por cobrar</small><b>${money(total)}</b></div>
+        <div class="kpi"><small>Clientes</small><b>${list.length}</b></div>
         <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
+        <div class="kpi"><small>Por vencer</small><b>${porVencer(7)}</b></div>
       </div>
       <div id="cl2"></div>`;
 
@@ -164,6 +180,11 @@
     const d = deudaDe(c.cid), vs = ventasDe(c.cid);
     const comprado = vs.reduce((x, v) => x + (Number(v.total) || 0), 0);
     const pagado = pagosDeCliente(c).reduce((x, g) => x + (Number(g.monto) || 0), 0);
+    const hoyMes = new Date();
+    const esteMes = vs.filter((v) => {
+      const f = new Date(v.fecha);
+      return f.getMonth() === hoyMes.getMonth() && f.getFullYear() === hoyMes.getFullYear();
+    }).reduce((x, v) => x + (Number(v.total) || 0), 0);
     const fila = (v) => {
       const cred = v.metodo === "credito";
       return `<div class="cx" role="button" tabindex="0" data-v="${esc(v.vid || "")}">
@@ -179,6 +200,9 @@
           ${g.nota ? `<span class="fpago">${esc(g.nota)}</span>` : ""}
           ${typeof g.saldoDespues === "number" ? `<span class="fpago">Saldo despues: ${money(g.saldoDespues)}</span>` : ""}</div>
         <b class="green">-${money(g.monto)}</b></div>`;
+    const listaHTML = () => cliVista === "compras"
+      ? (vs.length ? `<div class="cx-list">${vs.map(fila).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>')
+      : (pagos.length ? `<div class="cx-list">${pagos.map(filaPago).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin pagos registrados.</p>');
     window.PPUI.clearFab();
     document.body.classList.add("focus");   /* sin encabezado ni barra inferior */
     const dir = c.direccion || "Sin direccion registrada";
@@ -188,23 +212,21 @@
         <div class="subv-tt"><b>${esc(c.nombre)}</b><span>${esc(dir)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="kpis kpi2">
+      <div class="kpis din">
         <div class="kpi"><small>Comprado</small><b>${money(comprado)}</b></div>
+        <div class="kpi"><small>Este mes</small><b>${money(esteMes)}</b></div>
+        <div class="kpi"><small>Debe</small><b style="color:${d > 0 ? "#B3261E" : "#0B6B45"}">${money(d)}</b></div>
         <div class="kpi"><small>Pagado</small><b style="color:#0B6B45">${money(pagado)}</b></div>
       </div>
       <div class="subv-duo">
         ${d > 0 ? `<button class="btn sec mini2 conic" id="svPay">${window.PPUI.I.wallet}<span>Registrar pago</span></button>` : ""}
-        <button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.chart}<span>Deuda</span></button>
+        ${d > 0 ? `<button class="btn sec mini2 conic" id="svCorte">${window.PPUI.I.chart}<span>Estado cuenta</span></button>` : ""}
       </div>
       <div class="seg2" id="segCli">
         <button class="sg ${cliVista === "compras" ? "on" : ""}" data-t="compras">VENTAS (${vs.length})</button>
         <button class="sg ${cliVista === "pagos" ? "on" : ""}" data-t="pagos">PAGOS (${pagos.length})</button>
       </div>
-      <div id="cxCaja">
-      ${cliVista === "compras"
-        ? (vs.length ? `<div class="cx-list">${vs.map(fila).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin compras registradas.</p>')
-        : (pagos.length ? `<div class="cx-list">${pagos.map(filaPago).join("")}</div>` : '<p class="cnt" style="padding:10px 14px">Sin pagos registrados.</p>')}
-      </div>
+      <div id="cxCaja">${listaHTML()}</div>
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">${I.edit}<span>Editar cliente</span></button></div>`;
     animarSub = false; view.scrollTop = 0;
@@ -213,7 +235,8 @@
     $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
     $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     $("#svEdit").onclick = () => editarCliente(c);
-    $("#svCorte").onclick = () => estadoCuenta(c);
+    const corte = $("#svCorte");
+    if (corte) corte.onclick = () => estadoCuenta(c);
     const pay = $("#svPay");
     if (pay) pay.onclick = () => abonar(c);
     /* una sola escucha para compras y pagos */
@@ -231,8 +254,18 @@
       }
     };
     $$("#segCli .sg").forEach((b) => (b.onclick = () => {
+      if (cliVista === b.dataset.t) return;
       cliVista = b.dataset.t;
-      pintarCliente(c);
+      $$("#segCli .sg").forEach((x) => x.classList.toggle("on", x.dataset.t === cliVista));
+      const caja = $("#cxCaja");
+      if (!caja) return;
+      caja.classList.add("cambiando");
+      setTimeout(() => {
+        caja.innerHTML = listaHTML();
+        caja.classList.remove("cambiando");
+        caja.classList.add("entrando");
+        setTimeout(() => caja.classList.remove("entrando"), 300);
+      }, 130);
     }));
   }
 
@@ -322,7 +355,7 @@
     const neg = db().settings.negocio || "Mi negocio";
     const hora = (f) => new Date(f).toLocaleTimeString("es-DO", { hour: "numeric", minute: "2-digit" });
     const filas = d.incl.map((s) => `<div class="ec-f"><div><b>${fmtF(s.fecha)}</b><span>${hora(s.fecha)}</span></div><b class="red">${money2(s.total)}</b></div>`).join("");
-    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.chart}</span>Estado de deuda</h2><button class="sh-x" data-x>${I.xDown}</button></div>
+    const s = sheetCliente(`<div class="sh-h compacta ec-h"><h2><span class="hi">${I.chart}</span>Estado de cuenta</h2><button class="sh-x" data-x>${I.xDown}</button></div>
       <div class="ec-body">
         <div class="ec-tot"><small>TOTAL A PAGAR</small><b>${money2(d.total)}</b>
           ${d.refPago ? `<span>Fecha de pago: ${new Date(d.refPago + "T12:00:00").toLocaleDateString("es-DO")}</span>` : ""}</div>
@@ -510,8 +543,9 @@
           <button class="fopt" data-e="aldia">Al dia ${window.PPUI.I.check}</button>
         </div>
       </div>
-      <div class="kpis" style="margin-bottom:12px">
+      <div class="kpis din">
         <div class="kpi"><small>Por pagar</small><b>${money(debeTotal)}</b></div>
+        <div class="kpi"><small>Suplidores</small><b>${list.length}</b></div>
         <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
       </div>
       <div id="pl2"></div>`;
@@ -562,6 +596,13 @@
   function pintarProveedor(p) {
     const view = document.getElementById("view");
     const s0 = saldoProv(p);
+    const hoyP = new Date();
+    const comprasMes = comprasDe(p).filter((c) => {
+      const f = new Date(c.fecha);
+      return f.getMonth() === hoyP.getMonth() && f.getFullYear() === hoyP.getFullYear();
+    });
+    const montoMes = comprasMes.reduce((x, c) => x + (Number(c.total) || 0), 0);
+    const creditoMes = comprasMes.filter((c) => (Number(c.total) || 0) - (Number(c.pagado) || 0) > 0.001).length;
     const mov = [
       ...comprasDe(p).map((c) => ({ t: c.fecha, tipo: "compra", x: c })),
       ...pagosDe(p).map((g) => ({ t: g.fecha, tipo: "pago", x: g })),
@@ -577,6 +618,8 @@
           <span>${new Date(m.t).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${compra ? (pend > 0 ? " &middot; debe " + money(pend) : " &middot; pagada") : ""}</span></div>
         <b class="${compra ? (pend > 0 ? "red" : "") : "green"}">${compra ? "-" + money(m.x.total) : "+" + money(m.x.monto)}</b></div>`;
     };
+    const listaHTML = () => lista.length ? lista.map((m) => fila(m, mov.indexOf(m))).join("")
+      : `<p class="cnt" style="padding:10px 14px">${provVista === "compra" ? "Sin compras registradas." : "Sin pagos registrados."}</p>`;
     window.PPUI.clearFab();
     document.body.classList.add("focus");
     const contacto = p.contacto || p.whatsapp || p.telefono || "Sin contacto";
@@ -586,8 +629,10 @@
         <div class="subv-tt"><b>${esc(p.nombre)}</b><span>${esc(contacto)}</span></div>
         <button class="ico wa" id="svWa" aria-label="WhatsApp">${window.PPUI.I.wa}</button>
       </div>
-      <div class="kpis kpi2">
+      <div class="kpis din">
         <div class="kpi"><small>Comprado</small><b>${money(s0.comprado)}</b></div>
+        <div class="kpi"><small>Este mes</small><b>${money(montoMes)}</b></div>
+        <div class="kpi"><small>Credito del mes</small><b>${creditoMes}</b></div>
         <div class="kpi"><small>Debe</small><b style="color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
       <div class="subv-duo">
@@ -598,9 +643,7 @@
         <button class="sg ${provVista === "compra" ? "on" : ""}" data-t="compra">COMPRAS (${nCompras})</button>
         <button class="sg ${provVista === "pago" ? "on" : ""}" data-t="pago">PAGOS (${nPagos})</button>
       </div>
-      <div id="movCaja">
-        ${lista.length ? lista.map((m) => fila(m, mov.indexOf(m))).join("") : `<p class="cnt" style="padding:10px 14px">${provVista === "compra" ? "Sin compras registradas." : "Sin pagos registrados."}</p>`}
-      </div>
+      <div id="movCaja">${listaHTML()}</div>
     </div>
     <div class="subv-foot"><button class="btn sec" id="svEdit">${I.edit}<span>Editar suplidor</span></button></div>`;
     animarSub = false; view.scrollTop = 0;
@@ -614,7 +657,20 @@
       const m = mov[Number(el.dataset.mov)];
       if (m) verMovimiento(p, m);
     };
-    $$("#segProv .sg").forEach((b) => (b.onclick = () => { provVista = b.dataset.t; pintarProveedor(p); }));
+    $$("#segProv .sg").forEach((b) => (b.onclick = () => {
+      if (provVista === b.dataset.t) return;
+      provVista = b.dataset.t;
+      $$("#segProv .sg").forEach((x) => x.classList.toggle("on", x.dataset.t === provVista));
+      const caja = $("#movCaja");
+      if (!caja) return;
+      caja.classList.add("cambiando");
+      setTimeout(() => {
+        caja.innerHTML = listaHTML();
+        caja.classList.remove("cambiando");
+        caja.classList.add("entrando");
+        setTimeout(() => caja.classList.remove("entrando"), 300);
+      }, 130);
+    }));
     $("#svCompra").onclick = () => registrarCompra(p);
     $("#svEdit").onclick = () => editarProveedor(p);
     const pg = $("#svPago");
@@ -681,6 +737,7 @@
         <option value="credito">A credito (queda debiendo)</option>
         <option value="contado">Al contado (pagada)</option>
       </select></label>
+      <label class="field"><span>Fecha de pago (vencimiento)</span><input id="cfp" type="date"></label>
       ${pend > 0 ? `<p class="cnt" style="margin-top:-4px">Saldo anterior: ${money(pend)}</p>` : ""}
       <button class="btn" id="okc">Registrar compra</button>`);
     s.querySelector("[data-x]").onclick = closeSheet;
@@ -692,6 +749,7 @@
         id: S.uid("CP"), fecha: new Date().toISOString(),
         concepto: s.querySelector("#cc").value.trim() || "Compra",
         total: S.round2(monto), pagado: tipo === "contado" ? S.round2(monto) : 0,
+        fecha_pago: tipo === "credito" ? (s.querySelector("#cfp").value || "") : "",
       };
       p.compras = comprasDe(p); p.compras.push(c);
       S.save(); window.PPSync.saveProveedor(p);

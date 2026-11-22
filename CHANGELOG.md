@@ -2,6 +2,24 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.8.0] - 2026-11-22
+
+### Añadido
+- **Clientes**: la fila de KPIs suma total de clientes y clientes con credito por vencer (proximos 7 dias); en movil la fila se desliza de lado a lado.
+- **Detalle del cliente**: nuevas tarjetas Este mes y Debe; la fila de KPIs tambien se desliza en movil.
+- **Suplidores**: nueva tarjeta con el total de suplidores y fila de KPIs deslizable en movil.
+- **Detalle del suplidor**: tarjetas de compra del mes y compras a credito del mes; campo Fecha de pago (vencimiento) en Nueva compra, guardado en la compra.
+- **Aviso de pago a suplidor**: notificacion un dia antes y el dia limite de cada compra a credito con vencimiento.
+- **Analitica**: dos KPIs nuevos (ticket promedio y clientes atendidos), contenido centrado y tarjetas un poco mas anchas.
+
+### Cambiado
+- El boton Deuda pasa a llamarse Estado cuenta y la ventana modal Estado de deuda pasa a Estado de cuenta; el boton se oculta cuando el cliente esta al dia.
+- Cambiar entre Ventas y Pagos (y entre Compras y Pagos) ya no repinta la pantalla: solo cambia la lista con una transicion suave.
+- La cabecera del detalle de cliente y de suplidor pierde el fondo blanco; nombre y direccion a la izquierda y WhatsApp a la derecha.
+- El boton de filtro queda pegado a la esquina derecha en clientes y suplidores.
+- En PC, el talonario del panel de venta sube hasta la esquina interior: se quito el margen superior sobrante.
+- Cache del service worker a `pedipos-v113`.
+
 ## [2.7.0] - 2026-11-21
 
 ### Añadido
