@@ -540,6 +540,11 @@
     const list = db().providers || [];
     const debeTotal = list.reduce((s, p) => s + Math.max(0, saldoProv(p).debe), 0);
     const conDeuda = list.filter((p) => saldoProv(p).debe > 0).length;
+    const mesHoy = new Date();
+    const compradoMes = list.reduce((acc, p) => acc + comprasDe(p).filter((c) => {
+      const f = new Date(c.fecha);
+      return f.getMonth() === mesHoy.getMonth() && f.getFullYear() === mesHoy.getFullYear();
+    }).reduce((x, c) => x + (Number(c.total) || 0), 0), 0);
     view.innerHTML = `
       <div class="stickbar">
         <div class="searchrow">
@@ -556,6 +561,7 @@
         <div class="kpi"><small>Por pagar</small><b>${money(debeTotal)}</b></div>
         <div class="kpi"><small>Suplidores</small><b>${list.length}</b></div>
         <div class="kpi"><small>Con deuda</small><b>${conDeuda}</b></div>
+        <div class="kpi"><small>Del mes</small><b>${money(compradoMes)}</b></div>
       </div>
       <div id="pl2"></div>`;
     const draw = (f = "") => {
@@ -642,7 +648,7 @@
         <div class="kpi"><small>Comprado</small><b>${money(s0.comprado)}</b></div>
         <div class="kpi"><small>Este mes</small><b>${money(montoMes)}</b></div>
         <div class="kpi"><small>Credito del mes</small><b>${creditoMes}</b></div>
-        <div class="kpi"><small>Debe</small><b style="color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
+        <div class="kpi"><small>Le debe</small><b style="color:${s0.debe > 0 ? "#B3261E" : "#0B6B45"}">${money(s0.debe)}</b></div>
       </div>
       <div class="subv-duo">
         <button class="btn sec mini2 conic" id="svCompra">${window.PPUI.I.cart}<span>Nueva compra</span></button>

@@ -2546,13 +2546,18 @@
 
   /* Arranque estable: durante el primer segundo y medio se descartan los redibujos
      repetidos con el mismo estado, que eran los que hacian "pestanear" la pantalla. */
-  const ARRANQUE = Date.now();
-  let _arranqueClave = "";
+  /* Arranque estable: descarta redibujos repetidos del mismo estado durante
+     el primer segundo y medio. Nunca deja la pantalla vacia: si la vista no
+     tiene contenido, siempre dibuja. */
+  var _arranque = 0, _arranqueClave = "";
   function render() {
-    if (Date.now() - ARRANQUE < 1500) {
-      const k = tab + "|" + (sub ? sub.id : "") + "|" + JSON.stringify(db()).length;
-      if (k === _arranqueClave) return;
-      _arranqueClave = k;
+    var ahora = Date.now();
+    if (!_arranque) _arranque = ahora;
+    var vv = document.getElementById("view");
+    if (ahora - _arranque < 1500 && vv && vv.children.length) {
+      var kk = tab + "|" + (sub ? sub.id : "") + "|" + JSON.stringify(db()).length;
+      if (kk === _arranqueClave) return;
+      _arranqueClave = kk;
     }
     clearFab();
     /* el alto del encabezado se mide primero: el talonario arranca justo debajo */
@@ -2725,6 +2730,20 @@
   window.render = render; window.toast = toast; window.go = go;
   window.PPMic = { bloquear: bloquearGrabacionGesto, activar: activarManosLibres, desactivar: desactivarManosLibres, estado: () => ({ ...MIC }) };
   window.PPUI = { sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
+
+  /* Sonido del sistema en toda accion: botones, tarjetas, iconos y accesos. */
+  (function sonidoGlobal() {
+    var ultimo = 0;
+    var SEL = "button, [role=button], a, .cfg-card, .clrow, .cx, .kpi, .aviso, .fbtn, .subv-back, .sh-x, .fopt, .pcard, .tile, .an-kpi, .dock button";
+    document.addEventListener("click", function (e) {
+      var t = e.target && e.target.closest ? e.target.closest(SEL) : null;
+      if (!t || t.disabled) return;
+      var ahora = Date.now();
+      if (ahora - ultimo < 70) return;
+      ultimo = ahora;
+      try { if (window.PPSound && window.PPSound.tock) window.PPSound.tock(); } catch (_) {}
+    }, true);
+  })();
   $("#btnMenu").onclick = openMenu;
   $("#btnBell").onclick = () => { marcarLeidos(); go("avisos"); };
   /* respaldo del boton imprimir: funciona aunque el modal se haya vuelto a dibujar */

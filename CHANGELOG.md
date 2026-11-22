@@ -2,6 +2,19 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.8.2] - 2026-11-22
+
+### Corregido
+- **Pantalla en blanco al iniciar sesion**: la guarda de arranque de la 2.8.1 se ejecutaba antes de declarar su estado y rompia el primer dibujo. Ahora usa variables izadas, se inicializa en la primera llamada y nunca descarta un dibujo si la vista esta vacia.
+- **Analitica**: la fila de KPIs recupera el comportamiento responsivo y deslizable (desliza en movil, rejilla centrada en PC) y las 7 tarjetas quedan visibles.
+
+### Anadido
+- **Suplidores**: nueva tarjeta de KPI "Del mes" con el monto comprado en el mes actual.
+- **Sonido del sistema**: un solo listener global hace sonar el tock del sistema en cualquier boton, tarjeta, icono o acceso, con filtro de 70 ms para no duplicar el sonido cuando el boton ya lo emite.
+
+### Cambiado
+- **Detalle del suplidor**: la tarjeta "Debe" pasa a llamarse "Le debe".
+
 ## [2.8.1] - 2026-11-22
 
 ### Corregido

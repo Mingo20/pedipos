@@ -106,3 +106,18 @@
 @media (min-width:1024px){
   .an-kpis{grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:12px}
 }
+
+
+/* --- v2.8.2: KPIs de analitica responsivos y deslizables --- */
+@media (max-width:767px){
+  .an-kpis{display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;
+    max-width:none;width:100%;scrollbar-width:none;-ms-overflow-style:none}
+  .an-kpis::-webkit-scrollbar{display:none}
+  .an-kpi{flex:0 0 auto;min-width:152px;scroll-snap-align:start}
+}
+@media (min-width:768px){
+  .an-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;
+    max-width:1320px;margin:0 auto 14px;justify-content:center;overflow:visible}
+  .an-kpi{min-width:0}
+}
