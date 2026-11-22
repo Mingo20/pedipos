@@ -2455,10 +2455,13 @@
         <div class="card"><h3>Donde se guardan las facturas</h3>
           <p class="cnt" style="font-size:12.5px;margin:0 0 10px">Elige la nube donde PediPOS archiva tus comprobantes electronicos.</p>
           <div class="pp-switch" id="ppDest">
-            <button class="pp-opt" data-n="google">Google Drive</button>
-            <button class="pp-opt" data-n="puter">Puter Drive</button>
+            <button class="pp-opt on" data-n="puter">Puter Drive</button>
           </div>
           <p class="cnt" style="font-size:11.5px;margin:8px 0 0" id="ppDestTxt"></p>
+        </div>
+        <div class="card"><h3>Facturas guardadas</h3>
+          <p class="cnt" style="font-size:12.5px;margin:0 0 10px">Abre la carpeta de facturas en tu nube, organizada por ano y mes.</p>
+          <a class="btn sec" href="https://puter.com/dashboard#files" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Ver facturas</a>
         </div>
         <div class="card"><h3>Sincronizacion</h3><div class="cnt" id="syn"></div>
           <button class="btn sec" id="sy">Sincronizar ahora</button></div>

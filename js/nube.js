@@ -17,11 +17,11 @@
   function ajustes() {
     var d = db();
     d.settings = d.settings || {};
-    d.settings.nube = d.settings.nube || { destino: "google" };
+    d.settings.nube = d.settings.nube || { destino: "puter" };
     return d.settings.nube;
   }
-  function destino() { return ajustes().destino || "google"; }
-  function setDestino(v) { ajustes().destino = (v === "puter" ? "puter" : "google"); S.save(); }
+  function destino() { return "puter"; }
+  function setDestino() { ajustes().destino = "puter"; S.save(); }
 
   /* ---------- contador de llamadas por modelo ---------- */
   function ia() {
@@ -64,7 +64,11 @@
     if (donde === "puter") {
       var P = global.puter;
       if (!P || !P.fs) throw new Error("Puter no esta disponible");
-      var ruta = "PediPOS/facturas/" + nombre;
+      var f = new Date();
+      var anio = String(f.getFullYear()), mes = ("0" + (f.getMonth() + 1)).slice(-2);
+      var carpeta = "PediPOS/facturas/" + anio + "/" + mes;
+      try { await P.fs.mkdir(carpeta, { createMissingParents: true }); } catch (e) {}
+      var ruta = carpeta + "/" + nombre;
       await P.fs.write(ruta, contenido, { createMissingParents: true });
       return { ok: true, destino: "puter", ruta: ruta };
     }
@@ -91,15 +95,51 @@
     return b + " B";
   }
 
-  async function usoAlmacenamiento(P) {
+  async function tamanoCarpeta(P, ruta) {
+    var total = 0;
     try {
-      if (P.fs && typeof P.fs.usage === "function") {
-        var u = await P.fs.usage();
-        return { usado: Number(u.used || u.usage || 0), total: Number(u.total || u.capacity || 0) || null };
+      var items = await P.fs.readdir(ruta);
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i], p = ruta + "/" + it.name;
+        if (it.is_dir || it.isDir) total += await tamanoCarpeta(P, p);
+        else {
+          try { var st = await P.fs.stat(p, { return_size: true }); total += Number((st && st.size) || 0); } catch (e) {}
+        }
       }
-      var st = await P.fs.stat("PediPOS");
-      return { usado: Number((st && st.size) || 0), total: null };
-    } catch (e) { return null; }
+    } catch (e) {}
+    return total;
+  }
+
+  async function usoAlmacenamiento(P) {
+    var usado = 0, total = null;
+    /* capacidad de la cuenta: se prueban las vias que expone Puter */
+    var intentos = [
+      function () { return P.fs.usage && P.fs.usage(); },
+      function () { return P.fs.getUsage && P.fs.getUsage(); },
+      function () { return P.auth.getStorageUsage && P.auth.getStorageUsage(); }
+    ];
+    for (var i = 0; i < intentos.length; i++) {
+      try {
+        var u = await intentos[i]();
+        if (u) {
+          usado = Number(u.used || u.usage || u.usedBytes || 0) || usado;
+          total = Number(u.total || u.capacity || u.quota || u.limit || 0) || total;
+          if (total) break;
+        }
+      } catch (e) {}
+    }
+    /* lo que ocupa realmente PediPOS, sumando la carpeta de facturas */
+    var propio = await tamanoCarpeta(P, "PediPOS");
+    if (!usado) usado = propio;
+    if (!total) {
+      try {
+        var mu = await P.auth.getMonthlyUsage();
+        var al = (mu && mu.allowanceInfo) || {};
+        total = Number(al.storageAllowance || al.storageTotal || 0) || null;
+        if (!usado) usado = Number(al.storageUsed || 0) || 0;
+      } catch (e) {}
+    }
+    return { usado: usado, total: total, propio: propio };
   }
 
   function htmlVacio(msg, boton) {
@@ -141,11 +181,13 @@
       if (!caja) return;
       caja.hidden = false;
       caja.innerHTML = '<div class="pp-frame-h"><b>Planes de Puter</b><button class="pp-x" id="ppCerrar">Cerrar</button></div>' +
-        '<iframe src="https://puter.com/dashboard" title="Planes de Puter" referrerpolicy="no-referrer"></iframe>' +
-        '<p class="cnt" style="font-size:11.5px;margin:8px 0 0">Si el panel no carga aqui, usa <a href="https://puter.com/dashboard" target="_blank" rel="noopener">abrir en una ventana</a>.</p>';
+        '<iframe src="https://puter.com/dashboard#billing" title="Planes de Puter" referrerpolicy="no-referrer"></iframe>' +
+        '<p class="cnt" style="font-size:11.5px;margin:8px 0 0">Si el panel no carga aqui, usa <a href="https://puter.com/dashboard#billing" target="_blank" rel="noopener">abrir en una ventana</a>.</p>';
       var c = $("#ppCerrar", caja); if (c) c.onclick = function () { caja.hidden = true; };
       caja.scrollIntoView({ behavior: "smooth", block: "nearest" });
     };
+    var ver = $("#ppVerFac", view);
+    if (ver) ver.onclick = function () { window.open("https://puter.com/dashboard#files", "_blank", "noopener"); };
     var upd = $("#ppUpd", view);
     if (upd) upd.onclick = function () { render(view); };
   }
@@ -184,6 +226,11 @@
           : "Los consumos se descuentan de la infraestructura de la cuenta.") + "</p>" +
         '<button class="btn" id="ppPlan">Actualizar mi plan</button></div>' +
 
+      '<div class="pp-card"><h3>Facturas en Puter</h3>' +
+        '<p class="cnt" style="font-size:12.5px;margin:0 0 10px">Tus comprobantes se archivan por ano y mes en PediPOS/facturas, dentro de tu propia nube.</p>' +
+        '<div class="pp-num"><span>Carpeta</span><b style="font-size:12.5px">PediPOS/facturas/AAAA/MM</b></div>' +
+        '<button class="btn sec" id="ppVerFac">Ver facturas</button></div>' +
+
       '<div class="pp-card"><h3>Consumo de IA</h3>' +
         '<div class="pp-num"><span>Gastado este mes</span><b>' + usd(usado) + "</b></div>" +
         '<div class="pp-num"><span>Disponible</span><b class="ok">' + usd(queda) + "</b></div>" +
@@ -191,10 +238,10 @@
         '<p class="cnt" style="font-size:11.5px">' + pctIA + "% del permiso mensual de IA usado.</p></div>" +
 
       '<div class="pp-card"><h3>Almacenamiento</h3>' +
-        '<div class="pp-num"><span>Usado por PediPOS</span><b>' + (alm ? mb(alm.usado) : "sin dato") + "</b></div>" +
+        '<div class="pp-num"><span>Usado por PediPOS</span><b>' + (alm ? mb(alm.propio || alm.usado) : "sin dato") + "</b></div>" +
         '<div class="pp-num"><span>Capacidad</span><b>' + (alm && alm.total ? mb(alm.total) : "la de la cuenta") + "</b></div>" +
         barra(pctAlm, "#1E7BD6") +
-        '<p class="cnt" style="font-size:11.5px">' + (alm && alm.total ? pctAlm + "% del almacenamiento usado." : "PediPOS guarda sus facturas en " + (dest === "puter" ? "Puter Drive" : "Google Drive") + ".") + "</p></div>" +
+        '<p class="cnt" style="font-size:11.5px">' + (alm && alm.total ? pctAlm + "% del almacenamiento de tu cuenta usado." : "Puter no informa la capacidad total desde este navegador; arriba ves lo que ocupan tus facturas.") + "</p></div>" +
 
       '<div class="pp-card"><h3>Creditos gratuitos</h3>' +
         '<div class="pp-num"><span>Incluidos</span><b>1,000</b></div>' +
