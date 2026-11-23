@@ -9,7 +9,8 @@
 
   /* Modelos que PediPOS usa de verdad. Solo estos se muestran. */
   var MODELOS = [
-    { id: "deepseek-chat", etiqueta: "DeepSeek Chat", uso: "Pedidos por voz y explicacion de rechazos" }
+    { id: "deepseek-chat", etiqueta: "DeepSeek Chat", uso: "Interpreta los pedidos dictados y explica rechazos" },
+    { id: "whisper", etiqueta: "Whisper", uso: "Transcribe la voz del comerciante a texto" }
   ];
   var CREDITOS_GRATIS = 1000;
 
@@ -55,6 +56,14 @@
       try { contar(modelo); } catch (e) {}
       return orig.apply(P.ai, args);
     };
+    /* la transcripcion de voz usa Whisper: se cuenta aparte, con su propio nombre */
+    if (typeof P.ai.speech2txt === "function") {
+      var origS2T = P.ai.speech2txt;
+      P.ai.speech2txt = function () {
+        try { contar("whisper"); } catch (e) {}
+        return origS2T.apply(P.ai, arguments);
+      };
+    }
     P.ai.__ppContado = true;
   }
 
