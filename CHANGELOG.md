@@ -2,6 +2,17 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.13.0] - 2026-11-23
+
+### Anadido
+- **Backend `pedposPerfil`** (funcion Deno en Base44): reserva atomica de bloques de e-NCF por RNC y tipo, y perfil restaurable del comercio. Entidades nuevas: `SecuenciaECF` y `PerfilComercio`.
+- **Reserva de secuencia en la nube**: cada caja pide un bloque de 50 numeros y los consume en local. Probado con reservas simultaneas: 1-10 y 11-20, sin solaparse.
+- **Modulo `js/nube.js`**: bloques de secuencia, perfil (usuarios con PIN en PBKDF2-SHA256, ajustes y `.p12` cifrado con AES-GCM) y restauracion en equipo nuevo.
+- El contador de e-NCF consulta primero el bloque del servidor y cae al contador local si no hay bloque o no hay red, sin bloquear la venta.
+
+### Seguridad
+- El servidor nunca recibe el PIN ni la clave del certificado: solo el hash y el `.p12` cifrado con llave derivada del PIN en el dispositivo.
+
 ## [2.8.2] - 2026-11-22
 
 ### Corregido
