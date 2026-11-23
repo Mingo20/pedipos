@@ -1,0 +1,60 @@
+[2920:2920:1123/042711.468664:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches
+[2919:2919:1123/042711.468784:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches
+[2905:2928:1123/042711.477544:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches
+[2905:2926:1123/042711.477632:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[2905:2926:1123/042711.478631:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2926:1123/042711.481658:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[2905:2928:1123/042711.482029:ERROR:net/base/address_tracker_linux.cc:243] Could not bind NETLINK socket: Operation not supported (95)
+[2905:2926:1123/042711.483186:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[2905:2926:1123/042711.483203:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2939:2939:1123/042711.503297:WARNING:media/gpu/vaapi/vaapi_wrapper.cc:1660] drmGetDevices2() has not found any devices
+[2939:2939:1123/042711.505451:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+[2905:2926:1123/042711.738579:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2905:1123/042711.744802:INFO:components/enterprise/browser/controller/chrome_browser_cloud_management_controller.cc:241] No machine level policy manager exists.
+[2953:2957:1123/042711.778194:ERROR:base/files/file_path_watcher_inotify.cc:925] Failed to read /proc/sys/fs/inotify/max_user_watches
+[2905:2926:1123/042711.807885:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2905:1123/042711.929326:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2905:1123/042711.929427:WARNING:device/bluetooth/dbus/bluez_dbus_manager.cc:209] Floss manager service not available, cannot set Floss enable/disable.
+[2905:2905:1123/042711.929441:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2926:1123/042711.929928:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2926:1123/042711.929940:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2905:1123/042711.930434:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2905:1123/042711.931231:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2926:1123/042711.936833:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2905:1123/042711.979951:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2926:1123/042711.980116:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[2905:2905:1123/042711.980132:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2926:1123/042711.980162:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[2905:2926:1123/042711.980460:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2905:1123/042711.991774:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2905:1123/042712.007003:WARNING:dbus/property.cc:94] Failed to connect to PropertiesChangedsignal.
+[2905:2905:1123/042712.007339:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: 
+[2905:2905:1123/042712.007352:WARNING:dbus/property.cc:174] GetAll request failed for: org.freedesktop.UPower.Device
+[2905:2905:1123/042712.007573:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2926:1123/042712.007742:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2905:1123/042712.028501:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2926:1123/042712.029616:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2905:2905:1123/042712.047211:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[2905:2905:1123/042712.047229:WARNING:ui/base/idle/idle_linux.cc:111] None of the known D-Bus ScreenSaver services could be used.
+[2905:2905:1123/042712.236778:INFO:CONSOLE:0] "Access to manifest at 'file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/manifest.json' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-experimental-site-token-provider, chrome-extension, chrome-untrusted, data, http, https, isolated-app.", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/index.html (0)
+[2905:2905:1123/042712.296844:INFO:CONSOLE:4] "%c ____  _   _ _____ _____ ____       _ ____  
+|  _ \| | | |_   _| ____|  _ \     | / ___| 
+| |_) | | | | | | |  _| | |_) | _  | \___ \ 
+|  __/| |_| | | | | |___|  _ < | |_| |___) |
+|_|    \___/  |_| |_____|_| \_(_)___/|____/  color: #000fd8; font-weight: bold; font-size: 14px; font-family: monospace;", source: https://js.puter.com/v2/ (4)
+[2905:2905:1123/042712.296975:INFO:CONSOLE:4] "%cSubmit this app to the Puter App Store:
+%chttps://apps.puter.com/ color: rgb(0, 57, 137); font-size: 18px; font-weight: bold; color: #3b82f6; font-size: 18px; font-weight: bold; text-decoration: underline;", source: https://js.puter.com/v2/ (4)
+[2905:2905:1123/042712.296989:INFO:CONSOLE:4] "%cTo disable this message: %cputer.quiet = true color: #94a3b8; font-size: 11px; color: #94a3b8; font-size: 11px; font-style: italic;", source: https://js.puter.com/v2/ (4)
+[2905:2905:1123/042712.297004:INFO:CONSOLE:4] "Puter.js: this page has no origin to sign in with. Serve it over http://localhost or a real domain instead of opening it from a file, and give sandboxed iframes allow-same-origin.", source: https://js.puter.com/v2/ (4)
+[3102:3102:1123/042712.877605:WARNING:media/audio/linux/audio_manager_linux.cc:53] Falling back to ALSA for audio output. PulseAudio is not available or could not be initialized.
+[2905:2905:1123/042712.879685:INFO:CONSOLE:97] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (97)
+[2905:2905:1123/042712.881265:INFO:CONSOLE:107] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (107)
+[2905:2905:1123/042712.881296:INFO:CONSOLE:107] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (107)
+[2905:2905:1123/042712.881968:INFO:CONSOLE:241] "Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (241)
+[2905:2905:1123/042712.885870:INFO:CONSOLE:2723] "Uncaught (in promise) ReferenceError: sub is not defined", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (2723)
+[2905:2905:1123/042712.885952:INFO:CONSOLE:97] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (97)
+[2905:2905:1123/042712.886012:INFO:CONSOLE:107] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (107)
+[2905:2905:1123/042712.886076:INFO:CONSOLE:107] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/js/app.js?v=122 (107)
+[2905:2905:1123/042712.907481:INFO:CONSOLE:0] "Access to fetch at 'file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/version.json?t=1795408036371' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-experimental-site-token-provider, chrome-extension, chrome-untrusted, data, http, https, isolated-app.", source: file:///app/conversations/6a0113c1777455158d4e8fde/pedipos/index.html (0)
+[1123/042713.019996:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:182] incorrect payload size 0
+[1123/042713.020916:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:182] incorrect payload size 0

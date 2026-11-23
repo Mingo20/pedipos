@@ -2720,7 +2720,7 @@
     if (!_arranque) _arranque = ahora;
     var vv = document.getElementById("view");
     if (ahora - _arranque < 1500 && vv && vv.children.length) {
-      var kk = tab + "|" + (sub ? sub.id : "") + "|" + JSON.stringify(db()).length;
+      var kk = tab + "|" + String((window.PPUI && window.PPUI.subId) || "") + "|" + JSON.stringify(db()).length;
       if (kk === _arranqueClave) return;
       _arranqueClave = kk;
     }
