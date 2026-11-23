@@ -653,9 +653,9 @@
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar items</div>')}${manual ? manualRow() : ""}</div>
         <div class="tick-f">
-          <div class="itbis-r"><span>e-CF</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
+          <div class="itbis-r"><span>ITBIS</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
           <div class="line"><span>Subtotal</span><span id="vSub">${money(t.subtotal)}</span></div>
-          <div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>
+          ${(c.itbis && window.PPFiscal && window.PPFiscal.activo()) ? `<div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>` : ""}
           <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
         </div>
         <div class="tools">
@@ -2346,7 +2346,7 @@
     const s = db().session;
     return !!(s && String(s.rol || "").toLowerCase().indexOf("admin") === 0);
   }
-  const CFG_ICONO = { negocio: "home", caja: "wallet", ia: "bolt", sync: "globe", admin: "shield" };
+  const CFG_ICONO = { negocio: "home", caja: "wallet", ia: "bolt", sync: "globe", admin: "shield", impresora: "print" };
 
   function cfgCabecera(titulo, sub) {
     return `<div class="subv-h cfg-top">
@@ -2367,7 +2367,8 @@
     const tarjetas = [
       ["negocio", "Mi negocio", st.negocio || "Sin nombre", "Nombre, direccion, ITBIS y ubicacion"],
       ["caja", "Caja y acceso", ses ? (ses.nombre + " · " + ses.rol) : "Sin sesion iniciada", "PIN, avisos, impresora y sesion"],
-      ["ia", "Uso de IA", "Consumo del mes en Puter", "Cuanto se ha gastado y cuanto queda"],
+      ["ia", "Mi Infraestructura", "Consumo de IA y almacenamiento", "Plan, creditos y modelos que usa PediPOS"],
+      ["impresora", "Ajustes de impresora", "Tickets y stickers termicos", "Texto, papel y ticket de prueba"],
       ["sync", "Sincronizacion", online ? "Conectado" : "Sin conexion", "Estado y sincronizar ahora"]
     ];
     if (esAdminSesion()) tarjetas.push(["admin", "Administracion", "Solo administrador", "Respaldo en Drive y comercios"]);
@@ -2427,6 +2428,7 @@
           <div class="line" style="font-size:13px"><span>Sesion</span><b>${db().session ? esc(db().session.nombre + " · " + db().session.rol) : "sin iniciar"}</b></div>
           <label class="field" style="margin-top:8px"><span>Pedir PIN al abrir</span><select id="cr"><option value="0" ${st.pinReq ? "" : "selected"}>No</option><option value="1" ${st.pinReq ? "selected" : ""}>Si</option></select></label>
           <button class="btn sec" id="cses">${db().session ? "Cerrar sesion" : "Iniciar sesion"}</button>
+          <button class="btn sec" id="cCom" style="margin-top:8px">Comercios de este equipo</button>
           <div class="line" style="font-size:13px;margin-top:10px"><span>Avisos del telefono</span><b>${window.PPAvisos ? (window.PPAvisos.permiso() === "granted" ? "activados" : "apagados") : "no disponible"}</b></div>
           <button class="btn sec" id="cavisos" style="margin-top:8px">${window.PPAvisos && window.PPAvisos.permiso() === "granted" ? "Probar un aviso" : "Activar avisos"}</button>
           <button class="btn sec" id="cbm" style="margin-top:8px">Emparejar impresora Bluetooth</button>
@@ -2441,6 +2443,7 @@
         if (p !== "granted") return toast("El telefono no autorizo los avisos");
         toast("Avisos activados"); window.PPAvisos.revisar(); renderConfig();
       };
+      $("#cCom").onclick = () => hojaComercios();
       $("#cses").onclick = () => { if (db().session) { db().session = null; S.save(); toast("Sesion cerrada"); render(); } else loginScreen(); };
       $("#cbm").onclick = async () => {
         try { const n = await window.PPExtra.btConectar(); toast("Impresora: " + n); renderConfig(); }
@@ -2503,6 +2506,7 @@
     }
 
     if (tipo === "ia") { pintarUsoIA(); return; }
+    if (tipo === "impresora") { pintarImpresora(); return; }
 
     cfgSub = null; renderConfig();
   }
@@ -2510,6 +2514,98 @@
   /* ---------- Uso de IA: consumo real desde la cuenta Puter ---------- */
   const MC_A_USD = 1e8;                       /* 1,000,000 microcentavos = 0.01 USD */
   const usd = (mc) => "$" + (Number(mc || 0) / MC_A_USD).toFixed(2);
+  /* ---------- Comercios: cada uno con su propio espacio ---------- */
+  function hojaComercios() {
+    const T = window.PPTenant;
+    if (!T) return toast("Comercios no disponible");
+    const lista = T.todos();
+    const s = sheet(`<div class="sh-h"><h2>Comercios</h2><button class="sh-x" data-x aria-label="Cerrar">${I.xDown || I.x}</button></div>
+      <div class="cmp-list">${lista.length ? lista.map((c) => `<button class="cmp-i ${c.id === T.actual() ? "on" : ""}" data-c="${c.id}">
+        <b>${esc(c.nombre)}</b><small>${c.id === T.actual() ? "En uso en este equipo" : "Toca para entrar con tu PIN"}</small></button>`).join("")
+        : '<p class="cnt">Aun no hay comercios. Crea el primero abajo.</p>'}</div>
+      <div class="cmp-nuevo"><input id="cmpN" placeholder="Nombre del comercio" autocomplete="off">
+        <input id="cmpP" placeholder="PIN de 4 numeros" inputmode="numeric" autocomplete="off">
+        <button class="btn" id="cmpA">Crear comercio</button></div>`);
+    $$("[data-x]", s).forEach((b) => (b.onclick = () => closeSheet()));
+    $$(".cmp-i", s).forEach((b) => (b.onclick = () => {
+      const id = b.dataset.c;
+      if (id === T.actual()) return closeSheet();
+      const pin = prompt("PIN del comercio " + (T.todos().filter((x) => x.id === id)[0] || {}).nombre);
+      if (!pin) return;
+      try { T.entrar(id, pin); toast("Entrando a " + T.comercioActual().nombre); setTimeout(() => location.reload(), 500); }
+      catch (e) { toast(e.message); }
+    }));
+    $("#cmpA", s).onclick = () => {
+      try {
+        T.registrar({ nombre: $("#cmpN", s).value, pin: $("#cmpP", s).value });
+        toast("Comercio creado");
+        setTimeout(() => location.reload(), 500);
+      } catch (e) { toast(e.message); }
+    };
+  }
+
+  function pintarImpresora() {
+    const st = db().settings;
+    st.printer = Object.assign({ fuente: "normal", negrita: true, papel: "58", alineacion: "centro", cabecera: "", pie: "Gracias por su compra" }, st.printer || {});
+    const pr = st.printer;
+    const opt = (v, t, sel) => `<option value="${v}"${sel === v ? " selected" : ""}>${t}</option>`;
+    $("#view").innerHTML = `<div class="cfg-panel">
+      ${cfgCabecera("Ajustes de impresora", "Tickets y stickers termicos")}
+      <div class="imp-grid">
+        <div class="card"><h3>Texto</h3>
+          <label class="field"><span>Tamano</span><select id="ipF">${opt("pequena", "Pequena", pr.fuente)}${opt("normal", "Normal", pr.fuente)}${opt("grande", "Grande", pr.fuente)}</select></label>
+          <label class="field"><span>Ubicacion</span><select id="ipA">${opt("izquierda", "Izquierda", pr.alineacion)}${opt("centro", "Centro", pr.alineacion)}</select></label>
+          <label class="field"><span>Negrita</span><select id="ipN">${opt("1", "Si", pr.negrita ? "1" : "0")}${opt("0", "No", pr.negrita ? "1" : "0")}</select></label>
+        </div>
+        <div class="card"><h3>Papel y contenido</h3>
+          <label class="field"><span>Ancho del papel</span><select id="ipP">${opt("58", "58 mm", pr.papel)}${opt("80", "80 mm", pr.papel)}</select></label>
+          <label class="field"><span>Cabecera</span><input id="ipC" value="${esc(pr.cabecera || "")}" placeholder="Nombre del negocio"></label>
+          <label class="field"><span>Pie</span><input id="ipE" value="${esc(pr.pie || "")}" placeholder="Gracias por su compra"></label>
+        </div>
+      </div>
+      <div class="card"><h3>Vista previa</h3><div id="ipPrev" class="imp-prev"></div>
+        <button class="btn sec" id="ipTest" style="margin-top:10px">Imprimir ticket de prueba</button>
+      </div>
+      ${cfgPie()}</div>`;
+    $("#cfgBack").onclick = () => { cfgSub = null; renderConfig(); };
+    const leer = () => ({ fuente: $("#ipF").value, alineacion: $("#ipA").value, negrita: $("#ipN").value === "1", papel: $("#ipP").value, cabecera: $("#ipC").value, pie: $("#ipE").value });
+    const pintar = () => { const v = leer(); st.printer = v; S.save(); $("#ipPrev").innerHTML = ticketPruebaHTML(v); };
+    ["#ipF", "#ipA", "#ipN", "#ipP", "#ipC", "#ipE"].forEach((k) => { $(k).onchange = pintar; $(k).oninput = pintar; });
+    pintar();
+    $("#ipTest").onclick = () => imprimirPrueba(leer());
+  }
+
+  function ticketPruebaHTML(v) {
+    const mm = v.papel === "80" ? 302 : 219;
+    const fs = v.fuente === "grande" ? 13 : v.fuente === "pequena" ? 9.5 : 11.5;
+    const al = v.alineacion === "centro" ? "center" : "left";
+    const fw = v.negrita ? 700 : 400;
+    return `<div class="imp-tk" style="width:${mm}px;font-size:${fs}px;font-weight:${fw};text-align:${al}">
+      <div class="imp-neg">${esc(v.cabecera || "MI NEGOCIO")}</div>
+      <div>TICKET DE PRUEBA</div><div>${new Date().toLocaleString("es-DO")}</div>
+      <div class="imp-ln"></div>
+      <div>Producto de ejemplo ......... RD$ 100.00</div>
+      <div>Otro producto ............... RD$ 250.00</div>
+      <div class="imp-ln"></div>
+      <div class="imp-neg">TOTAL ................. RD$ 350.00</div>
+      <div class="imp-ln"></div>
+      <div>${esc(v.pie || "")}</div></div>`;
+  }
+
+  function imprimirPrueba(v) {
+    const w = v.papel === "80" ? 80 : 58;
+    const html = `<html><head><meta charset="utf-8"><style>
+      @page{size:${w}mm auto;margin:0}
+      body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+      .imp-tk{width:100%!important;padding:4mm 3mm}
+    </style></head><body>${ticketPruebaHTML(v)}</body></html>`;
+    const f = document.createElement("iframe");
+    f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    document.body.appendChild(f);
+    f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
+    setTimeout(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast("No se pudo abrir la impresion"); } setTimeout(() => f.remove(), 1500); }, 250);
+  }
+
   function pintarUsoIA() {
     if (window.PPConsumo) { window.PPConsumo.render($("#view")); return; }
     $("#view").innerHTML = `<div class="cfg-panel">

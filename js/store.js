@@ -1,7 +1,17 @@
 /* PediPOS: espejo local de la base. La app siempre lee de aqui; la red solo sincroniza. */
 (function () {
   "use strict";
-  const KEY = "pedipos.db.v1";
+  /* una clave por comercio: el espacio de cada uno queda aislado del resto */
+  const KEY = (window.PPTenant ? window.PPTenant.key("pedipos.db.v1") : "pedipos.db.v1");
+  /* migracion: el espacio antiguo pasa al comercio por defecto sin perder nada */
+  (function migrar() {
+    try {
+      if (KEY === "pedipos.db.v1") return;
+      if (localStorage.getItem(KEY)) return;
+      const viejo = localStorage.getItem("pedipos.db.v1");
+      if (viejo) localStorage.setItem(KEY, viejo);
+    } catch (e) {}
+  })();
   const uid = (p) => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   const SEED_PRODUCTS = [
