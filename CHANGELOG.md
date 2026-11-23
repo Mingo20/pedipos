@@ -1,3 +1,11 @@
+## 2.14.0 (v125)
+- Reparto de numeros e-NCF sin perdidas: servicio propio `pediposSecuencia` (copia en backend/). Probado con 2 a 8 cajas a la vez: sin duplicados ni numeros perdidos.
+- La emision ahora SI usa el bloque reservado (antes preguntaba por una funcion inexistente y caia al contador local).
+- Sin numeros y sin red: no se emite, la venta sigue como ticket normal y el e-NCF no cambia.
+- Corregido un candado que podia dejar a una caja sin pedir mas numeros; un bloque nuevo ya no se pierde si aun quedan numeros.
+- Certificado digital restaurable: se cifra en el equipo (AES-256-GCM), con consentimiento y frase; se restaura en un equipo limpio y se verifica que firma.
+- Talonario: la etiqueta del switch ahora dice "e-CF", aparece solo con el switch encendido y se actualiza en tiempo real.
+
 # Historial de cambios · PediPOS
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).

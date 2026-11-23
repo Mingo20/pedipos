@@ -5,7 +5,8 @@
  */
 (function (global) {
   "use strict";
-  var URL_DEF = "https://base44.app/api/apps/6a0113bf2d35fdb22cd92a9e/functions/pedposPerfil";
+  var URL_DEF = "https://base44.app/api/apps/69bf571e53cddb8789552b4e/functions/pediposSecuencia";
+  var URL_VIEJA = "https://base44.app/api/apps/6a0113bf2d35fdb22cd92a9e/functions/pedposPerfil";
 
   function S() { return global.PPStore; }
   function db() { return S().db; }
@@ -15,7 +16,7 @@
     var d = db();
     d.nubePerfil = d.nubePerfil || { activo: false, rnc: "", url: URL_DEF, bloques: {} };
     d.nubePerfil.bloques = d.nubePerfil.bloques || {};
-    if (!d.nubePerfil.url) d.nubePerfil.url = URL_DEF;
+    if (!d.nubePerfil.url || d.nubePerfil.url === URL_VIEJA) d.nubePerfil.url = URL_DEF;
     return d.nubePerfil;
   }
 
@@ -54,32 +55,65 @@
       .then(hex);
   }
 
-  /* ---------- bloques de secuencia ---------- */
-  function reservar(clave) {
-    var c = conf();
-    if (c._pidiendo) return;
-    c._pidiendo = true;
-    post(c.url, { accion: "secuencia.reservar", rnc: c.rnc, tipo: String(clave).slice(1), cantidad: 50 })
-      .then(function (d) {
-        if (d && d.ok) {
-          c.bloques[clave] = { desde: d.desde, hasta: d.hasta, usado: 0 };
-          guardar();
-        }
-      })
-      .catch(function () {})
-      .then(function () { c._pidiendo = false; });
+  /* identificador estable de esta caja (para saber quien tiene cada bloque) */
+  function cajaId() {
+    try {
+      var k = "pedipos.caja.id", v = localStorage.getItem(k);
+      if (!v) { v = "caja-" + Math.random().toString(36).slice(2, 8); localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return "caja"; }
   }
 
-  /* Devuelve el siguiente numero del bloque reservado, o null para seguir con el contador local. */
+  /* ---------- bloques de secuencia ---------- */
+  /* El candado vive SOLO en memoria y caduca a los 25 s. Antes se guardaba junto con la configuracion: si la app
+     se cerraba a mitad de un pedido, quedaba en "pidiendo" para siempre y esa caja ya no pedia mas numeros. */
+  var pidiendoDesde = {};
+  function reservar(clave) {
+    var c = conf();
+    if (c._pidiendo) { delete c._pidiendo; }               /* limpia restos guardados por versiones anteriores */
+    var t = pidiendoDesde[clave];
+    if (t && Date.now() - t < 25000) return;
+    pidiendoDesde[clave] = Date.now();
+    return post(c.url, { accion: "secuencia.reservar", rnc: c.rnc, tipo: String(clave).slice(1), cantidad: 50, caja: cajaId() })
+      .then(function (d) {
+        if (d && d.ok) {
+          /* solo se reemplaza el bloque cuando el anterior ya se uso o no existe: nunca se pierden numeros sin usar */
+          var viejo = c.bloques[clave];
+          var cap = viejo ? Number(viejo.hasta) - Number(viejo.desde) + 1 : 0;
+          if (!viejo || Number(viejo.usado || 0) >= cap) {
+            c.bloques[clave] = { desde: d.desde, hasta: d.hasta, usado: 0 };
+            guardar();
+          } else {
+            /* el servidor ya me dio otro bloque pero aun me quedan numeros: se guarda en espera para no perderlo */
+            c.espera = c.espera || {}; c.espera[clave] = { desde: d.desde, hasta: d.hasta, usado: 0 };
+            guardar();
+          }
+        }
+        return d;
+      })
+      .catch(function () { return null; })
+      .then(function (r) { delete pidiendoDesde[clave]; return r; });
+  }
+
+  /* Devuelve el siguiente numero del bloque reservado.
+       - null             -> la reserva esta apagada: se sigue con el contador local de siempre.
+       - { agotado:true } -> la reserva esta ENCENDIDA pero la caja no tiene numeros (bloque agotado y sin red):
+                             NO se debe inventar un numero con el contador local, porque otra caja podria repetirlo.
+       - "0000123"        -> el numero listo para usar.
+     El bloque se vuelve a pedir cuando quedan 5, para no llegar a quedarse sin numeros. */
   function tomar(clave, ancho) {
     try {
       var c = conf();
       if (!c.activo || !c.rnc || !c.url) return null;
       var b = c.bloques[clave];
       var capacidad = b ? Number(b.hasta) - Number(b.desde) + 1 : 0;
+      if ((!b || Number(b.usado || 0) >= capacidad) && c.espera && c.espera[clave]) {
+        c.bloques[clave] = c.espera[clave]; delete c.espera[clave]; b = c.bloques[clave];
+        capacidad = Number(b.hasta) - Number(b.desde) + 1;
+      }
       if (!b || Number(b.usado || 0) >= capacidad) {
         reservar(clave);
-        return null;
+        return { agotado: true, motivo: b ? "Se acabaron los numeros reservados. Conecta a internet para pedir mas." : "Esta caja aun no tiene numeros reservados. Conecta a internet para pedirlos." };
       }
       var n = Number(b.desde) + Number(b.usado || 0);
       b.usado = Number(b.usado || 0) + 1;
@@ -89,6 +123,15 @@
     } catch (e) {
       return null;
     }
+  }
+
+  /* cuantos numeros le quedan a esta caja (para avisar al cajero antes de que se acaben) */
+  function restantes(clave) {
+    var c = conf(), b = c.bloques[clave];
+    if (!c.activo || !b) return null;
+    var sobra = Math.max(0, Number(b.hasta) - Number(b.desde) + 1 - Number(b.usado || 0));
+    var e = c.espera && c.espera[clave];
+    return sobra + (e ? Number(e.hasta) - Number(e.desde) + 1 - Number(e.usado || 0) : 0);
   }
 
   function estado() {
@@ -158,7 +201,7 @@
     });
   }
 
-  var API = { tomar: tomar, reservar: reservar, estado: estado, conf: conf, guardarPerfil: guardarPerfil, restaurar: restaurar, hashPin: hashPin, URL_DEF: URL_DEF };
+  var API = { tomar: tomar, restantes: restantes, reservar: reservar, estado: estado, conf: conf, guardarPerfil: guardarPerfil, restaurar: restaurar, hashPin: hashPin, URL_DEF: URL_DEF };
   global.PPNubePerfil = API;
   /* el contador fiscal consulta PPNube.tomar: se expone aqui para no tocar el otro modulo */
   if (global.PPNube && !global.PPNube.tomar) global.PPNube.tomar = tomar;

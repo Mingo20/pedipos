@@ -653,7 +653,7 @@
         <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar items</div>')}${manual ? manualRow() : ""}</div>
         <div class="tick-f">
-          <div class="itbis-r"><span>ITBIS</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
+          <div class="itbis-r"><span>ITBIS${c.itbis ? '<i class="ecf-chip">e-CF</i>' : ""}</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
           <div class="line"><span>Subtotal</span><span id="vSub">${money(t.subtotal)}</span></div>
           ${(c.itbis && window.PPFiscal && window.PPFiscal.activo()) ? `<div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>` : ""}
           <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
@@ -710,19 +710,28 @@
       manual = true; render(); const f = $("#mnm"); f && f.focus();
     };
     if (manual) { bindManual(); bindSugerencias(); }
+    /* La etiqueta e-CF sigue SIEMPRE al switch: visible si esta encendido, fuera si esta apagado. */
+    const syncEcf = () => {
+      const sw = $("#swItbis"); if (!sw) return;
+      const eti = sw.parentElement && sw.parentElement.querySelector("span");
+      if (!eti) return;
+      const on = !!cart().itbis, chip = eti.querySelector(".ecf-chip");
+      sw.classList.toggle("on", on);
+      sw.setAttribute("aria-pressed", on ? "true" : "false");
+      if (on && !chip) { const i = document.createElement("i"); i.className = "ecf-chip"; i.textContent = "e-CF"; eti.appendChild(i); }
+      else if (on && chip && chip.textContent !== "e-CF") chip.textContent = "e-CF";
+      else if (!on && chip) chip.remove();
+    };
+    syncEcf();
     $("#swItbis").onclick = () => {
       const a = tot();
       cart().itbis = !cart().itbis; S.save();
       const b = tot();
       const sw = $("#swItbis"); sw.classList.toggle("on", cart().itbis);
+      syncEcf();
       /* el interruptor manda: encendido se emite factura electronica, apagado la venta sigue informal */
       if (window.PPFiscal && window.PPFiscal.setActivo) {
         window.PPFiscal.setActivo(cart().itbis);
-        const fila = sw && sw.parentElement;
-        const eti = fila ? fila.querySelector("span") : null;
-        const chip = eti ? eti.querySelector(".ecf-chip") : null;
-        if (cart().itbis && eti && !chip) { const i = document.createElement("i"); i.className = "ecf-chip"; i.textContent = "FISCAR"; eti.appendChild(i); }
-        if (!cart().itbis && chip) chip.remove();
         const listo = !!(window.PPFiscal.cfg && window.PPFiscal.cfg().rnc);
         toast(cart().itbis ? (listo ? "Facturacion electronica activa" : "ITBIS activo: falta configurar el emisor") : "Venta informal: sin factura electronica");
       }
@@ -1957,6 +1966,7 @@
     try {
       const r = await window.PPFiscal.emitir(sale, {});
       if (r && r.reg && r.reg.ncf) pintarEcf(r.reg.ncf + " - " + (r.reg.estado || ""), r.ok ? "ok" : "warn");
+      else if (r && r.sinNumeros) pintarEcf("Venta guardada como ticket normal: esta caja no tiene numeros e-NCF. Conecta a internet para pedirlos.", "warn");
       else pintarEcf((r && r.error) || "No se pudo emitir el comprobante", "warn");
     } catch (e) { pintarEcf("No se pudo emitir: " + (e.message || e), "warn"); }
   }
@@ -2400,12 +2410,14 @@
         </div>
         <div class="card" style="margin-top:12px">
           <h3 style="margin:0 0 6px">Restaurar en este equipo</h3>
-          <p class="cnt">Escribe el RNC, el usuario y el PIN que usabas. Se traen los ajustes y los usuarios. El certificado se vuelve a subir, no se copia.</p>
+          <p class="cnt">Escribe el RNC, el usuario y el PIN que usabas. Se traen los ajustes y los usuarios. Si guardaste tu certificado en la nube, te pedimos tu frase para recuperarlo.</p>
           <label class="field"><span>Usuario</span><input id="rUser" placeholder="Domingo"></label>
           <label class="field"><span>PIN</span><input id="rPin" type="password" inputmode="numeric" placeholder="1234"></label>
           <button class="btn sec" id="rGo">Restaurar perfil</button>
         </div>
+        <div class="card" style="margin-top:12px" id="nCert"></div>
         ${cfgPie()}</div>`;
+      if (window.PPNubeCertUI) window.PPNubeCertUI.bloqueNube($("#nCert"));
       $("#nGo").onclick = () => {
         c.rnc = ($("#nRnc").value || "").replace(/\D/g, "");
         c.activo = $("#nAct").value === "1";
@@ -2423,6 +2435,8 @@
         n.restaurar(c.url, rnc, usr, pin).then((r) => {
           if (!r.ok) return toast(r.error || "No se pudo restaurar");
           cfgSub = null; renderConfig(); toast("Perfil restaurado");
+          /* si el comercio guardo su certificado en la nube, se ofrece recuperarlo ahora */
+          if (window.PPNubeCertUI) setTimeout(() => window.PPNubeCertUI.restaurarConFrase(rnc, () => renderConfig()), 500);
         }).catch((e) => toast("No se pudo restaurar: " + (e.message || e)));
       };
       return;

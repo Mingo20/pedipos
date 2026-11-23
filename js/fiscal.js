@@ -54,9 +54,10 @@
     if (!m) return actual;
     var serie = m[1], tipo = m[2], num = m[3];
     /* bloque reservado en el servidor: dos cajas nunca repiten numero */
-    if (window.PPNube && window.PPNube.tomar) {
-      var deNube = window.PPNube.tomar(serie + tipo, num.length);
-      if (deNube) return serie + tipo + deNube;
+    if (window.PPNubePerfil && window.PPNubePerfil.tomar) {
+      var deNube = window.PPNubePerfil.tomar(serie + tipo, num.length);
+      if (deNube && deNube.agotado) { c.sinNumeros = deNube.motivo; return actual; }   /* no se inventa un numero */
+      if (deNube) { c.sinNumeros = ""; return serie + tipo + deNube; }
     }
     var sig = String(Number(num) + 1).padStart(num.length, "0");
     return serie + tipo + sig;
@@ -87,6 +88,19 @@
       return { ok: false, error: "La facturacion electronica esta apagada: enciende el ITBIS en el panel de venta" };
     }
     if (!c.rnc) return { ok: false, error: "Falta el RNC del comerciante en Ajustes fiscales" };
+
+    /* POLITICA SIN NUMEROS: con la reserva en la nube encendida, si la caja no tiene numeros (bloque agotado y sin
+       red) NO se emite: un numero repetido por otra caja es peor que no emitir. La venta sigue como ticket normal. */
+    var np = window.PPNubePerfil;
+    if (np && np.conf().activo && np.conf().rnc && !opts.demo && !c.demo) {
+      var mt = String(c.ncf || "").toUpperCase().match(/^([A-Z])(\d{2})(\d+)$/);
+      var rest = mt ? np.restantes(mt[1] + mt[2]) : null;
+      if (mt && (rest === null || rest <= 0)) {
+        try { np.reservar(mt[1] + mt[2]); } catch (e) {}
+        toast("Sin numeros e-NCF por ahora. La venta sigue como ticket normal.");
+        return { ok: false, sinNumeros: true, error: "Esta caja no tiene numeros e-NCF reservados. Conecta a internet para pedirlos; mientras tanto la venta sale como ticket normal." };
+      }
+    }
 
     var valores = {
       ncf: c.ncf,
@@ -474,10 +488,17 @@
 
     /* Resguardo del certificado en Puter: siempre cifrado en este equipo con una frase propia. */
     function resguardarCert(view, c) {
-      if (!global.PPNube || !c.p12) return;
+      if (!c.p12) return;
+      var clave = global.__ppFiscalPass || ($("#f-pass", view) ? $("#f-pass", view).value : "") || "";
+      /* ventana propia (el prompt() del navegador se bloquea en muchos moviles). El certificado ya quedo en este equipo. */
+      if (global.PPNubeCertUI) {
+        if (!(global.PPNubePerfil && global.PPNubePerfil.conf().rnc)) { toast("Para guardarlo en la nube, primero pon tu RNC en Ajustes, Nube y perfil"); return; }
+        global.PPNubeCertUI.pedirResguardo(c.p12, clave, function (r) { if (r && r.ok) { c.certNube = true; guardar(); } });
+        return;
+      }
+      if (!global.PPNube) return;
       var frase = global.prompt("Para guardar tu certificado digital en Puter (cifrado), crea una frase de proteccion de 8 caracteres o mas. Guardala: sin ella no se puede recuperar.");
       if (!frase) { toast("El certificado quedo solo en este equipo"); return; }
-      var clave = global.__ppFiscalPass || ($("#f-pass", view) ? $("#f-pass", view).value : "") || "";
       global.PPNube.guardarCertificado(c.p12, clave, frase)
         .then(function () { c.certNube = true; guardar(); toast("Certificado guardado en Puter, cifrado"); })
         .catch(function (e) { toast("No se pudo guardar en Puter: " + (e.message || e)); });
