@@ -53,6 +53,11 @@
     var m = actual.match(/^([A-Z])(\d{2})(\d+)$/);
     if (!m) return actual;
     var serie = m[1], tipo = m[2], num = m[3];
+    /* bloque reservado en el servidor: dos cajas nunca repiten numero */
+    if (window.PPNube && window.PPNube.tomar) {
+      var deNube = window.PPNube.tomar(serie + tipo, num.length);
+      if (deNube) return serie + tipo + deNube;
+    }
     var sig = String(Number(num) + 1).padStart(num.length, "0");
     return serie + tipo + sig;
   }
