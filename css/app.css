@@ -2340,3 +2340,17 @@ main#view{transition:opacity .12s linear}
 .pp-frame iframe{width:100%;height:520px;border:0;display:block}
 .pp-foot{margin-top:14px;display:flex;justify-content:flex-end}
 @media (max-width:760px){.pp-grid{grid-template-columns:1fr}.pp-frame iframe{height:420px}}
+
+/* ===== v117 · Barra de voz redonda, consumo estilo Puter ===== */
+body.grabando .act,.act.rec,.act.flotante,body.manos-libres .act{border-radius:999px!important;overflow:hidden}
+body.grabando .act .recbar,.act.rec .recbar{border-radius:999px!important}
+.pp-uso .pp-sub{font-size:15px;color:#3A4540;margin:2px 0 12px}
+.pp-uso .pp-sub b{font-weight:800;color:#14201A}
+.pp-uso .pp-bar{height:16px;border-radius:999px;background:#E6E9EE}
+.pp-uso .pp-bar i{border-radius:999px;min-width:0}
+.pp-det{margin-top:14px;border-top:1px solid #EEF1EF;padding-top:10px}
+.pp-det summary{cursor:pointer;font-size:14.5px;font-weight:600;color:#3A4540;list-style:none;display:flex;align-items:center;gap:10px}
+.pp-det summary::-webkit-details-marker{display:none}
+.pp-det summary::before{content:"";width:8px;height:8px;border-right:2px solid #3A4540;border-bottom:2px solid #3A4540;transform:rotate(-45deg);transition:transform .2s}
+.pp-det[open] summary::before{transform:rotate(45deg)}
+.pp-det .pp-num{margin-top:8px}

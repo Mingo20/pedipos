@@ -312,7 +312,7 @@
   /* ---------- Panel ---------- */
   let manual = false;
   function manualRow() {
-    return `<div class="row man" id="mrow"><input class="nm" id="mnm" placeholder="Item" autocomplete="off" enterkeyhint="next"><input id="mq" inputmode="decimal" placeholder="Cant." value="1" enterkeyhint="next"><input id="mp" inputmode="decimal" placeholder="Precio" enterkeyhint="done"><span class="t" id="mt">RD$0</span></div>`;
+    return `<div class="row man" id="mrow"><input class="nm" id="mnm" placeholder="Producto" autocomplete="off" enterkeyhint="next"><input id="mq" inputmode="decimal" placeholder="Cant." value="1" enterkeyhint="next"><input id="mp" inputmode="decimal" placeholder="Precio" enterkeyhint="done"><span class="t" id="mt">RD$0</span></div>`;
   }
   /* La seccion manual tambien se elimina deslizandola a la izquierda, igual que un producto. */
   function bindSwipeManual() {
@@ -620,7 +620,7 @@
         if (!isNaN(co)) prod.costo = co;
         try { window.PPSync.saveProduct(prod); } catch (_) {}
       }
-      S.save(); closeSheet(); render(); toast("Item actualizado");
+      S.save(); closeSheet(); render(); toast("Producto actualizado");
     };
     $("#eok", s).onclick = guardar;
     en.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); guardar(); } };
@@ -650,10 +650,10 @@
         <div class="pgrid pw-grid" id="pwGrid">${listaProd.length ? listaProd.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:18px">Sin productos que coincidan.</p>'}</div>
       </div>
       <section class="tick">
-        <div class="tick-h"><span>ITEM</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
+        <div class="tick-h"><span>PRODUCTO</span><span>CANTIDAD</span><span>PRECIO</span><span>TOTAL</span></div>
         <div class="tick-b" id="tickb">${n ? c.lines.map(lineRow).join("") : (manual ? "" : '<div class="tick-empty">Toca + para agregar items</div>')}${manual ? manualRow() : ""}</div>
         <div class="tick-f">
-          <div class="itbis-r"><span>ITBIS ${Math.round(rate() * 100)}%${(c.itbis && window.PPFiscal && window.PPFiscal.activo()) ? ' <i class="ecf-chip">e-CF</i>' : ""}</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
+          <div class="itbis-r"><span>e-CF</span><button class="sw ${c.itbis ? "on" : ""}" id="swItbis" aria-label="ITBIS"></button></div>
           <div class="line"><span>Subtotal</span><span id="vSub">${money(t.subtotal)}</span></div>
           <div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>
           <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
@@ -2078,10 +2078,10 @@
       Object.assign(p, { nombre: nom, precio: pr, unidad: $("#fu", s).value, categoria: $("#fc", s).value.trim(), stock: parseFloat($("#fs", s).value) || 0, img });
       if (isNaN(co)) delete p.costo; else p.costo = co;
       if (n) db().products.push(p);
-      S.save(); window.PPSync.saveProduct(p); closeSheet(); toast("Item guardado"); render();
+      S.save(); window.PPSync.saveProduct(p); closeSheet(); toast("Producto guardado"); render();
     };
     const dl = $("#dl", s);
-    if (dl) dl.onclick = () => { db().products = db().products.filter((x) => x.pid !== p.pid); S.save(); window.PPSync.deleteProduct(p.pid); closeSheet(); toast("Item eliminado"); render(); };
+    if (dl) dl.onclick = () => { db().products = db().products.filter((x) => x.pid !== p.pid); S.save(); window.PPSync.deleteProduct(p.pid); closeSheet(); toast("Producto eliminado"); render(); };
   }
 
   /* ---------- Analitica ---------- */
@@ -2306,7 +2306,7 @@
       <div class="mch grande"><b>${esc(st.negocio || "Mi negocio")}</b><span>${esc(st.direccion || "Sin direccion registrada")}</span><span>${esc(st.telefono || "")}</span></div>
       <div class="strow"><span class="stt ${pagado ? "" : "cred"}">${pagado ? I.ok : I.card} ${pagado ? "PAGADO" : "A CREDITO"}</span><span class="cnt">${fechaCorta(s.fecha)}</span></div>
       <div class="dsum"><div class="r"><span>CLIENTE</span><span>${esc(s.cliente || "Sin cliente")}</span></div></div>
-      <div class="dlh"><span>ITEM</span><span>TOTAL</span></div>
+      <div class="dlh"><span>PRODUCTO</span><span>TOTAL</span></div>
       <div class="dls">${lineas}</div>
       <div class="dsum">
         <div class="r"><span>Subtotal</span><span>${money2(s.subtotal)}</span></div>

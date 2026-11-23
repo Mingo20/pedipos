@@ -624,7 +624,6 @@
     ].sort((a, b) => String(b.t).localeCompare(String(a.t)));
     const nCompras = mov.filter((m) => m.tipo === "compra").length;
     const nPagos = mov.filter((m) => m.tipo === "pago").length;
-    const lista = mov.filter((m) => m.tipo === provVista);
     const fila = (m, i) => {
       const compra = m.tipo === "compra";
       const pend = compra ? Math.max(0, (Number(m.x.total) || 0) - (Number(m.x.pagado) || 0)) : 0;
@@ -633,8 +632,8 @@
           <span>${new Date(m.t).toLocaleString("es-DO", { day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })}${compra ? (pend > 0 ? " &middot; debe " + money(pend) : " &middot; pagada") : ""}</span></div>
         <b class="${compra ? (pend > 0 ? "red" : "") : "green"}">${compra ? "-" + money(m.x.total) : "+" + money(m.x.monto)}</b></div>`;
     };
-    const listaHTML = () => lista.length ? lista.map((m) => fila(m, mov.indexOf(m))).join("")
-      : `<p class="cnt" style="padding:10px 14px">${provVista === "compra" ? "Sin compras registradas." : "Sin pagos registrados."}</p>`;
+    const listaHTML = () => { const lista = mov.filter((m) => m.tipo === provVista); return lista.length ? lista.map((m) => fila(m, mov.indexOf(m))).join("")
+      : `<p class="cnt" style="padding:10px 14px">${provVista === "compra" ? "Sin compras registradas." : "Sin pagos registrados."}</p>`; };
     window.PPUI.clearFab();
     document.body.classList.add("focus");
     const contacto = p.contacto || p.whatsapp || p.telefono || "Sin contacto";

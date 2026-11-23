@@ -69,13 +69,57 @@
       var carpeta = "PediPOS/facturas/" + anio + "/" + mes;
       try { await P.fs.mkdir(carpeta, { createMissingParents: true }); } catch (e) {}
       var ruta = carpeta + "/" + nombre;
-      await P.fs.write(ruta, contenido, { createMissingParents: true });
+      await P.fs.write(ruta, contenido, { createMissingParents: true, overwrite: true });
       return { ok: true, destino: "puter", ruta: ruta };
     }
     return { ok: false, destino: "google", pendiente: true };
   }
 
-  global.PPNube = { destino: destino, setDestino: setDestino, guardarFactura: guardarFactura, contar: contar, MODELOS: MODELOS, engancharContador: engancharContador };
+  /* ---------- Boveda del certificado digital ----------
+     El .p12 (clave privada + certificado) y su clave se suben a Puter SIEMPRE cifrados
+     con AES-GCM en este equipo. La frase de proteccion no se guarda en ningun sitio:
+     sin ella, el archivo en la nube no sirve a nadie. */
+  function aB64(u8) { var s = ""; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+  function deB64(b) { var s = atob(b), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+  async function llaveDe(frase, sal) {
+    var enc = new TextEncoder();
+    var base = await crypto.subtle.importKey("raw", enc.encode(frase), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: sal, iterations: 210000, hash: "SHA-256" }, base,
+      { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  }
+  async function cifrar(texto, frase) {
+    var sal = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    var k = await llaveDe(frase, sal);
+    var ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, k, new TextEncoder().encode(texto)));
+    return JSON.stringify({ v: 1, alg: "AES-256-GCM+PBKDF2-SHA256", sal: aB64(sal), iv: aB64(iv), datos: aB64(ct) });
+  }
+  async function descifrar(json, frase) {
+    var o = JSON.parse(json), k = await llaveDe(frase, deB64(o.sal));
+    var pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: deB64(o.iv) }, k, deB64(o.datos));
+    return new TextDecoder().decode(pt);
+  }
+  var RUTA_CERT = "PediPOS/certificado/certificado.p12.enc";
+  async function guardarCertificado(p12base64, claveP12, frase) {
+    var P = global.puter;
+    if (!P || !P.fs) throw new Error("Puter no esta disponible");
+    if (!frase || frase.length < 8) throw new Error("La frase de proteccion debe tener al menos 8 caracteres");
+    var paquete = await cifrar(JSON.stringify({ p12: p12base64, clave: claveP12 || "", guardado: new Date().toISOString() }), frase);
+    try { await P.fs.mkdir("PediPOS/certificado", { createMissingParents: true }); } catch (e) {}
+    await P.fs.write(RUTA_CERT, paquete, { createMissingParents: true, overwrite: true });
+    return { ok: true, ruta: RUTA_CERT };
+  }
+  async function recuperarCertificado(frase) {
+    var P = global.puter;
+    if (!P || !P.fs) throw new Error("Puter no esta disponible");
+    var blob = await P.fs.read(RUTA_CERT);
+    var txt = typeof blob === "string" ? blob : await blob.text();
+    return JSON.parse(await descifrar(txt, frase));
+  }
+  async function hayCertificado() {
+    try { var P = global.puter; if (!P || !P.fs) return false; await P.fs.stat(RUTA_CERT); return true; } catch (e) { return false; }
+  }
+
+  global.PPNube = { guardarCertificado: guardarCertificado, recuperarCertificado: recuperarCertificado, hayCertificado: hayCertificado, destino: destino, setDestino: setDestino, guardarFactura: guardarFactura, contar: contar, MODELOS: MODELOS, engancharContador: engancharContador };
 })(window);
 
 /* ---------- Pantalla de consumo (se usa desde Configuracion) ---------- */
@@ -89,11 +133,13 @@
     return '<div class="pp-bar"><i style="width:' + Math.max(0, Math.min(100, pct)) + '%;background:' + (color || "#0B8F5F") + '"></i></div>';
   }
   function mb(n) {
-    var b = Number(n) || 0;
-    if (b > 1048576) return (b / 1048576).toFixed(1) + " MB";
-    if (b > 1024) return (b / 1024).toFixed(0) + " KB";
-    return b + " B";
+    var b = Number(n) || 0, f = function (x) { return x.toFixed(2).replace(".", ","); };
+    if (b >= 1073741824) return f(b / 1073741824) + " GB";
+    if (b >= 1048576) return f(b / 1048576) + " MB";
+    if (b >= 1024) return f(b / 1024) + " KB";
+    return b + (b === 1 ? " byte" : " bytes");
   }
+  var CAP_GRATIS = 25 * 1048576;     /* almacenamiento del plan gratuito de Puter */
 
   async function tamanoCarpeta(P, ruta) {
     var total = 0;
@@ -176,16 +222,7 @@
       try { await P.auth.signIn(); render(view); } catch (e) { inn.disabled = false; inn.textContent = "Conectar con Puter"; }
     };
     var plan = $("#ppPlan", view);
-    if (plan) plan.onclick = function () {
-      var caja = $("#ppFrame", view);
-      if (!caja) return;
-      caja.hidden = false;
-      caja.innerHTML = '<div class="pp-frame-h"><b>Planes de Puter</b><button class="pp-x" id="ppCerrar">Cerrar</button></div>' +
-        '<iframe src="https://puter.com/dashboard#billing" title="Planes de Puter" referrerpolicy="no-referrer"></iframe>' +
-        '<p class="cnt" style="font-size:11.5px;margin:8px 0 0">Si el panel no carga aqui, usa <a href="https://puter.com/dashboard#billing" target="_blank" rel="noopener">abrir en una ventana</a>.</p>';
-      var c = $("#ppCerrar", caja); if (c) c.onclick = function () { caja.hidden = true; };
-      caja.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    };
+    if (plan) plan.onclick = function () { window.open("https://puter.com/dashboard#billing", "_blank", "noopener"); };
     var ver = $("#ppVerFac", view);
     if (ver) ver.onclick = function () { window.open("https://puter.com/dashboard#files", "_blank", "noopener"); };
     var upd = $("#ppUpd", view);
@@ -204,10 +241,16 @@
     var usado = Math.max(0, total - queda);
     var pctIA = total > 0 ? Math.min(100, Math.round((usado / total) * 100)) : 0;
     var creditoTotal = Math.max(CREDITOS_GLOBAL(), 1);
-    var pctCred = Math.min(100, Math.round((usado / creditoTotal) * 100));
+    /* Puter cuenta 1,000 creditos por mes: el permiso se traduce a esa escala */
+    var creditosUsados = total > 0 ? Math.min(creditoTotal, Math.round((usado / total) * creditoTotal)) : 0;
+    var pctCred = Math.min(100, Math.round((creditosUsados / creditoTotal) * 100));
 
     var alm = await usoAlmacenamiento(P);
-    var pctAlm = alm && alm.total ? Math.min(100, Math.round((alm.usado / alm.total) * 100)) : 0;
+    var capAlm = (alm && alm.total) ? alm.total : CAP_GRATIS;
+    var usadoAlm = alm ? (alm.usado || alm.propio || 0) : 0;
+    var pctAlmReal = capAlm > 0 ? (usadoAlm / capAlm) * 100 : 0;
+    var pctAlm = Math.min(100, pctAlmReal);
+    var pctAlmTxt = pctAlmReal > 0 && pctAlmReal < 1 ? "<1" : String(Math.round(pctAlmReal));
 
     var nombrePlan = String(user.plan || user.plan_name || "").toLowerCase();
     var esGratis = !nombrePlan || /free|gratis|basic/.test(nombrePlan) || user.is_free === true;
@@ -226,34 +269,29 @@
           : "Los consumos se descuentan de la infraestructura de la cuenta.") + "</p>" +
         '<button class="btn" id="ppPlan">Actualizar mi plan</button></div>' +
 
-      '<div class="pp-card"><h3>Facturas en Puter</h3>' +
-        '<p class="cnt" style="font-size:12.5px;margin:0 0 10px">Tus comprobantes se archivan por ano y mes en PediPOS/facturas, dentro de tu propia nube.</p>' +
-        '<div class="pp-num"><span>Carpeta</span><b style="font-size:12.5px">PediPOS/facturas/AAAA/MM</b></div>' +
-        '<button class="btn sec" id="ppVerFac">Ver facturas</button></div>' +
+      '<div class="pp-card"><h3>Puter Drive</h3>' +
+        '<button class="btn sec" id="ppVerFac">Ver mi Drive</button></div>' +
 
-      '<div class="pp-card"><h3>Consumo de IA</h3>' +
-        '<div class="pp-num"><span>Gastado este mes</span><b>' + usd(usado) + "</b></div>" +
-        '<div class="pp-num"><span>Disponible</span><b class="ok">' + usd(queda) + "</b></div>" +
-        barra(pctIA) +
-        '<p class="cnt" style="font-size:11.5px">' + pctIA + "% del permiso mensual de IA usado.</p></div>" +
-
-      '<div class="pp-card"><h3>Almacenamiento</h3>' +
-        '<div class="pp-num"><span>Usado por PediPOS</span><b>' + (alm ? mb(alm.propio || alm.usado) : "sin dato") + "</b></div>" +
-        '<div class="pp-num"><span>Capacidad</span><b>' + (alm && alm.total ? mb(alm.total) : "la de la cuenta") + "</b></div>" +
+      '<div class="pp-card pp-uso"><h3>Almacenamiento</h3>' +
+        '<p class="pp-sub"><b>' + pctAlmTxt + '%</b> &middot; ' + mb(alm ? (alm.usado || alm.propio || 0) : 0) + ' usado de ' + mb(capAlm) + '</p>' +
         barra(pctAlm, "#1E7BD6") +
-        '<p class="cnt" style="font-size:11.5px">' + (alm && alm.total ? pctAlm + "% del almacenamiento de tu cuenta usado." : "Puter no informa la capacidad total desde este navegador; arriba ves lo que ocupan tus facturas.") + "</p></div>" +
+        '<details class="pp-det"><summary>Detalles de uso</summary>' +
+          '<div class="pp-num"><span>Facturas y certificado (PediPOS)</span><b>' + mb(alm ? (alm.propio || 0) : 0) + '</b></div>' +
+          '<div class="pp-num"><span>Total en tu cuenta</span><b>' + mb(alm ? (alm.usado || 0) : 0) + '</b></div>' +
+          '<div class="pp-num"><span>Capacidad del plan</span><b>' + mb(capAlm) + '</b></div></details></div>' +
 
-      '<div class="pp-card"><h3>Creditos gratuitos</h3>' +
-        '<div class="pp-num"><span>Incluidos</span><b>1,000</b></div>' +
-        '<div class="pp-num"><span>Consumidos</span><b>' + usd(usado) + "</b></div>" +
-        barra(pctCred, "#E8A33D") +
-        '<p class="cnt" style="font-size:11.5px">Los 1,000 creditos son de la infraestructura gratuita de Puter.</p></div>' +
+      '<div class="pp-card pp-uso"><h3>Creditos mensuales</h3>' +
+        '<p class="pp-sub"><b>' + pctCred + '%</b> &middot; ' + creditosUsados + ' usado de ' + creditoTotal + ' creditos</p>' +
+        barra(pctCred, pctCred >= 90 ? "#D64545" : "#C4A81F") +
+        '<details class="pp-det"><summary>Detalles de uso</summary>' +
+          '<div class="pp-num"><span>Gastado este mes</span><b>' + usd(usado) + '</b></div>' +
+          '<div class="pp-num"><span>Disponible</span><b class="ok">' + usd(queda) + '</b></div>' +
+          '<div class="pp-num"><span>Permiso del mes</span><b>' + usd(total) + '</b></div></details></div>' +
 
       '<div class="pp-card pp-wide"><h3>Modelos que usa PediPOS</h3>' +
         (modelos || '<p class="cnt">Todavia no hay llamadas registradas.</p>') +
         '<p class="cnt" style="font-size:11.5px;margin-top:8px">Solo se muestran los modelos que la app usa de verdad, con el numero de llamadas hechas desde este equipo.</p></div>' +
       "</div>" +
-      '<div class="pp-frame" id="ppFrame" hidden></div>' +
       '<div class="pp-foot"><button class="btn sec" id="ppUpd">Actualizar datos</button></div>';
   }
 

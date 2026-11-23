@@ -137,6 +137,13 @@
     }
 
     if (global.PPComprobantes) global.PPComprobantes.add(reg); else { db().ecf = db().ecf || []; db().ecf.unshift(reg); }
+    /* archivo en la nube del comerciante: XML firmado por ano y mes. Nunca bloquea la venta. */
+    try {
+      if (global.PPNube && reg.xml) {
+        var nom = (String(reg.ncf || reg.id || "comprobante").replace(/[^A-Za-z0-9_-]/g, "") || "comprobante") + ".xml";
+        global.PPNube.guardarFactura(nom, String(reg.xml), "application/xml").then(function (r) { if (r && r.ruta) reg.nubeRuta = r.ruta; }).catch(function () {});
+      }
+    } catch (e) {}
     if (reg.estado !== "error" && reg.estado !== "rechazado") c.ncf = siguienteNcf(c);
     guardar();
     return { ok: reg.estado === "aceptado" || reg.estado === "enviado", reg: reg };
@@ -455,9 +462,21 @@
           });
         }
         toast("Certificado cargado");
+        resguardarCert(view, c);
       };
       fr.readAsDataURL(f);
     };
+
+    /* Resguardo del certificado en Puter: siempre cifrado en este equipo con una frase propia. */
+    function resguardarCert(view, c) {
+      if (!global.PPNube || !c.p12) return;
+      var frase = global.prompt("Para guardar tu certificado digital en Puter (cifrado), crea una frase de proteccion de 8 caracteres o mas. Guardala: sin ella no se puede recuperar.");
+      if (!frase) { toast("El certificado quedo solo en este equipo"); return; }
+      var clave = global.__ppFiscalPass || ($("#f-pass", view) ? $("#f-pass", view).value : "") || "";
+      global.PPNube.guardarCertificado(c.p12, clave, frase)
+        .then(function () { c.certNube = true; guardar(); toast("Certificado guardado en Puter, cifrado"); })
+        .catch(function (e) { toast("No se pudo guardar en Puter: " + (e.message || e)); });
+    }
 
     /* emitir una venta existente */
     $$(".ecf-sale", view).forEach(function (b) {
