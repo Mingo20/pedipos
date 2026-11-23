@@ -1,0 +1,79 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PediPOS · Crear carpetas de facturas en Puter</title>
+<script src="https://js.puter.com/v2/"></script>
+<style>
+:root{--g:#0B8F5F;--ink:#10231A;--mut:#6B7A73;--line:#E4EAE6}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#F4F8F5;color:var(--ink)}
+.wrap{max-width:720px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:23px;margin:0 0 6px;letter-spacing:-.02em}
+p.sub{color:var(--mut);margin:0 0 20px;font-size:14.5px;line-height:1.5}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+.btn{width:100%;height:54px;border:0;border-radius:14px;background:var(--g);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.55}
+.tree{font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.85;background:#F7FAF8;border:1px solid var(--line);border-radius:12px;padding:14px;white-space:pre-wrap}
+li{margin:6px 0;font-size:14px}
+.ok{color:#0B6B45;font-weight:700}.bad{color:#B4232A;font-weight:700}
+</style></head><body><div class="wrap">
+<h1>Crear las carpetas de facturas en tu Puter</h1>
+<p class="sub">Esto crea en tu propia nube la misma estructura que usa PediPOS, con facturas de ejemplo para que veas cómo lo verá un comerciante. No se guarda nada fuera de tu cuenta.</p>
+<div class="card"><div class="tree">PediPOS/
+  facturas/
+    2026/
+      11/   ← facturas de este mes
+      10/   ← facturas del mes anterior
+  certificado/   ← aquí va el .p12 cifrado</div></div>
+<button class="btn" id="go">Crear carpetas y facturas de ejemplo</button>
+<div class="card" id="log" hidden><ul id="lst"></ul></div>
+</div>
+<script>
+function ecf(o){
+  var itbis=(o.monto*0.18).toFixed(2), grav=(o.monto-itbis).toFixed(2);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<ECF><Encabezado><Version>1.0</Version><IdDoc>'+
+  '<TipoeCF>'+o.tipo+'</TipoeCF><eNCF>'+o.ncf+'</eNCF><FechaVencimientoSecuencia>31-12-2027</FechaVencimientoSecuencia>'+
+  '<IndicadorMontoGravado>1</IndicadorMontoGravado><TipoIngresos>01</TipoIngresos><TipoPago>1</TipoPago></IdDoc>'+
+  '<Emisor><RNCEmisor>131234567</RNCEmisor><RazonSocialEmisor>Colmado La Esquina SRL</RazonSocialEmisor>'+
+  '<NombreComercial>Colmado La Esquina</NombreComercial><DireccionEmisor>Av. Duarte 45, Santo Domingo Oeste</DireccionEmisor>'+
+  '<Municipio>Hato Nuevo</Municipio><Provincia>Santo Domingo</Provincia></Emisor>'+
+  (o.cliente?'<Comprador><RNCComprador>'+o.rnc+'</RNCComprador><RazonSocialComprador>'+o.cliente+'</RazonSocialComprador></Comprador>':'')+
+  '<Totales><MontoGravadoTotal>'+grav+'</MontoGravadoTotal><MontoGravadoI1>'+grav+'</MontoGravadoI1>'+
+  '<TotalITBIS>'+itbis+'</TotalITBIS><TotalITBIS1>'+itbis+'</TotalITBIS1><MontoTotal>'+o.monto.toFixed(2)+'</MontoTotal></Totales>'+
+  '<Detalle>'+o.lineas.map(function(l,i){return '<Item numeroLinea="'+(i+1)+'"><IndicadorFacturacion>1</IndicadorFacturacion>'+
+  '<NombreItem>'+l.n+'</NombreItem><CantidadItem>'+l.c.toFixed(2)+'</CantidadItem><UnidadMedida>43</UnidadMedida>'+
+  '<PrecioUnitarioItem>'+l.p.toFixed(2)+'</PrecioUnitarioItem><MontoItem>'+(l.c*l.p).toFixed(2)+'</MontoItem></Item>';}).join('')+
+  '</Detalle><FechaEmision>'+o.fecha+'</FechaEmision></ECF>';
+}
+var EJ=[
+ {carp:'PediPOS/facturas/2026/11',ncf:'E310000000001',tipo:'31',fecha:'15-11-2026',monto:1180,
+  cliente:'Supermercado Central SRL',rnc:'130987654',
+  lineas:[{n:'Arroz Campo',c:10,p:45},{n:'Aceite',c:2,p:180},{n:'Habichuelas Rojas',c:5,p:60}]},
+ {carp:'PediPOS/facturas/2026/11',ncf:'E320000000002',tipo:'32',fecha:'18-11-2026',monto:590,
+  lineas:[{n:'Pollo',c:4,p:95},{n:'Huevos',c:15,p:8},{n:'Platano',c:6,p:20}]},
+ {carp:'PediPOS/facturas/2026/10',ncf:'E320000000098',tipo:'32',fecha:'29-10-2026',monto:354,
+  lineas:[{n:'Leche Entera',c:3,p:75},{n:'Azucar',c:2,p:40},{n:'Arroz Campo',c:1,p:45}]}
+];
+document.getElementById('go').onclick=async function(){
+  var b=this,lst=document.getElementById('lst'),log=document.getElementById('log');
+  b.disabled=true;b.textContent='Creando...';log.hidden=false;
+  function fila(txt,ok){var li=document.createElement('li');li.innerHTML=(ok?'<span class="ok">Listo</span> · ':'<span class="bad">Error</span> · ')+txt;lst.appendChild(li);}
+  try{
+    if(!window.puter||!puter.fs){fila('Puter no cargó en este navegador',false);b.disabled=false;return;}
+    var carpetas=['PediPOS/facturas/2026/11','PediPOS/facturas/2026/10','PediPOS/certificado'];
+    for(var i=0;i<carpetas.length;i++){await puter.fs.mkdir(carpetas[i],{createMissingParents:true});fila('carpeta '+carpetas[i],true);}
+    for(var j=0;j<EJ.length;j++){
+      var e=EJ[j];
+      await puter.fs.write(e.carp+'/'+e.ncf+'.xml',ecf(e),{createMissingParents:true});
+      fila('factura '+e.ncf+'.xml ('+e.fecha+')',true);
+    }
+    await puter.fs.write('PediPOS/certificado/LEEME.txt',
+      'Aqui guarda PediPOS el certificado digital cifrado (certificado.p12.enc).\n'+
+      'El archivo se cifra en el equipo del comerciante con AES-256 y una frase de proteccion.\n'+
+      'Sin esa frase no se puede abrir, ni siquiera con acceso a esta cuenta.\n',{createMissingParents:true});
+    fila('nota en PediPOS/certificado',true);
+    b.textContent='Listo. Revisa tu Drive';
+    var a=document.createElement('a');a.className='btn';a.style.cssText='display:block;text-align:center;line-height:54px;text-decoration:none;margin-top:14px';
+    a.href='https://puter.com/dashboard#files';a.target='_blank';a.rel='noopener';a.textContent='Abrir mi Drive';
+    log.appendChild(a);
+  }catch(e){fila(String(e&&e.message||e),false);b.disabled=false;b.textContent='Reintentar';}
+};
+</script></body></html>
