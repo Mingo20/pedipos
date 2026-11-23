@@ -2,6 +2,15 @@
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
 
+## [2.13.1] - 2026-11-23
+
+### Anadido
+- **Nube y perfil** en Configuracion: activar la reserva de bloques e-NCF en el servidor y restaurar el perfil en un equipo nuevo con RNC, usuario y PIN.
+- **`js/nubeperfil.js`**: consume los bloques reservados, pide 50 numeros cuando quedan menos de 5 y verifica el PIN con PBKDF2-SHA256 antes de aplicar los ajustes y los usuarios. Si no hay red o no esta activo, el contador sigue local.
+
+### Cambiado
+- El chip del talonario dice **FISCAR** en lugar de e-CF.
+
 ## [2.13.0] - 2026-11-23
 
 ### Anadido

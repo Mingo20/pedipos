@@ -721,7 +721,7 @@
         const fila = sw && sw.parentElement;
         const eti = fila ? fila.querySelector("span") : null;
         const chip = eti ? eti.querySelector(".ecf-chip") : null;
-        if (cart().itbis && eti && !chip) { const i = document.createElement("i"); i.className = "ecf-chip"; i.textContent = "e-CF"; eti.appendChild(i); }
+        if (cart().itbis && eti && !chip) { const i = document.createElement("i"); i.className = "ecf-chip"; i.textContent = "FISCAR"; eti.appendChild(i); }
         if (!cart().itbis && chip) chip.remove();
         const listo = !!(window.PPFiscal.cfg && window.PPFiscal.cfg().rnc);
         toast(cart().itbis ? (listo ? "Facturacion electronica activa" : "ITBIS activo: falta configurar el emisor") : "Venta informal: sin factura electronica");
@@ -2346,7 +2346,7 @@
     const s = db().session;
     return !!(s && String(s.rol || "").toLowerCase().indexOf("admin") === 0);
   }
-  const CFG_ICONO = { negocio: "home", caja: "wallet", ia: "bolt", sync: "globe", admin: "shield", impresora: "print" };
+  const CFG_ICONO = { negocio: "home", caja: "wallet", ia: "bolt", sync: "globe", admin: "shield", impresora: "print", nube: "globe" };
 
   function cfgCabecera(titulo, sub) {
     return `<div class="subv-h cfg-top">
@@ -2369,7 +2369,8 @@
       ["caja", "Caja y acceso", ses ? (ses.nombre + " · " + ses.rol) : "Sin sesion iniciada", "PIN, avisos, impresora y sesion"],
       ["ia", "Mi Infraestructura", "Consumo de IA y almacenamiento", "Plan, creditos y modelos que usa PediPOS"],
       ["impresora", "Ajustes de impresora", "Tickets y stickers termicos", "Texto, papel y ticket de prueba"],
-      ["sync", "Sincronizacion", online ? "Conectado" : "Sin conexion", "Estado y sincronizar ahora"]
+      ["sync", "Sincronizacion", online ? "Conectado" : "Sin conexion", "Estado y sincronizar ahora"],
+      ["nube", "Nube y perfil", "Secuencia y cambio de equipo", "Bloques e-NCF y restauracion en equipo nuevo"]
     ];
     if (esAdminSesion()) tarjetas.push(["admin", "Administracion", "Solo administrador", "Respaldo en Drive y comercios"]);
     $("#view").innerHTML = `<div class="cfg-hub">${tarjetas.map((t) => `<button class="cfg-card" data-s="${t[0]}">
@@ -2385,6 +2386,47 @@
     const geo = (window.PPOnboarding && window.PPOnboarding.geo) || { PROVINCIAS: [], MUNIS: {}, TIPOS: [], TAMANOS: [] };
     const munisDe = (prov) => (geo.MUNIS || {})[prov] || [];
     const volver = () => { cfgSub = null; renderConfig(); };
+
+    if (tipo === "nube") {
+      const n = window.PPNubePerfil;
+      const c = n ? n.conf() : { activo: false, rnc: "", url: "" };
+      $("#view").innerHTML = `<div class="cfg-panel">
+        ${cfgCabecera("Nube y perfil", "Secuencia e-NCF y cambio de equipo")}
+        <div class="card">
+          <p class="cnt">Con la reserva encendida, cada caja pide un bloque de numeros al servidor y dos equipos nunca repiten un e-NCF. Si no hay red, sigue el contador local.</p>
+          <label class="field"><span>RNC del comercio</span><input id="nRnc" inputmode="numeric" value="${esc(c.rnc || "")}" placeholder="131000001"></label>
+          <label class="field"><span>Reserva en la nube</span><select id="nAct"><option value="0" ${c.activo ? "" : "selected"}>Apagada (solo contador local)</option><option value="1" ${c.activo ? "selected" : ""}>Encendida</option></select></label>
+          <button class="btn" id="nGo">Guardar</button>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin:0 0 6px">Restaurar en este equipo</h3>
+          <p class="cnt">Escribe el RNC, el usuario y el PIN que usabas. Se traen los ajustes y los usuarios. El certificado se vuelve a subir, no se copia.</p>
+          <label class="field"><span>Usuario</span><input id="rUser" placeholder="Domingo"></label>
+          <label class="field"><span>PIN</span><input id="rPin" type="password" inputmode="numeric" placeholder="1234"></label>
+          <button class="btn sec" id="rGo">Restaurar perfil</button>
+        </div>
+        ${cfgPie()}</div>`;
+      $("#nGo").onclick = () => {
+        c.rnc = ($("#nRnc").value || "").replace(/\D/g, "");
+        c.activo = $("#nAct").value === "1";
+        if (c.activo && !c.rnc) return toast("Falta el RNC");
+        S.save();
+        toast(c.activo ? "Reserva en la nube activada" : "Reserva en la nube apagada");
+      };
+      $("#rGo").onclick = () => {
+        const pin = ($("#rPin").value || "").trim();
+        const usr = ($("#rUser").value || "").trim();
+        const rnc = ($("#nRnc").value || "").replace(/\D/g, "") || c.rnc;
+        if (!rnc || !pin) return toast("Falta el RNC o el PIN");
+        if (!n) return toast("El modulo de nube no cargo");
+        toast("Buscando el perfil...");
+        n.restaurar(c.url, rnc, usr, pin).then((r) => {
+          if (!r.ok) return toast(r.error || "No se pudo restaurar");
+          cfgSub = null; renderConfig(); toast("Perfil restaurado");
+        }).catch((e) => toast("No se pudo restaurar: " + (e.message || e)));
+      };
+      return;
+    }
 
     if (tipo === "negocio") {
       $("#view").innerHTML = `<div class="cfg-panel">
