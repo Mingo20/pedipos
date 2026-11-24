@@ -51,6 +51,39 @@
     n.start(t);
   }
 
+  /* Confirmacion de grabacion: dos tonos claros y fuertes, como el aviso de una nota de voz.
+     Se pide desde el toque del microfono, asi el navegador deja sonar el audio. */
+  let ultimoGrabar = 0;
+  function grabar() {
+    const ahora = Date.now();
+    if (ahora - ultimoGrabar < 500) return;
+    ultimoGrabar = ahora;
+    const c = audio();
+    if (!c) return;
+    const t = c.currentTime;
+    [[784, 0], [1175, 0.11]].forEach(function (par) {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(par[0], t + par[1]);
+      g.gain.setValueAtTime(0.0001, t + par[1]);
+      g.gain.exponentialRampToValueAtTime(0.3, t + par[1] + 0.014);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + par[1] + 0.19);
+      o.connect(g); g.connect(c.destination);
+      o.start(t + par[1]); o.stop(t + par[1] + 0.22);
+    });
+    /* refuerzo grave: da cuerpo y suena mas fuerte en el altavoz del telefono */
+    const o2 = c.createOscillator();
+    const g2 = c.createGain();
+    o2.type = "triangle";
+    o2.frequency.setValueAtTime(392, t);
+    g2.gain.setValueAtTime(0.0001, t);
+    g2.gain.exponentialRampToValueAtTime(0.22, t + 0.016);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o2.connect(g2); g2.connect(c.destination);
+    o2.start(t); o2.stop(t + 0.24);
+  }
+
   /* todo lo que debe sonar al tocarse */
   const SEL = [
     "#bList", "#bPlus", "#bSearch",     /* lista de pedido, mas y producto */
@@ -67,5 +100,5 @@
     if (el) tock();
   }, true);
 
-  window.PPSound = { tock };
+  window.PPSound = { tock, grabar };
 })();

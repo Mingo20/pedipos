@@ -2567,9 +2567,60 @@ body.grabando .act .mic{opacity:.35}
 /* el + ocupa el centro exacto de la barra de cobro */
 .act .act-plus{order:2}
 
-/* mientras se graba, la hoja del catalogo se aparta: la barra queda sola, sin amontonarse */
-body.grabando:not(.manos-libres) .catsheet{display:none!important}
-/* en manos libres la hoja se queda para recorrer el catalogo: la barra sube sobre el campo */
-body.manos-libres .recdock{bottom:calc(env(safe-area-inset-bottom) + 112px)}
+/* grabando, la hoja del catalogo se queda a la vista para recorrerla mientras se habla;
+   la barra de voz se apoya encima del campo de la lista, sin tapar nada */
+body.grabando .recdock,body.manos-libres .recdock{bottom:calc(env(safe-area-inset-bottom) + var(--cs-peek,150px) + 8px)}
+body.grabando.cat-abierto .recdock,body.manos-libres.cat-abierto .recdock{bottom:calc(env(safe-area-inset-bottom) + 112px)}
 /* el circulo de cantidad no se recorta en la primera fila */
 .cs-grid{padding-top:10px}
+
+/* ========== v128 ========== */
+/* --- Campo "Lista de pedido": arranca abajo y crece hacia arriba --- */
+.cs-order{align-items:flex-end;min-height:78px;gap:6px;padding:10px 8px 10px 8px}
+.cs-ta{flex:1;min-width:0;min-height:0;max-height:132px;align-self:flex-end;padding:6px 0;
+  transition:height .12s ease}
+.cs-lupa,.cs-erase{flex:none;width:38px;height:38px;border-radius:50%;border:0;display:grid;place-items:center;
+  background:transparent;color:#7d878f;align-self:flex-end;transition:background .16s ease,color .16s ease,transform .14s ease}
+.cs-lupa svg{width:21px;height:21px}
+.cs-erase{color:#98a2a9}
+.cs-erase svg{width:20px;height:20px}
+.cs-lupa:active,.cs-erase:active{transform:scale(.9)}
+.cs-lupa:hover,.cs-erase:hover{background:#e9eef2}
+.cs-erase[hidden]{display:none}
+.cs-order .cs-mic{align-self:flex-end;width:44px;height:44px}
+
+/* --- Buscador pequeno que abre la lupa --- */
+.cs-find{display:flex;align-items:center;gap:8px;height:0;opacity:0;overflow:hidden;margin-bottom:0;
+  padding:0 12px 0 10px;border-radius:16px;background:#f2f5f7;border:1.5px solid #e7ecef;
+  transition:height .24s cubic-bezier(.22,.9,.3,1),opacity .18s ease,margin .24s ease,border-color .18s ease}
+.cs-find.on{height:46px;opacity:1;margin-bottom:8px;border-color:var(--g-line);background:#fff}
+.cs-find-ico{flex:none;display:grid;place-items:center;color:#8a949c}
+.cs-find-ico svg{width:18px;height:18px}
+.cs-find input{flex:1;min-width:0;height:100%;border:0;background:transparent;outline:none;
+  font-family:inherit;font-size:15px;color:var(--ink)}
+.cs-find input::placeholder{color:#98a2a9}
+.cs-find-x{flex:none;width:30px;height:30px;border-radius:50%;border:0;background:#e9eef2;color:#6b767f;
+  display:grid;place-items:center}
+.cs-find-x svg{width:14px;height:14px}
+
+/* --- Tarjetas: entrada escalonada al filtrar y al abrir --- */
+@keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.cs-grid .pcard.entra{animation:cardIn .34s cubic-bezier(.22,.9,.3,1) both}
+@media (prefers-reduced-motion:reduce){
+  .cs-grid .pcard.entra{animation:none}
+  .cs-find{transition:none}
+}
+
+/* --- Barra de voz: candado mas grande y mas arriba, zafacon mas grande --- */
+.rd-lock{bottom:calc(100% + 14px)}
+.rd-lock svg{width:27px;height:27px}
+.rd-lock small{font-size:8.5px;letter-spacing:.04em}
+.rd-trash svg{width:25px;height:25px}
+.rd-trash small{font-size:8.5px}
+/* candado: el arco se abre y se cierra solo */
+.rd-lock .arco{transform-origin:12px 10.6px;animation:arcoLock 2.6s cubic-bezier(.45,0,.3,1) infinite}
+/* zafacon: la tapa se levanta y se vuelve a cerrar */
+.rd-trash .tapa{transform-origin:6px 7px;animation:tapaTrash 2.6s cubic-bezier(.45,0,.3,1) infinite}
+/* la pildora sin etiqueta: punto, tiempo y aire */
+.rd-pill{justify-content:flex-start;padding:0 16px;gap:12px}
+.rd-pill b{font-size:16.5px}

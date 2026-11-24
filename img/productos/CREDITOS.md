@@ -46,3 +46,53 @@ Fotos descargadas de Wikimedia Commons y recortadas a 420x420 para el catalogo d
 | Cloro 1 L | cloro.jpg | Adina Firestone | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Clorox_Bleach_products.jpg |
 | Papel Higienico 4 rollos | papel.jpg | Brandon Blinkenberg | CC BY 2.5 | https://commons.wikimedia.org/wiki/File:Toiletpapier_(Gobran111).jpg |
 | Detergente en Polvo | detergente.jpg | Uncy at Slovenian Wikipedia | Public domain | https://commons.wikimedia.org/wiki/File:Pralni_prašek.JPG |
+| Apio | apio.jpg | Renee Comet (Photographer) | Public domain | https://commons.wikimedia.org/wiki/File:Celery_(1).jpg |
+| Atun en Lata | atun-lata.jpg | I would appreciate being notified if y… | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Tuna_can.jpg |
+| Avena en Hojuelas | avena.jpg | en:user:Hankwang | Public domain | https://commons.wikimedia.org/wiki/File:Rolled_oats.jpg |
+| Bacalao | pescado.jpg | Cássio Abreu | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Bacalhau.jpg |
+| Bebida Energizante | bebida-energizante.jpg | Oto Zapletal | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:HELL_energy_drinks.jpg |
+| Berenjena | berenjena.jpg | Mbigul | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:A_group_of_eggplants.jpg |
+| Cafe Instantaneo | cafe-instantaneo.jpg | Editor at Large | CC BY-SA 2.5 | https://commons.wikimedia.org/wiki/File:Instant_coffee.jpg |
+| Carne de Res | carne-res.jpg | Иван | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Raw_beef_steaks.jpg |
+| Cereal de Maiz | cereal-maiz.jpg | Gaurav Dhwaj Khadka | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Corn_flakes.jpg |
+| Chuleta de Cerdo | chuleta-cerdo.jpg | Peachyeung316 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Pork_chop_at_home.jpg |
+| Crema de Leche | crema-leche.jpg | EmperadorSandia | Public domain | https://commons.wikimedia.org/wiki/File:Cream.jpg |
+| Galletas Dulces | galletas-dulces.jpg | Peter &amp; Maggie Bailey | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Biscuits_perspective.jpg |
+| Garbanzos | garbanzos.jpg | Fumikas Sagisavas | CC0 | https://commons.wikimedia.org/wiki/File:Chickpeas%F0%9F%AB%98.jpg |
+| Gelatina | gelatina.jpg | Texas Lane | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Strawberry_flavored_Gelatin.jpg |
+| Guineo | guineo.jpg | Vitaium | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Green_raw_bananas.jpg |
+| Harina de Maiz | harina-maiz.jpg | Hajia Hijjah | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Maize_flour.jpg |
+| Jabon de Bano | jabon-bano.jpg | No machine-readable author provided. L… | Public domain | https://commons.wikimedia.org/wiki/File:A_bar_of_soap.jpg |
+| Jugo en Polvo | jugo-polvo.jpg | Corn cheese | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Drink_mix.jpg |
+| Ketchup | ketchup.jpg | Visitor7 | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Ketchup_Bottles.jpg |
+| Leche Condensada | leche-condensada.jpg | - | CC BY-SA 2.5 | https://commons.wikimedia.org/wiki/File:Condensed_milk_fan.jpg |
+| Lechuga | lechuga.jpg | Rainer Zenz | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Romaine_lettuce.jpg |
+| Lentejas | lentejas.jpg | Fumikas Sagisavas | CC0 | https://commons.wikimedia.org/wiki/File:Red_lentils_(1).jpg |
+| Limpiador Multiuso | limpiador-multiuso.jpg | ajay_suresh | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Lysol_-_All_Purpose_Cleaner_(51012787263).jpg |
+| Longaniza | longaniza.jpg | Xemenendura | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Longaniza_1.jpg |
+| Maiz Dulce en Lata | maiz-dulce-lata.jpg | Danielgrad | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Corn_kernels.jpg |
+| Malta | malta.jpg | Marwan Bello | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Maltina_Soft_Drink.jpg |
+| Mani Salado | mani-salado.jpg | Vis M | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Roasted_peanuts.jpg |
+| Mayonesa | mayonesa.jpg | jules | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Mayonnaise_(1).jpg |
+| Mortadela | mortadela.jpg | ehud | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Mortadella.jpg |
+| Name | name.jpg | Hajia Hijjah | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Yam_tubers.jpg |
+| Pan de Molde | pan-molde.jpg | ElinorD | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:White_bread.jpg |
+| Papa | papa.jpg | - | Public domain | https://commons.wikimedia.org/wiki/File:Potatoes.jpg |
+| Papas Fritas | papas-fritas.jpg | Evan-Amos          for those who dont … | Public domain | https://commons.wikimedia.org/wiki/File:Potato-Chips.jpg |
+| Papel Toalla | papel-toalla.jpg | Mets501 | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Paper_towel.png |
+| Pasta Dental | pasta-dental.jpg | Justmee3001 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Toothpastes.jpg |
+| Pepino | pepino.jpg | Maathavan | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Cucumber_in_jaffna.JPG |
+| Pimiento Verde | pimiento-verde.jpg | Muna.R | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Green_pepper.jpg |
+| Queso de Freir | queso-freir.jpg | E4024 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:White_cheese.jpg |
+| Refresco en Lata | refresco-lata.jpg | Editor182 (talk) | Public domain | https://commons.wikimedia.org/wiki/File:Lift_(soft_drink).jpg |
+| Remolacha | remolacha.jpg | Kiwima | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Beetroot(1).jpg |
+| Repollo | repollo.jpg | Charipearl | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Fresh_Cabbage_Head.jpg |
+| Salchichas | salchichas.jpg | Flixtey | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Sausages.jpg |
+| Salsa Picante | salsa-picante.jpg | Reuben Strayer | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:TRUFF_Hotter_Sauce.jpg |
+| Sardinas en Lata | sardinas.jpg | TANAKA Juuyoh (田中十洋) | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Sardines_-_%E9%B0%AF(%E3%81%84%E3%82%8F%E3%81%97).jpg |
+| Sopa en Sobre | sopa-sobre.jpg | Zákupák | Public domain | https://commons.wikimedia.org/wiki/File:Instantn%C3%AD_vietnamsk%C3%A1_pol%C3%A9vka.JPG |
+| Suavizante de Ropa | suavizante.jpg | Alf van Beem | Public domain | https://commons.wikimedia.org/wiki/File:Globus_Saarbr%C3%BCcken,_fabric_softener_pic1.JPG |
+| Vinagre | vinagre.jpg | Groogle | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Chinkiang-vinegar-5.jpg |
+| Yautia | yautia.jpg | Paxsimius | CC BY-SA 2.5 | https://commons.wikimedia.org/wiki/File:Taro_corms.JPG |
+| Yogurt | yogurt.jpg | Orrling | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Yogurt.jpg |
+| Zanahoria | zanahoria.jpg | Aastha12gogo | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Carrots_001.jpg |

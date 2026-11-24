@@ -26,9 +26,39 @@
 - Catalogo base dominicano ampliado de 42 a 72 productos: 30 nuevos de colmado en Granos, Despensa, Enlatados, Lacteos, Embutido, Carnes, Viveres, Panaderia, Snacks, Bebidas, Limpieza e Higiene. Sin duplicados con los existentes.
 - Sin cambios en el procesamiento de pedidos, el inventario, la sincronizacion ni la facturacion electronica.
 
+## 2.17.0 (v128)
+- Catalogo del panel: animaciones suaves al cambiar de categoria y al aparecer las tarjetas (entrada escalonada, respeta "reducir movimiento").
+- Campo de la lista: fuera el icono de lista, etiqueta corta "Lista de pedido", el texto arranca pegado abajo y crece hacia arriba con las lineas.
+- Lupa en la esquina inferior izquierda: abre un buscador horizontal pequeno para filtrar productos por nombre sin perder la lista escrita.
+- Borrador junto al microfono: vacia la lista de un solo toque.
+- La hoja del catalogo se queda a la vista mientras se graba, y en manos libres se puede recorrer el catalogo con la grabacion activa. La barra de voz se apoya encima del campo, sin tapar nada.
+- Al procesar un pedido por voz o por lista de texto, los productos entran al talonario y la hoja se contrae sola.
+- Fuera las etiquetas de gesto de la barra de voz. El candado sube y se agranda, el zafacon se agranda; ambos con animacion propia (el arco del candado se abre y se cierra, la tapa del zafacon se levanta y se cierra).
+- Confirmacion al empezar a grabar: vibracion marcada y aviso sonoro fuerte de dos tonos.
+- Fotografias: 50 fotos nuevas de Wikimedia Commons (420x420) para los 30 productos que estaban sin imagen y para los 20 nuevos, mas las de los 8 productos base. El catalogo queda con 92 productos, todos con foto. Creditos en img/productos/CREDITOS.md.
+- Los equipos que ya habian sembrado el catalogo reciben la foto que les faltaba al abrir la app (completarFotos), sin duplicar productos.
+- 20 productos nuevos de colmado dominicano: Yautia, Name, Guineo, Lechuga, Remolacha, Pimiento Verde, Apio, Bacalao, Longaniza, Yogurt, Crema de Leche, Sopa en Sobre, Vinagre, Salsa Picante, Gelatina, Cereal de Maiz, Jugo en Polvo, Bebida Energizante, Papel Toalla y Pasta Dental.
+- Sin cambios en el procesamiento de pedidos, el inventario, el talonario ni la facturacion electronica.
+
 # Historial de cambios · PediPOS
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
+
+## [2.17.0] - 2026-11-24
+
+### Anadido
+- **Buscador con lupa** en el catalogo del panel: campo horizontal pequeno que filtra por nombre sin borrar la lista escrita.
+- **Borrador** junto al microfono para vaciar la lista de un toque.
+- **Fotografias** para los 50 productos que no tenian (30 anteriores + 20 nuevos) y para los 8 productos base; el catalogo queda en 92 productos, todos con foto.
+- **20 productos nuevos** de colmado dominicano con precio, unidad, categoria y foto.
+- **Confirmacion de grabacion**: vibracion y aviso sonoro fuerte al empezar a grabar.
+- **Animaciones**: entrada escalonada de las tarjetas al filtrar o abrir, arco del candado y tapa del zafacon animados.
+
+### Cambiado
+- **Campo de la lista**: sin icono, etiqueta "Lista de pedido", el texto arranca abajo y crece hacia arriba.
+- **Barra de voz**: candado mas grande y mas alto, zafacon mas grande, sin etiquetas de gesto.
+- **Grabacion**: la hoja del catalogo se queda a la vista y se puede recorrer mientras se dicta; al procesar, la hoja se contrae sola.
+- Los equipos con el catalogo ya sembrado reciben las fotos que faltaban sin duplicar productos.
 
 ## [2.16.0] - 2026-11-24
 

@@ -15,14 +15,14 @@
   const uid = (p) => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   const SEED_PRODUCTS = [
-    { nombre: "Arroz Campo", precio: 45, unidad: "libra", categoria: "Granos", stock: 200 },
-    { nombre: "Habichuelas Rojas", precio: 60, unidad: "libra", categoria: "Granos", stock: 80 },
-    { nombre: "Leche Entera", precio: 75, unidad: "unidad", categoria: "Lacteos", stock: 40 },
-    { nombre: "Huevos", precio: 8, unidad: "unidad", categoria: "Lacteos", stock: 300 },
-    { nombre: "Pollo", precio: 95, unidad: "libra", categoria: "Carnes", stock: 60 },
-    { nombre: "Aceite", precio: 180, unidad: "unidad", categoria: "Despensa", stock: 25 },
-    { nombre: "Azucar", precio: 40, unidad: "libra", categoria: "Despensa", stock: 120 },
-    { nombre: "Platano", precio: 20, unidad: "unidad", categoria: "Viveres", stock: 150 },
+    { nombre: "Arroz Campo", precio: 45, unidad: "libra", categoria: "Granos", stock: 200, img: "img/productos/arroz.jpg" },
+    { nombre: "Habichuelas Rojas", precio: 60, unidad: "libra", categoria: "Granos", stock: 80, img: "img/productos/habichuelas.jpg" },
+    { nombre: "Leche Entera", precio: 75, unidad: "unidad", categoria: "Lacteos", stock: 40, img: "img/productos/leche-evap.jpg" },
+    { nombre: "Huevos", precio: 8, unidad: "unidad", categoria: "Lacteos", stock: 300, img: "img/productos/huevos.jpg" },
+    { nombre: "Pollo", precio: 95, unidad: "libra", categoria: "Carnes", stock: 60, img: "img/productos/pollo.jpg" },
+    { nombre: "Aceite", precio: 180, unidad: "unidad", categoria: "Despensa", stock: 25, img: "img/productos/aceite.jpg" },
+    { nombre: "Azucar", precio: 40, unidad: "libra", categoria: "Despensa", stock: 120, img: "img/productos/azucar.jpg" },
+    { nombre: "Platano", precio: 20, unidad: "unidad", categoria: "Viveres", stock: 150, img: "img/productos/platano.jpg" },
   ];
 
   function fresh() {

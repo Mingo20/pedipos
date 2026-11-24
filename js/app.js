@@ -32,6 +32,7 @@
     trashAnim: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5l.85 11.6A2 2 0 0 0 9.34 21h5.32a2 2 0 0 0 1.99-1.9l.85-11.6"/><g class="tapa"><path d="M4.4 7.2h15.2"/><path d="M9.4 7.2V4.9h5.2v2.3"/></g></svg>',
     lockAnim: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.6" width="14" height="9.4" rx="2.6"/><path class="arco" d="M8.2 10.6V7.9a3.8 3.8 0 0 1 7.6 0v2.7"/></svg>',
     share: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M8.5 6.5 12 3l3.5 3.5"/><path d="M6 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1"/></svg>',
+    eraser: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 21h12.4"/><path d="M17.4 3.6 20.6 6.8a1.7 1.7 0 0 1 0 2.4l-8.5 8.5a1.7 1.7 0 0 1-2.4 0l-3.2-3.2a1.7 1.7 0 0 1 0-2.4z"/><path d="M9.7 6.2 16 12.5"/></svg>',
     sendarrow: '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg>',
     bag: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -646,17 +647,40 @@
   /* ---------- Catalogo del panel: hoja inferior arrastrable (movil vertical) ----------
      Siempre queda a la vista su encabezado y la fila de categorias. Se sube arrastrando
      para recorrer las tarjetas y se baja igual; no se desvanece ni necesita botones. */
-  let csCat = "", csQ = "", csFull = false, csScroll = 0;
+  let csCat = "", csQ = "", csFindQ = "", csFindAbierto = false, csFull = false, csScroll = 0;
 
   const catsPanel = () => [...new Set((db().products || []).filter((p) => p.activo !== false)
     .map((p) => p.categoria).filter(Boolean))].sort();
 
   function csLista() {
+    const q = window.PPVoice ? window.PPVoice.norm(csFindQ) : String(csFindQ || "").toLowerCase();
     const enTalonario = new Set(cart().lines.map((l) => l.pid));
     return (db().products || [])
-      .filter((p) => p.activo !== false && (!csCat || p.categoria === csCat))
+      .filter((p) => p.activo !== false && (!csCat || p.categoria === csCat) && (!q ||
+        (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q)
+                        : String(p.nombre).toLowerCase().includes(q))))
       /* los ya elegidos suben al principio: la tarjeta se ve sin buscarla */
       .sort((a, b) => (enTalonario.has(a.pid) ? 0 : 1) - (enTalonario.has(b.pid) ? 0 : 1));
+  }
+
+  /* Entrada escalonada de las tarjetas: al cambiar de categoria o al buscar. */
+  function animarTarjetas(g) {
+    if (!g) return;
+    const cards = g.querySelectorAll(".pcard");
+    cards.forEach((c, i) => {
+      c.classList.add("entra");
+      c.style.animationDelay = Math.min(i * 24, 300) + "ms";
+    });
+    const limpia = () => cards.forEach((c) => { c.classList.remove("entra"); c.style.animationDelay = ""; });
+    clearTimeout(g._tAnim);
+    g._tAnim = setTimeout(limpia, 700 + Math.min(cards.length, 14) * 24);
+  }
+  function pintarGrid(animar) {
+    const sh = document.getElementById("catsheet");
+    const g = sh && sh.querySelector("#csGrid");
+    if (!g) return;
+    g.innerHTML = csGridHTML();
+    if (animar) animarTarjetas(g);
   }
   /* icono de la categoria: la foto de uno de sus productos */
   function iconoCat(cat) {
@@ -687,11 +711,17 @@
       </div>
       <div class="cs-body" id="csBody"><div class="pgrid cs-grid" id="csGrid">${csGridHTML()}</div></div>
       <div class="cs-foot" id="csFoot">
+        <div class="cs-find" id="csFind">
+          <span class="cs-find-ico" aria-hidden="true">${I.search}</span>
+          <input id="csFindQ" placeholder="Buscar producto" autocomplete="off" spellcheck="false" enterkeyhint="search">
+          <button class="cs-find-x" id="csFindX" type="button" aria-label="Cerrar búsqueda">${I.xDown}</button>
+        </div>
         <div class="cs-search cs-order">
-          <span class="cs-oico" aria-hidden="true">${I.list}</span>
-          <textarea id="csQ" class="cs-ta" rows="2" placeholder="Lista de pedido: escribe o pega aquí" autocomplete="off" spellcheck="false"></textarea>
+          <button class="cs-lupa" id="csLupa" type="button" aria-label="Buscar producto">${I.search}</button>
+          <textarea id="csQ" class="cs-ta" rows="1" placeholder="Lista de pedido" autocomplete="off" spellcheck="false"></textarea>
+          <button class="cs-erase" id="csErase" type="button" aria-label="Borrar lista" hidden>${I.eraser}</button>
           <button class="cs-mic" id="csMic" data-mic="1" aria-label="Pedido por voz">${I.mic}</button>
-          <button class="cs-mic cs-send" id="csSend" aria-label="Procesar lista" hidden>${I.sendarrow}</button>
+          <button class="cs-mic cs-send" id="csSend" type="button" aria-label="Procesar lista" hidden>${I.sendarrow}</button>
         </div>
       </div>`;
     document.body.append(sh);
@@ -803,8 +833,7 @@
       if (!b) return;
       csCat = b.dataset.cat || "";
       cats.innerHTML = csCatsHTML();
-      const g = sh.querySelector("#csGrid");
-      if (g) g.innerHTML = csGridHTML();
+      pintarGrid(true);
       if (body) body.scrollTop = 0;
       tap();
     });
@@ -813,17 +842,23 @@
     const q = sh.querySelector("#csQ");
     const bMic = sh.querySelector("#csMic");
     const bSend = sh.querySelector("#csSend");
+    const bErase = sh.querySelector("#csErase");
+    const find = sh.querySelector("#csFind");
+    const findQ = sh.querySelector("#csFindQ");
+    const bLupa = sh.querySelector("#csLupa");
     const pintarBoton = () => {
       const hay = !!(q && q.value.trim());
       if (bMic) bMic.hidden = hay;
       if (bSend) bSend.hidden = !hay;
+      if (bErase) bErase.hidden = !hay;
     };
+    /* el campo arranca con una linea pegada abajo y crece hacia arriba */
     const crecer = () => {
       if (!q) return;
       q.style.height = "auto";
-      const alto = Math.min(q.scrollHeight, 168);
+      const alto = Math.min(q.scrollHeight, 132);
       q.style.height = alto + "px";
-      q.style.overflowY = q.scrollHeight > 168 ? "auto" : "hidden";
+      q.style.overflowY = q.scrollHeight > 132 ? "auto" : "hidden";
     };
     window.PPListaCampo = { pintar: pintarBoton, crecer };
     if (q) {
@@ -835,6 +870,42 @@
       crecer();
     }
     if (bSend) bSend.addEventListener("click", (e) => { e.preventDefault(); procesarListaCatalogo(); });
+    /* borrador: deja la lista vacia de un solo toque */
+    if (bErase) bErase.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (q) { q.value = ""; q.style.height = ""; }
+      csQ = "";
+      pintarBoton(); crecer(); tap();
+      if (q) { try { q.focus({ preventScroll: true }); } catch (_) {} }
+    });
+    /* lupa: abre un buscador pequeno y horizontal sobre el campo de la lista */
+    if (bLupa && find && findQ) {
+      const cerrarFind = () => {
+        csFindAbierto = false;
+        find.classList.remove("on");
+        findQ.value = ""; csFindQ = "";
+        pintarGrid(true);
+      };
+      bLupa.addEventListener("click", (e) => {
+        e.preventDefault();
+        const abrir = !csFindAbierto;
+        csFindAbierto = abrir;
+        find.classList.toggle("on", abrir);
+        if (abrir) {
+          if (!csFull) irA(true, true);
+          setTimeout(() => { try { findQ.focus({ preventScroll: true }); } catch (_) {} }, 240);
+        } else cerrarFind();
+        tap();
+      });
+      findQ.addEventListener("input", () => {
+        csFindQ = findQ.value;
+        pintarGrid(true);
+        if (body) body.scrollTop = 0;
+      });
+      findQ.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); findQ.blur(); } });
+      const fx = sh.querySelector("#csFindX");
+      if (fx) fx.addEventListener("click", (e) => { e.preventDefault(); cerrarFind(); tap(); });
+    }
     pintarBoton();
     /* tarjetas: agregan al talonario, se resaltan y suben al principio */
     sh.querySelector("#csGrid").addEventListener("click", (e) => {
@@ -860,6 +931,10 @@
     if (g) g.innerHTML = csGridHTML();
     const q = sh.querySelector("#csQ");
     if (q && q.value !== csQ) q.value = csQ;
+    const fq = sh.querySelector("#csFindQ");
+    if (fq && fq.value !== csFindQ) fq.value = csFindQ;
+    const find = sh.querySelector("#csFind");
+    if (find) find.classList.toggle("on", !!csFindAbierto);
     if (window.PPListaCampo) { window.PPListaCampo.pintar(); window.PPListaCampo.crecer(); }
     medirCatalogo(sh);
     irA(csFull, false);
@@ -1718,7 +1793,6 @@
         <button class="rd-trash" id="recX" type="button" aria-label="Cancelar grabación">${I.trashAnim}<small>Cancelar</small></button>
         <div class="rd-pill">
           <span class="rd-dot"></span><b id="recSeg">0:00</b>
-          <span class="rd-tip" id="recTip">Desliza arriba al candado</span>
         </div>
         <span class="rd-lock" id="recLock" aria-hidden="true">${I.lockAnim}<small>Bloquear</small></span>
         <span class="rd-mic" id="rdMic" aria-hidden="true">${I.mic}</span>
@@ -1831,6 +1905,9 @@
     if (MIC.token !== mi || MIC.fase !== "arrancando") { try { window.PPVoice.resetRecording(); } catch (_) {} return; }
     MIC.fase = "grabando";
     mostrarDock();
+    /* confirmacion clara de que la grabacion arranco: sonido fuerte y vibracion */
+    micVibra([45, 55, 45]);
+    try { window.PPSound && window.PPSound.grabar && window.PPSound.grabar(); } catch (_) {}
     MIC.tick = setInterval(() => {
       MIC.seg++;
       const a = document.getElementById("recSeg"), b = document.getElementById("recSeg2");
@@ -2046,6 +2123,7 @@
     $("#proc") && $("#proc").remove();
     if (!r) { toast("No se pudo procesar el pedido."); return; }
     agregarDirecto(r, { cobrar: true });
+    irA(false, true);      /* la hoja del catalogo se contrae sola */
   }
 
   function toggleVoice() {

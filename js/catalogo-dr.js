@@ -1,7 +1,8 @@
 /* PediPOS: catalogo base dominicano.
-   42 productos de los que mas se venden en los colmados de Republica Dominicana, con foto
+   72 productos de los que mas se venden en los colmados de Republica Dominicana, con foto
    descargada de Wikimedia Commons (ver img/productos/CREDITOS.md).
-   Se siembra una sola vez por equipo: si el producto ya existe por nombre, no se toca. */
+   Se siembra una sola vez por equipo: si el producto ya existe por nombre, no se toca; si le
+   falta la foto, se le pone la del catalogo. */
 (function () {
   "use strict";
   const PRODUCTOS = [
@@ -473,7 +474,7 @@
  "unidad": "libra",
  "precio": 60,
  "stock": 90,
- "img": ""
+ "img": "img/productos/lentejas.jpg"
 },
 {
  "nombre": "Garbanzos",
@@ -481,7 +482,7 @@
  "unidad": "libra",
  "precio": 70,
  "stock": 80,
- "img": ""
+ "img": "img/productos/garbanzos.jpg"
 },
 {
  "nombre": "Avena en Hojuelas",
@@ -489,7 +490,7 @@
  "unidad": "unidad",
  "precio": 95,
  "stock": 50,
- "img": ""
+ "img": "img/productos/avena.jpg"
 },
 {
  "nombre": "Harina de Maiz",
@@ -497,7 +498,7 @@
  "unidad": "libra",
  "precio": 40,
  "stock": 120,
- "img": ""
+ "img": "img/productos/harina-maiz.jpg"
 },
 {
  "nombre": "Mayonesa",
@@ -505,7 +506,7 @@
  "unidad": "unidad",
  "precio": 110,
  "stock": 60,
- "img": ""
+ "img": "img/productos/mayonesa.jpg"
 },
 {
  "nombre": "Ketchup",
@@ -513,7 +514,7 @@
  "unidad": "unidad",
  "precio": 95,
  "stock": 55,
- "img": ""
+ "img": "img/productos/ketchup.jpg"
 },
 {
  "nombre": "Cafe Instantaneo",
@@ -521,7 +522,7 @@
  "unidad": "unidad",
  "precio": 150,
  "stock": 45,
- "img": ""
+ "img": "img/productos/cafe-instantaneo.jpg"
 },
 {
  "nombre": "Atun en Lata",
@@ -529,7 +530,7 @@
  "unidad": "unidad",
  "precio": 85,
  "stock": 80,
- "img": ""
+ "img": "img/productos/atun-lata.jpg"
 },
 {
  "nombre": "Sardinas en Lata",
@@ -537,7 +538,7 @@
  "unidad": "unidad",
  "precio": 55,
  "stock": 90,
- "img": ""
+ "img": "img/productos/sardinas.jpg"
 },
 {
  "nombre": "Maiz Dulce en Lata",
@@ -545,7 +546,7 @@
  "unidad": "unidad",
  "precio": 75,
  "stock": 60,
- "img": ""
+ "img": "img/productos/maiz-dulce-lata.jpg"
 },
 {
  "nombre": "Leche Condensada",
@@ -553,7 +554,7 @@
  "unidad": "unidad",
  "precio": 120,
  "stock": 70,
- "img": ""
+ "img": "img/productos/leche-condensada.jpg"
 },
 {
  "nombre": "Queso de Freir",
@@ -561,7 +562,7 @@
  "unidad": "libra",
  "precio": 280,
  "stock": 40,
- "img": ""
+ "img": "img/productos/queso-freir.jpg"
 },
 {
  "nombre": "Mortadela",
@@ -569,7 +570,7 @@
  "unidad": "libra",
  "precio": 165,
  "stock": 50,
- "img": ""
+ "img": "img/productos/mortadela.jpg"
 },
 {
  "nombre": "Salchichas",
@@ -577,7 +578,7 @@
  "unidad": "unidad",
  "precio": 140,
  "stock": 45,
- "img": ""
+ "img": "img/productos/salchichas.jpg"
 },
 {
  "nombre": "Carne de Res",
@@ -585,7 +586,7 @@
  "unidad": "libra",
  "precio": 220,
  "stock": 35,
- "img": ""
+ "img": "img/productos/carne-res.jpg"
 },
 {
  "nombre": "Chuleta de Cerdo",
@@ -593,7 +594,7 @@
  "unidad": "libra",
  "precio": 175,
  "stock": 40,
- "img": ""
+ "img": "img/productos/chuleta-cerdo.jpg"
 },
 {
  "nombre": "Papa",
@@ -601,7 +602,7 @@
  "unidad": "libra",
  "precio": 45,
  "stock": 110,
- "img": ""
+ "img": "img/productos/papa.jpg"
 },
 {
  "nombre": "Zanahoria",
@@ -609,7 +610,7 @@
  "unidad": "libra",
  "precio": 40,
  "stock": 80,
- "img": ""
+ "img": "img/productos/zanahoria.jpg"
 },
 {
  "nombre": "Repollo",
@@ -617,7 +618,7 @@
  "unidad": "libra",
  "precio": 30,
  "stock": 60,
- "img": ""
+ "img": "img/productos/repollo.jpg"
 },
 {
  "nombre": "Pepino",
@@ -625,7 +626,7 @@
  "unidad": "unidad",
  "precio": 20,
  "stock": 70,
- "img": ""
+ "img": "img/productos/pepino.jpg"
 },
 {
  "nombre": "Berenjena",
@@ -633,7 +634,7 @@
  "unidad": "libra",
  "precio": 40,
  "stock": 50,
- "img": ""
+ "img": "img/productos/berenjena.jpg"
 },
 {
  "nombre": "Pan de Molde",
@@ -641,7 +642,7 @@
  "unidad": "unidad",
  "precio": 165,
  "stock": 30,
- "img": ""
+ "img": "img/productos/pan-molde.jpg"
 },
 {
  "nombre": "Galletas Dulces",
@@ -649,7 +650,7 @@
  "unidad": "unidad",
  "precio": 25,
  "stock": 100,
- "img": ""
+ "img": "img/productos/galletas-dulces.jpg"
 },
 {
  "nombre": "Papas Fritas",
@@ -657,7 +658,7 @@
  "unidad": "unidad",
  "precio": 45,
  "stock": 70,
- "img": ""
+ "img": "img/productos/papas-fritas.jpg"
 },
 {
  "nombre": "Mani Salado",
@@ -665,7 +666,7 @@
  "unidad": "unidad",
  "precio": 40,
  "stock": 65,
- "img": ""
+ "img": "img/productos/mani-salado.jpg"
 },
 {
  "nombre": "Malta",
@@ -673,7 +674,7 @@
  "unidad": "unidad",
  "precio": 45,
  "stock": 120,
- "img": ""
+ "img": "img/productos/malta.jpg"
 },
 {
  "nombre": "Refresco en Lata",
@@ -681,7 +682,7 @@
  "unidad": "unidad",
  "precio": 60,
  "stock": 110,
- "img": ""
+ "img": "img/productos/refresco-lata.jpg"
 },
 {
  "nombre": "Limpiador Multiuso",
@@ -689,7 +690,7 @@
  "unidad": "unidad",
  "precio": 130,
  "stock": 55,
- "img": ""
+ "img": "img/productos/limpiador-multiuso.jpg"
 },
 {
  "nombre": "Suavizante de Ropa",
@@ -697,7 +698,7 @@
  "unidad": "unidad",
  "precio": 110,
  "stock": 50,
- "img": ""
+ "img": "img/productos/suavizante.jpg"
 },
 {
  "nombre": "Jabon de Bano",
@@ -705,7 +706,167 @@
  "unidad": "unidad",
  "precio": 55,
  "stock": 75,
- "img": ""
+ "img": "img/productos/jabon-bano.jpg"
+},
+{
+ "nombre": "Yautia",
+ "categoria": "Viveres",
+ "unidad": "libra",
+ "precio": 45,
+ "stock": 70,
+ "img": "img/productos/yautia.jpg"
+},
+{
+ "nombre": "Name",
+ "categoria": "Viveres",
+ "unidad": "libra",
+ "precio": 50,
+ "stock": 70,
+ "img": "img/productos/name.jpg"
+},
+{
+ "nombre": "Guineo",
+ "categoria": "Viveres",
+ "unidad": "unidad",
+ "precio": 8,
+ "stock": 200,
+ "img": "img/productos/guineo.jpg"
+},
+{
+ "nombre": "Lechuga",
+ "categoria": "Viveres",
+ "unidad": "unidad",
+ "precio": 35,
+ "stock": 60,
+ "img": "img/productos/lechuga.jpg"
+},
+{
+ "nombre": "Remolacha",
+ "categoria": "Viveres",
+ "unidad": "libra",
+ "precio": 40,
+ "stock": 55,
+ "img": "img/productos/remolacha.jpg"
+},
+{
+ "nombre": "Pimiento Verde",
+ "categoria": "Viveres",
+ "unidad": "unidad",
+ "precio": 25,
+ "stock": 80,
+ "img": "img/productos/pimiento-verde.jpg"
+},
+{
+ "nombre": "Apio",
+ "categoria": "Viveres",
+ "unidad": "unidad",
+ "precio": 30,
+ "stock": 60,
+ "img": "img/productos/apio.jpg"
+},
+{
+ "nombre": "Bacalao",
+ "categoria": "Carnes",
+ "unidad": "libra",
+ "precio": 210,
+ "stock": 35,
+ "img": "img/productos/pescado.jpg"
+},
+{
+ "nombre": "Longaniza",
+ "categoria": "Embutido",
+ "unidad": "libra",
+ "precio": 175,
+ "stock": 45,
+ "img": "img/productos/longaniza.jpg"
+},
+{
+ "nombre": "Yogurt",
+ "categoria": "Lacteos",
+ "unidad": "unidad",
+ "precio": 90,
+ "stock": 50,
+ "img": "img/productos/yogurt.jpg"
+},
+{
+ "nombre": "Crema de Leche",
+ "categoria": "Lacteos",
+ "unidad": "unidad",
+ "precio": 120,
+ "stock": 45,
+ "img": "img/productos/crema-leche.jpg"
+},
+{
+ "nombre": "Sopa en Sobre",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 25,
+ "stock": 110,
+ "img": "img/productos/sopa-sobre.jpg"
+},
+{
+ "nombre": "Vinagre",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 45,
+ "stock": 60,
+ "img": "img/productos/vinagre.jpg"
+},
+{
+ "nombre": "Salsa Picante",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 65,
+ "stock": 55,
+ "img": "img/productos/salsa-picante.jpg"
+},
+{
+ "nombre": "Gelatina",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 30,
+ "stock": 80,
+ "img": "img/productos/gelatina.jpg"
+},
+{
+ "nombre": "Cereal de Maiz",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 180,
+ "stock": 40,
+ "img": "img/productos/cereal-maiz.jpg"
+},
+{
+ "nombre": "Jugo en Polvo",
+ "categoria": "Bebidas",
+ "unidad": "unidad",
+ "precio": 25,
+ "stock": 90,
+ "img": "img/productos/jugo-polvo.jpg"
+},
+{
+ "nombre": "Bebida Energizante",
+ "categoria": "Bebidas",
+ "unidad": "unidad",
+ "precio": 95,
+ "stock": 60,
+ "img": "img/productos/bebida-energizante.jpg"
+},
+{
+ "nombre": "Papel Toalla",
+ "categoria": "Limpieza",
+ "unidad": "unidad",
+ "precio": 95,
+ "stock": 55,
+ "img": "img/productos/papel-toalla.jpg"
+},
+{
+ "nombre": "Pasta Dental",
+ "categoria": "Higiene",
+ "unidad": "unidad",
+ "precio": 120,
+ "stock": 50,
+ "img": "img/productos/pasta-dental.jpg"
 }
 ];
 
@@ -733,12 +894,26 @@
   }
 
   /* Se ejecuta al abrir la app, despues de que la tienda cargue. */
+  /* Equipos que ya sembraron antes: los productos sin foto reciben la suya. */
+  function completarFotos(db) {
+    if (!db || !Array.isArray(db.products)) return 0;
+    const porNombre = new Map(PRODUCTOS.map((p) => [norm(p.nombre), p]));
+    let n = 0;
+    for (const p of db.products) {
+      if (p.img) continue;
+      const ref = porNombre.get(norm(p.nombre));
+      if (ref && ref.img) { p.img = ref.img; n++; }
+    }
+    return n;
+  }
+
   function auto() {
     const S = window.PPStore;
     if (!S) return;
     const db = S.db;
     const nuevos = sembrar(db, S.uid);
-    if (!nuevos) return;
+    const conFoto = completarFotos(db);
+    if (!nuevos && !conFoto) return;
     S.save();
     /* suben a la base central con la misma cola de siempre, sin bloquear nada */
     try {
@@ -748,5 +923,5 @@
     window.dispatchEvent(new CustomEvent("pp:catalogo", { detail: { nuevos } }));
   }
 
-  window.PPCatalogoDR = { PRODUCTOS, sembrar, auto, norm };
+  window.PPCatalogoDR = { PRODUCTOS, sembrar, completarFotos, auto, norm };
 })();
