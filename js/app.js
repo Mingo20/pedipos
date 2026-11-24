@@ -152,6 +152,23 @@
     </button>`;
   }
 
+  /* Tarjeta del catalogo del panel: si el producto ya esta en el talonario se resalta
+     y lleva un circulo con la cantidad elegida en la esquina superior derecha. */
+  function cantEnTalonario(pid) {
+    const l = cart().lines.find((x) => x.pid === pid);
+    return l ? l.cant : 0;
+  }
+  function pcardCS(p) {
+    const cant = cantEnTalonario(p.pid);
+    const sel = cant > 0;
+    return `<button class="pcard${sel ? " sel" : ""}" data-p="${esc(p.pid)}" aria-pressed="${sel ? "true" : "false"}">
+      ${sel ? `<i class="qbadge">${num(cant)}</i>` : ""}
+      <span class="ph">${fotoDe(p)}</span>
+      <b class="nm">${esc(p.nombre)}</b>
+      <span class="prow"><span class="pr">${money(p.precio)}</span><span class="un">${esc(p.unidad || "unidad")}</span></span>
+    </button>`;
+  }
+
   /* ---------- Pantalla grande (PC horizontal) ---------- */
   const esPC = () => window.matchMedia("(min-width:1024px)").matches;
   let panelQ = "";
@@ -635,9 +652,11 @@
     .map((p) => p.categoria).filter(Boolean))].sort();
 
   function csLista() {
-    const q = window.PPVoice ? window.PPVoice.norm(csQ) : String(csQ || "").toLowerCase();
-    return (db().products || []).filter((p) => p.activo !== false && (!csCat || p.categoria === csCat) && (!q ||
-      (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q) : String(p.nombre).toLowerCase().includes(q))));
+    const enTalonario = new Set(cart().lines.map((l) => l.pid));
+    return (db().products || [])
+      .filter((p) => p.activo !== false && (!csCat || p.categoria === csCat))
+      /* los ya elegidos suben al principio: la tarjeta se ve sin buscarla */
+      .sort((a, b) => (enTalonario.has(a.pid) ? 0 : 1) - (enTalonario.has(b.pid) ? 0 : 1));
   }
   /* icono de la categoria: la foto de uno de sus productos */
   function iconoCat(cat) {
@@ -646,7 +665,7 @@
   }
   function csGridHTML() {
     const lista = csLista();
-    return lista.length ? lista.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:22px 4px;text-align:center">Sin productos que coincidan.</p>';
+    return lista.length ? lista.map((p) => pcardCS(p)).join("") : '<p class="cnt" style="padding:22px 4px;text-align:center">Sin productos.</p>';
   }
   function csCatsHTML() {
     return `<button class="cs-cat${csCat ? "" : " on"}" data-cat=""><i>${I.cart}</i><span>Todos</span></button>` +
@@ -668,7 +687,12 @@
       </div>
       <div class="cs-body" id="csBody"><div class="pgrid cs-grid" id="csGrid">${csGridHTML()}</div></div>
       <div class="cs-foot" id="csFoot">
-        <div class="cs-search">${I.search}<input id="csQ" placeholder="Buscar producto.." autocomplete="off" enterkeyhint="search"><button class="cs-mic" id="csMic" data-mic="1" aria-label="Pedido por voz">${I.mic}</button></div>
+        <div class="cs-search cs-order">
+          <span class="cs-oico" aria-hidden="true">${I.list}</span>
+          <textarea id="csQ" class="cs-ta" rows="2" placeholder="Lista de pedido: escribe o pega aquí" autocomplete="off" spellcheck="false"></textarea>
+          <button class="cs-mic" id="csMic" data-mic="1" aria-label="Pedido por voz">${I.mic}</button>
+          <button class="cs-mic cs-send" id="csSend" aria-label="Procesar lista" hidden>${I.sendarrow}</button>
+        </div>
       </div>`;
     document.body.append(sh);
     engancharCatalogo(sh);
@@ -784,25 +808,42 @@
       if (body) body.scrollTop = 0;
       tap();
     });
-    /* buscador */
+    /* Lista de pedido: campo de texto libre que crece hacia arriba.
+       Mientras tenga contenido, el microfono se convierte en enviar. */
     const q = sh.querySelector("#csQ");
+    const bMic = sh.querySelector("#csMic");
+    const bSend = sh.querySelector("#csSend");
+    const pintarBoton = () => {
+      const hay = !!(q && q.value.trim());
+      if (bMic) bMic.hidden = hay;
+      if (bSend) bSend.hidden = !hay;
+    };
+    const crecer = () => {
+      if (!q) return;
+      q.style.height = "auto";
+      const alto = Math.min(q.scrollHeight, 168);
+      q.style.height = alto + "px";
+      q.style.overflowY = q.scrollHeight > 168 ? "auto" : "hidden";
+    };
+    window.PPListaCampo = { pintar: pintarBoton, crecer };
     if (q) {
-      q.addEventListener("input", () => {
-        csQ = q.value;
-        const g = sh.querySelector("#csGrid");
-        if (g) g.innerHTML = csGridHTML();
-      });
+      q.addEventListener("input", () => { csQ = q.value; pintarBoton(); crecer(); });
+      q.addEventListener("paste", () => setTimeout(() => { csQ = q.value; pintarBoton(); crecer(); }, 0));
       q.addEventListener("focus", () => { if (!csFull) irA(true, true); });
-      q.addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+      /* Ctrl/Cmd + Enter tambien procesa; Enter normal hace salto de linea */
+      q.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); procesarListaCatalogo(); } });
+      crecer();
     }
-    /* tarjetas: agregan al talonario sin cerrar el catalogo */
+    if (bSend) bSend.addEventListener("click", (e) => { e.preventDefault(); procesarListaCatalogo(); });
+    pintarBoton();
+    /* tarjetas: agregan al talonario, se resaltan y suben al principio */
     sh.querySelector("#csGrid").addEventListener("click", (e) => {
       const b = e.target.closest(".pcard");
       if (!b) return;
       const p = (db().products || []).find((x) => x.pid === b.dataset.p);
       if (!p) return;
       addLine(p, 1); S.save(); tap();
-      csScroll = body ? body.scrollTop : 0;
+      csScroll = 0;                 /* la tarjeta elegida queda a la vista, arriba */
       render();
     });
     if (body) body.addEventListener("scroll", () => { csScroll = body.scrollTop; }, { passive: true });
@@ -819,6 +860,7 @@
     if (g) g.innerHTML = csGridHTML();
     const q = sh.querySelector("#csQ");
     if (q && q.value !== csQ) q.value = csQ;
+    if (window.PPListaCampo) { window.PPListaCampo.pintar(); window.PPListaCampo.crecer(); }
     medirCatalogo(sh);
     irA(csFull, false);
     const body = sh.querySelector("#csBody");
@@ -834,8 +876,8 @@
       (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q) : String(p.nombre).toLowerCase().includes(q))));
     const actHTML = `<div class="act ${n ? "hay" : ""}" id="actbar">
         <button class="n ${n ? "on" : ""}" id="bNew">NUEVA</button>
+        <button class="act-plus" id="bPlus" aria-label="Agregar producto a mano" title="Agregar producto a mano">${I.plus}<i class="pin ${manual ? "" : "off"}"></i></button>
         <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
-        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic" data-mic="1" role="button" aria-label="Pedido por voz"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
       </div>`;
     $("#view").innerHTML = `
       <div class="panel-work">
@@ -857,11 +899,6 @@
           <div class="line"><span>Subtotal</span><span id="vSub">${money(t.subtotal)}</span></div>
           ${(c.itbis && window.PPFiscal && window.PPFiscal.activo()) ? `<div class="line it"><span>ITBIS (${Math.round(rate() * 100)}%)</span><span id="vIt">+${money(t.itbis)}</span></div>` : ""}
           <div class="tot"><span>TOTAL A COBRAR</span><b id="vTot">${money(t.total)}</b></div>
-        </div>
-        <div class="tools">
-          <button class="plus tl" id="bList" aria-label="Lista de pedido">${I.list}<i class="pin ${orderTexto().trim() ? "" : "off"}"></i></button>
-          <button class="plus" id="bPlus" aria-label="Agregar">${I.plus}<i class="pin ${manual ? "" : "off"}"></i></button>
-          <button class="plus tl" id="bSearch" aria-label="Catalogo">${I.cart}<i class="bub ${n ? "" : "off"}">${n}</i></button>
         </div>
         ${actHTML}
       </section>`;
@@ -904,8 +941,10 @@
       const n2 = $("#pwq"); if (n2) { n2.focus(); n2.setSelectionRange(pos, pos); }
     };
     if (window.PPUI && window.PPUI.alDock) window.PPUI.alDock();
-    $("#bSearch").onclick = () => { if (esPC()) return openSearch(); abrirCatalogo(true); };
-    $("#bList").onclick = () => openOrder("");
+    const bBuscar = $("#bSearch");
+    if (bBuscar) bBuscar.onclick = () => { if (esPC()) return openSearch(); abrirCatalogo(true); };
+    const bLista = $("#bList");
+    if (bLista) bLista.onclick = () => openOrder("");
     $("#bPlus").onclick = () => {
       /* siempre se puede agregar a mano: el talonario muestra 5 y el resto se desliza */
       manual = true; render(); const f = $("#mnm"); f && f.focus();
@@ -1531,6 +1570,33 @@
     };
   }
 
+  /* Procesa la lista escrita o pegada en la hoja del catalogo: interpreta el texto,
+     agrega los productos al talonario y contrae la hoja. */
+  async function procesarListaCatalogo() {
+    const sh = document.getElementById("catsheet");
+    const ta = sh && sh.querySelector("#csQ");
+    const texto = ta ? String(ta.value || "").trim() : "";
+    if (!texto) { toast("Escribe o pega la lista del pedido"); return; }
+    if (!window.PPVoice || !window.PPVoice.interpret) { toast("No se pudo procesar la lista"); return; }
+    const bSend = sh.querySelector("#csSend");
+    if (bSend) { bSend.disabled = true; bSend.classList.add("cargando"); }
+    showProc();
+    let r = null;
+    try { r = await window.PPVoice.interpret(texto, db().products); } catch (_) { r = null; }
+    const pr = document.getElementById("proc"); if (pr) pr.remove();
+    if (bSend) { bSend.disabled = false; bSend.classList.remove("cargando"); }
+    if (!r || !r.lines || !r.lines.length) {
+      toast("No reconocí productos en la lista");
+      if (r && r.missing && r.missing.length) setTimeout(() => toast("No encontré: " + r.missing.join(", ")), 900);
+      return;
+    }
+    csQ = "";
+    if (ta) { ta.value = ""; ta.style.height = ""; }
+    if (window.PPListaCampo) { window.PPListaCampo.pintar(); window.PPListaCampo.crecer(); }
+    agregarDirecto(r);      /* agrega al talonario y repinta */
+    irA(false, true);       /* contrae la hoja del catalogo */
+  }
+
   function confirmOrder(r) {
     const lines = r.lines.map((l) => ({ ...l }));
     const s = sheet(`<div class="sh-h compacta"><button class="sh-x" id="b">${I.back}</button><h2>Confirmar pedido</h2><button class="sh-x" id="x">${I.xDown}</button></div>
@@ -1645,9 +1711,17 @@
      pausa y enviar) y cancelando (papelera roja). */
   let dockEl = null;
   function dockHTML() {
+    /* Orden definitivo: zafacon en el extremo izquierdo, candado en el extremo derecho
+       y el microfono abajo a la derecha, alineado con el candado: se desliza hacia arriba
+       hasta el candado, igual que una nota de voz de WhatsApp. */
     return `<div class="rd-grab" id="rdGrab">
-        <span class="rd-dot"></span><b id="recSeg">0:00</b>
-        <span class="rd-tip" id="recTip">Desliza hacia arriba para manos libres</span>
+        <button class="rd-trash" id="recX" type="button" aria-label="Cancelar grabación">${I.trashAnim}<small>Cancelar</small></button>
+        <div class="rd-pill">
+          <span class="rd-dot"></span><b id="recSeg">0:00</b>
+          <span class="rd-tip" id="recTip">Desliza arriba al candado</span>
+        </div>
+        <span class="rd-lock" id="recLock" aria-hidden="true">${I.lockAnim}<small>Bloquear</small></span>
+        <span class="rd-mic" id="rdMic" aria-hidden="true">${I.mic}</span>
       </div>
       <div class="rd-free" id="recF" hidden>
         <button class="rd-btn rd-del" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
@@ -1655,10 +1729,7 @@
         <b id="recSeg2">0:00</b>
         <button class="rd-btn rd-pause" id="recP" aria-label="Pausar">${I.pausa}</button>
         <button class="rd-btn rd-send" id="recSend" aria-label="Enviar pedido">${I.sendarrow}</button>
-      </div>
-      <span class="rd-lock" id="recLock" aria-hidden="true">${I.lockAnim}<small>Bloquear</small></span>
-      <span class="rd-trash" id="recX" aria-hidden="true">${I.trashAnim}<small>Cancelar</small></span>
-      <span class="rd-mic" id="rdMic" aria-hidden="true">${I.mic}</span>`;
+      </div>`;
   }
   function asegurarDock() {
     if (dockEl && document.body.contains(dockEl)) return dockEl;
@@ -1672,6 +1743,7 @@
       el.addEventListener("click", ir); el.addEventListener("touchend", ir, { passive: false });
     };
     enl(dockEl.querySelector("#recDel"), () => cancelarGrabacionGesto(true));
+    enl(dockEl.querySelector("#recX"), () => cancelarGrabacionGesto(true));
     enl(dockEl.querySelector("#recSend"), () => terminarGrabacionGesto());
     enl(dockEl.querySelector("#recP"), alternarPausa);
     return dockEl;
@@ -1738,6 +1810,9 @@
     if (MIC.fase !== "libre") return;
     if (voice.phase !== "idle" && voice.phase !== undefined) { try { window.PPVoice.stopDictation(); } catch (_) {} voice = { phase: "idle", text: "" }; renderListen(); }
     if (!window.PPVoice.canRecord()) { toast("Este telefono no permite grabar audio"); MIC.dedo = false; return; }
+    /* el teclado tiene que irse: si el campo de la lista estaba enfocado, la barra de grabacion
+       quedaba encima del teclado y todo se veia amontonado */
+    try { const a = document.activeElement; if (a && a.blur && a !== document.body) a.blur(); } catch (_) {}
     MIC.fase = "arrancando"; MIC.activo = true; MIC.bloqueado = false; MIC.seg = 0; MIC.pausado = false;
     const mi = ++MIC.token;
     /* salvavidas: si el microfono no responde en 4 s se libera todo, nunca queda en rojo */
@@ -1812,10 +1887,10 @@
     if (free) free.hidden = true;
     const m = d.querySelector("#rdMic"); if (m) m.style.transform = "";
     const X = d.querySelector("#recX"), L = d.querySelector("#recLock");
-    if (X) { X.style.opacity = "0.5"; X.style.transform = "translateY(-50%) scale(.86)"; X.classList.remove("on"); }
-    if (L) { L.style.opacity = "0.5"; L.style.transform = "translateY(-50%) scale(.86)"; L.classList.remove("on"); }
+    if (X) { X.style.opacity = "1"; X.style.transform = "none"; X.classList.remove("on"); }
+    if (L) { L.style.opacity = "0.45"; L.style.transform = "none"; L.classList.remove("on"); }
     document.body.classList.add("grabando");
-    const tip = d.querySelector("#recTip"); if (tip) { tip.textContent = "Desliza hacia arriba para manos libres"; tip.classList.remove("warn"); }
+    const tip = d.querySelector("#recTip"); if (tip) { tip.textContent = "Desliza arriba al candado"; tip.classList.remove("warn"); }
   }
 
   /* Mientras el dedo se mueve: el microfono sube con el y el aviso elegido se enciende. */
@@ -1825,22 +1900,23 @@
     const subir = Math.max(0, -MIC.dy), izq = Math.max(0, -MIC.dx);
     const kSub = Math.min(1, subir / UMBRAL), kIzq = Math.min(1, izq / UMBRAL_X);
     const m = d.querySelector("#rdMic");
-    if (m) m.style.transform = "translateY(" + (-subir * 0.5).toFixed(1) + "px) scale(" + (1 + 0.08 * kSub).toFixed(2) + ")";
+    /* sube y se corre un poco a la derecha: el candado esta arriba a la derecha */
+    if (m) m.style.transform = "translate(" + (kSub * 8).toFixed(1) + "px," + (-subir * 0.5).toFixed(1) + "px) scale(" + (1 + 0.08 * kSub).toFixed(2) + ")";
     const L = d.querySelector("#recLock"), X = d.querySelector("#recX");
     if (L) {
-      L.style.opacity = kIzq > 0.3 ? "0" : String(0.5 + 0.5 * kSub);
-      L.style.transform = "translateY(-50%) scale(" + (0.86 + 0.3 * kSub).toFixed(2) + ")";
+      L.style.opacity = kIzq > 0.3 ? "0" : String(0.45 + 0.55 * kSub);
+      L.style.transform = "translateY(" + (-5 * kSub).toFixed(1) + "px) scale(" + (0.9 + 0.2 * kSub).toFixed(2) + ")";
       L.classList.toggle("on", kSub > 0.55);
     }
     if (X) {
-      X.style.opacity = String(0.5 + 0.5 * kIzq);
-      X.style.transform = "translateY(-50%) scale(" + (0.86 + 0.3 * kIzq).toFixed(2) + ")";
+      X.style.opacity = String(1 - 0.8 * kSub);
+      X.style.transform = "scale(" + (1 - 0.12 * kIzq).toFixed(2) + ")";
       X.classList.toggle("on", kIzq > 0.5);
     }
     const tip = d.querySelector("#recTip");
     if (tip) {
       tip.classList.toggle("warn", kIzq > 0.5);
-      tip.textContent = kIzq > 0.5 ? "Suelta para cancelar" : (kSub > 0.55 ? "Suelta para manos libres" : "Desliza hacia arriba para manos libres");
+      tip.textContent = kIzq > 0.5 ? "Suelta para cancelar" : (kSub > 0.55 ? "Suelta para manos libres" : "Desliza arriba al candado");
     }
   }
 
@@ -1936,8 +2012,8 @@
       if (grab) grab.hidden = true;
       if (free) free.hidden = false;
       const m = d.querySelector("#rdMic"); if (m) m.style.transform = "";
-      const X = d.querySelector("#recX"); if (X) { X.style.opacity = "0"; X.classList.remove("on"); }
-      const L = d.querySelector("#recLock"); if (L) { L.style.opacity = "0"; L.classList.remove("on"); }
+      const X = d.querySelector("#recX"); if (X) { X.style.opacity = "0"; X.style.transform = "none"; X.classList.remove("on"); }
+      const L = d.querySelector("#recLock"); if (L) { L.style.opacity = "0"; L.style.transform = "none"; L.classList.remove("on"); }
     }
     const seg = document.getElementById("recSeg2"); if (seg) seg.textContent = fmtSeg(MIC.seg);
   }

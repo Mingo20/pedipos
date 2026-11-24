@@ -15,9 +15,32 @@
 - Certificado digital restaurable: se cifra en el equipo (AES-256-GCM), con consentimiento y frase; se restaura en un equipo limpio y se verifica que firma.
 - Talonario: la etiqueta del switch ahora dice "e-CF", aparece solo con el switch encendido y se actualiza en tiempo real.
 
+## 2.16.0 (v127)
+- Catalogo del panel: el buscador pasa a ser un campo "Lista de pedido" de varias lineas donde se escribe o se pega la lista completa. Crece hacia arriba solo, con el doble de alto inicial, y la lupa se cambio por el icono de lista.
+- Mientras el campo tiene contenido el microfono se convierte en enviar: al pulsarlo se interpreta la lista, los productos entran al talonario y la hoja del catalogo se contrae sola. La lista puede venir en varias lineas, con vinetas o numerada.
+- El interprete local de pedidos ahora separa por saltos de linea, punto y coma, vinetas y numeros de lista (antes solo por comas y "y"), para que pegar una lista funcione igual que dictarla.
+- Tarjetas del catalogo: el producto elegido se resalta, lleva un circulo con la cantidad en la esquina y sube al principio de la rejilla. Si la cantidad vuelve a cero, el resalte y el circulo desaparecen.
+- Barra de grabacion reordenada y alineada: zafacon en el extremo izquierdo (cancela), candado en el extremo derecho con flecha que indica subir hacia el, y el microfono abajo a la derecha alineado con el candado. El arrastre corre el microfono hacia arriba y a la derecha, hacia el candado.
+- Al empezar a grabar se cierra el teclado y la hoja del catalogo se aparta, para que la barra quede sola y sin amontonarse. En manos libres la hoja vuelve y la barra sube sobre el campo.
+- Talonario: fuera los iconos de lista de pedido y carrito, fuera el microfono de la barra de cobro, y el boton (+) pasa al centro exacto entre NUEVA y COBRAR.
+- Catalogo base dominicano ampliado de 42 a 72 productos: 30 nuevos de colmado en Granos, Despensa, Enlatados, Lacteos, Embutido, Carnes, Viveres, Panaderia, Snacks, Bebidas, Limpieza e Higiene. Sin duplicados con los existentes.
+- Sin cambios en el procesamiento de pedidos, el inventario, la sincronizacion ni la facturacion electronica.
+
 # Historial de cambios · PediPOS
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
+
+## [2.16.0] - 2026-11-24
+
+### Anadido
+- **Lista de pedido en el catalogo**: campo de varias lineas para escribir o pegar el pedido completo; al enviar se interpreta y los productos entran al talonario.
+- **30 productos nuevos** de colmado dominicano (Granos, Despensa, Enlatados, Lacteos, Embutido, Carnes, Viveres, Panaderia, Snacks, Bebidas, Limpieza e Higiene). El catalogo base queda en 72.
+
+### Cambiado
+- **Tarjetas del catalogo**: el producto elegido se resalta, muestra la cantidad en un circulo y sube al principio de la rejilla.
+- **Barra de grabacion**: zafacon a la izquierda, candado a la derecha con flecha de gesto, microfono alineado con el candado y sin solapes con el teclado ni con la hoja del catalogo.
+- **Barra de cobro**: el boton (+) queda al centro entre NUEVA y COBRAR; se retiraron los iconos de lista de pedido, carrito y microfono del talonario.
+- El interprete local separa pedidos por saltos de linea, punto y coma, vinetas y numeros de lista.
 
 ## [2.15.0] - 2026-11-24
 

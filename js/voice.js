@@ -202,12 +202,15 @@
     const guarded = String(text).replace(
       new RegExp("((?:\\d+(?:[.,]\\d+)?|" + numWords + ")\\s*(?:libras?|lbs?|unidades?)?\\s*)y(\\s+(?:media|medio|cuarto|tres cuartos)\\b)", "gi"),
       "$1" + PROT + "$2");
-    const splitter = new RegExp("\\s*(?:,|\\by\\s+(?=\\d|(?:" + numWords + "|media|medio)\\b)|\\bmas\\b|\\bademas\\b|\\btambien\\b)\\s*", "i");
+    /* la lista puede venir pegada en varias lineas o con vineta/numero de lista */
+    const splitter = new RegExp("\\s*(?:,|;|\\r?\\n|\\by\\s+(?=\\d|(?:" + numWords + "|media|medio)\\b)|\\bmas\\b|\\bademas\\b|\\btambien\\b)\\s*", "i");
     /* "arroz, pollo y huevos": una "y" tambien separa cuando lo que sigue empieza con un producto del catalogo. */
     const firstWords = [...new Set(products.map((p) => norm(p.nombre).split(" ")[0]).filter((w) => w.length > 2))];
     let cut = guarded;
     if (firstWords.length) cut = cut.replace(new RegExp("\\s+y\\s+(?=(?:" + firstWords.join("|") + ")\\b)", "gi"), ", ");
-    const parts = cut.split(splitter).filter(Boolean).map((s) => s.split(PROT).join("y"));
+    const parts = cut.split(splitter).filter(Boolean)
+      .map((s) => s.split(PROT).join("y").replace(/^\s*(?:[-*\u2022\u00b7]\s*|\d{1,2}[.)]\s+)/, "").trim())
+      .filter(Boolean);
     const lines = [], missing = [];
     for (const part of parts) {
       let best = null, bs = 0;

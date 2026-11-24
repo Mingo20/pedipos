@@ -466,7 +466,247 @@
   "fuente": "https://commons.wikimedia.org/wiki/File:Pralni_prašek.JPG",
   "licencia": "Public domain",
   "autor": "Uncy at Slovenian Wikipedia"
- }
+ },
+{
+ "nombre": "Lentejas",
+ "categoria": "Granos",
+ "unidad": "libra",
+ "precio": 60,
+ "stock": 90,
+ "img": ""
+},
+{
+ "nombre": "Garbanzos",
+ "categoria": "Granos",
+ "unidad": "libra",
+ "precio": 70,
+ "stock": 80,
+ "img": ""
+},
+{
+ "nombre": "Avena en Hojuelas",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 95,
+ "stock": 50,
+ "img": ""
+},
+{
+ "nombre": "Harina de Maiz",
+ "categoria": "Despensa",
+ "unidad": "libra",
+ "precio": 40,
+ "stock": 120,
+ "img": ""
+},
+{
+ "nombre": "Mayonesa",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 110,
+ "stock": 60,
+ "img": ""
+},
+{
+ "nombre": "Ketchup",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 95,
+ "stock": 55,
+ "img": ""
+},
+{
+ "nombre": "Cafe Instantaneo",
+ "categoria": "Despensa",
+ "unidad": "unidad",
+ "precio": 150,
+ "stock": 45,
+ "img": ""
+},
+{
+ "nombre": "Atun en Lata",
+ "categoria": "Enlatados",
+ "unidad": "unidad",
+ "precio": 85,
+ "stock": 80,
+ "img": ""
+},
+{
+ "nombre": "Sardinas en Lata",
+ "categoria": "Enlatados",
+ "unidad": "unidad",
+ "precio": 55,
+ "stock": 90,
+ "img": ""
+},
+{
+ "nombre": "Maiz Dulce en Lata",
+ "categoria": "Enlatados",
+ "unidad": "unidad",
+ "precio": 75,
+ "stock": 60,
+ "img": ""
+},
+{
+ "nombre": "Leche Condensada",
+ "categoria": "Enlatados",
+ "unidad": "unidad",
+ "precio": 120,
+ "stock": 70,
+ "img": ""
+},
+{
+ "nombre": "Queso de Freir",
+ "categoria": "Lacteos",
+ "unidad": "libra",
+ "precio": 280,
+ "stock": 40,
+ "img": ""
+},
+{
+ "nombre": "Mortadela",
+ "categoria": "Embutido",
+ "unidad": "libra",
+ "precio": 165,
+ "stock": 50,
+ "img": ""
+},
+{
+ "nombre": "Salchichas",
+ "categoria": "Embutido",
+ "unidad": "unidad",
+ "precio": 140,
+ "stock": 45,
+ "img": ""
+},
+{
+ "nombre": "Carne de Res",
+ "categoria": "Carnes",
+ "unidad": "libra",
+ "precio": 220,
+ "stock": 35,
+ "img": ""
+},
+{
+ "nombre": "Chuleta de Cerdo",
+ "categoria": "Carnes",
+ "unidad": "libra",
+ "precio": 175,
+ "stock": 40,
+ "img": ""
+},
+{
+ "nombre": "Papa",
+ "categoria": "Viveres",
+ "unidad": "libra",
+ "precio": 45,
+ "stock": 110,
+ "img": ""
+},
+{
+ "nombre": "Zanahoria",
+ "categoria": "Viveres",
+ "unidad": "libra",
+ "precio": 40,
+ "stock": 80,
+ "img": ""
+},
+{
+ "nombre": "Repollo",
+ "categoria": "Viveres",
+ "unidad": "libra",
+ "precio": 30,
+ "stock": 60,
+ "img": ""
+},
+{
+ "nombre": "Pepino",
+ "categoria": "Viveres",
+ "unidad": "unidad",
+ "precio": 20,
+ "stock": 70,
+ "img": ""
+},
+{
+ "nombre": "Berenjena",
+ "categoria": "Viveres",
+ "unidad": "libra",
+ "precio": 40,
+ "stock": 50,
+ "img": ""
+},
+{
+ "nombre": "Pan de Molde",
+ "categoria": "Panaderia",
+ "unidad": "unidad",
+ "precio": 165,
+ "stock": 30,
+ "img": ""
+},
+{
+ "nombre": "Galletas Dulces",
+ "categoria": "Snacks",
+ "unidad": "unidad",
+ "precio": 25,
+ "stock": 100,
+ "img": ""
+},
+{
+ "nombre": "Papas Fritas",
+ "categoria": "Snacks",
+ "unidad": "unidad",
+ "precio": 45,
+ "stock": 70,
+ "img": ""
+},
+{
+ "nombre": "Mani Salado",
+ "categoria": "Snacks",
+ "unidad": "unidad",
+ "precio": 40,
+ "stock": 65,
+ "img": ""
+},
+{
+ "nombre": "Malta",
+ "categoria": "Bebidas",
+ "unidad": "unidad",
+ "precio": 45,
+ "stock": 120,
+ "img": ""
+},
+{
+ "nombre": "Refresco en Lata",
+ "categoria": "Bebidas",
+ "unidad": "unidad",
+ "precio": 60,
+ "stock": 110,
+ "img": ""
+},
+{
+ "nombre": "Limpiador Multiuso",
+ "categoria": "Limpieza",
+ "unidad": "unidad",
+ "precio": 130,
+ "stock": 55,
+ "img": ""
+},
+{
+ "nombre": "Suavizante de Ropa",
+ "categoria": "Limpieza",
+ "unidad": "unidad",
+ "precio": 110,
+ "stock": 50,
+ "img": ""
+},
+{
+ "nombre": "Jabon de Bano",
+ "categoria": "Higiene",
+ "unidad": "unidad",
+ "precio": 55,
+ "stock": 75,
+ "img": ""
+}
 ];
 
   const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")

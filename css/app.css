@@ -2479,3 +2479,97 @@ body.grabando .act .recbar,.act.rec .recbar{border-radius:999px!important}
 .rd-free .rwave.quieta i{animation-play-state:paused;height:6px!important}
 body.grabando .act{pointer-events:none}
 body.grabando .act .mic{opacity:.35}
+
+
+/* ========== v127 ========== */
+/* --- 1) Catalogo: campo "Lista de pedido" (escribir o pegar) --- */
+.cs-foot{padding:8px 12px 12px}
+.cs-order{height:auto;min-height:78px;align-items:flex-start;gap:8px;padding:10px 6px 10px 12px;
+  border-radius:22px;background:#f2f5f7;border:1.5px solid #e7ecef;transition:border-color .18s ease,background .18s ease}
+.cs-order:focus-within{border-color:var(--g-line);background:#fff}
+.cs-oico{flex:none;display:grid;place-items:center;width:22px;height:24px;color:#8a949c;margin-top:2px}
+.cs-oico svg{width:20px;height:20px}
+.cs-ta{flex:1;min-width:0;min-height:56px;max-height:168px;border:0;background:transparent;resize:none;
+  font-family:inherit;font-size:15px;line-height:1.45;color:var(--ink);outline:none;padding:2px 0;
+  overflow-y:hidden;-webkit-appearance:none;appearance:none;display:block}
+.cs-ta::placeholder{color:#98a2a9}
+.cs-order .cs-mic{align-self:flex-end;width:44px;height:44px}
+.cs-order .cs-mic svg{width:24px;height:24px}
+.cs-mic[hidden]{display:none}
+.cs-send{background:var(--g-d)}
+.cs-send.cargando{opacity:.55;pointer-events:none}
+.cs-send svg{width:21px;height:21px;margin-left:2px}
+
+/* --- 5) Tarjeta elegida: resaltada, con la cantidad en la esquina --- */
+.cs-grid .pcard.sel{border-color:var(--g);background:#F4FBF7;
+  box-shadow:0 0 0 2px #1f9d5c33,0 8px 18px #1f9d5c1f}
+.cs-grid .pcard.sel .nm{color:#0B6B45}
+.cs-grid .pcard .qbadge{position:absolute;top:-7px;right:-7px;min-width:23px;height:23px;padding:0 5px;
+  border-radius:999px;background:var(--g);color:#fff;font-size:11.5px;font-weight:800;font-style:normal;
+  display:grid;place-items:center;border:2px solid #fff;box-shadow:0 4px 10px #1f9d5c5c;z-index:3;
+  animation:qpop .2s cubic-bezier(.22,.9,.3,1) both}
+@keyframes qpop{from{transform:scale(.35);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* --- 2) Barra de cobro: el + al centro, entre NUEVA y COBRAR --- */
+.act{gap:6px;padding:0 12px}
+.act .act-plus{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--g);color:#fff;
+  display:grid;place-items:center;position:relative;z-index:3;box-shadow:0 6px 16px #1f9d5c4d;
+  transition:transform .14s ease,background .14s ease}
+.act .act-plus:active{transform:scale(.93)}
+.act .act-plus svg{width:24px;height:24px}
+.act .act-plus .pin{position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:50%;
+  background:var(--amber);border:2px solid #fff;transition:opacity .16s ease,transform .16s ease}
+.act .act-plus .pin.off{opacity:0;transform:scale(.4)}
+.act.hay .act-plus{background:#14181C;box-shadow:0 0 0 3px #ffffff66,0 6px 16px #0b141c40}
+.act.hay button.n,.act.hay button.c{text-align:center}
+.act button.n,.act button.c{padding-left:0;padding-right:0;text-align:center}
+
+/* --- 3 y 4) Barra de grabacion: zafacon izquierda, candado derecha --- */
+.recdock{width:min(100% - 20px,540px);bottom:calc(env(safe-area-inset-bottom) + 14px)}
+.rd-grab{position:relative;display:flex;align-items:center;gap:8px;height:auto;padding:0;border:0;
+  background:transparent;box-shadow:none;border-radius:0}
+.rd-pill{flex:1;min-width:0;display:flex;align-items:center;gap:10px;height:60px;padding:0 14px;
+  border-radius:999px;background:#fff;border:1.5px solid #eef1f3;box-shadow:0 14px 34px #0b141c38}
+.rd-trash{flex:none;position:static;width:56px;height:60px;padding:0;border-radius:20px;border:1.5px solid #eef1f3;
+  background:#fff;color:var(--red);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;box-shadow:0 14px 34px #0b141c38;opacity:1;transform:none;pointer-events:auto;
+  transition:background .15s ease,color .15s ease,transform .15s ease,opacity .15s ease}
+.rd-trash small{font-size:8.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1}
+.rd-trash svg{width:20px;height:20px}
+.rd-trash.on{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 8px 18px #e5484d55}
+.rd-trash:active{transform:scale(.94)}
+.rd-mic{position:static;flex:none;width:52px;height:52px;border-radius:50%;background:var(--g);color:#fff;
+  display:grid;place-items:center;box-shadow:0 8px 20px #1f9d5c4d;z-index:2;will-change:transform}
+.rd-mic svg{width:25px;height:25px}
+.rd-lock{position:absolute;right:0;bottom:calc(100% + 7px);left:auto;top:auto;transform:none;
+  display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 8px;border-radius:16px;
+  background:#f1f4f6;color:#5b646d;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  opacity:.45;pointer-events:none;transition:background .15s ease,color .15s ease,opacity .15s ease,transform .15s ease}
+.rd-lock svg{width:20px;height:20px}
+.rd-lock small{font-size:8.5px;line-height:1;letter-spacing:.04em}
+.rd-lock.on{background:var(--g);color:#fff;box-shadow:0 8px 18px #1f9d5c4d;opacity:1}
+/* flecha subiendo desde el microfono hacia el candado */
+.rd-lock::after{content:"↑";position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);
+  font-size:14px;line-height:1;font-weight:800;color:#9aa5ad;
+  animation:rdFlecha 1.5s ease-in-out infinite}
+.rd-lock.on::after{color:var(--g)}
+@keyframes rdFlecha{0%,100%{transform:translate(-50%,0);opacity:.45}50%{transform:translate(-50%,-4px);opacity:1}}
+.rd-grab .rd-dot{flex:none}
+.rd-grab b{flex:none}
+.rd-tip{flex:1;min-width:0;font-size:12px;line-height:1.2;color:#6b767f;text-align:right;
+  white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rd-tip.warn{color:var(--red);font-weight:800}
+/* manos libres: la pildora completa, sin los avisos de gesto */
+.rd-free{position:relative;display:flex;align-items:center;gap:8px;height:60px;padding:0 10px;
+  border-radius:999px;background:#fff;border:1.5px solid #eef1f3;box-shadow:0 14px 34px #0b141c38}
+.rd-free b{min-width:46px;text-align:center}
+
+/* el + ocupa el centro exacto de la barra de cobro */
+.act .act-plus{order:2}
+
+/* mientras se graba, la hoja del catalogo se aparta: la barra queda sola, sin amontonarse */
+body.grabando:not(.manos-libres) .catsheet{display:none!important}
+/* en manos libres la hoja se queda para recorrer el catalogo: la barra sube sobre el campo */
+body.manos-libres .recdock{bottom:calc(env(safe-area-inset-bottom) + 112px)}
+/* el circulo de cantidad no se recorta en la primera fila */
+.cs-grid{padding-top:10px}
