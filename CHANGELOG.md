@@ -1,3 +1,13 @@
+## 2.18.0 (v129)
+- Venta por voz en el catalogo: al tocar el microfono es la MISMA barra inferior la que se transforma en grabadora (zafacon, punto rojo con el tiempo, candado de manos libres y microfono). Ya no se abre una segunda barra encima de la primera.
+- Manos libres: deslizar el microfono hacia arriba o hacia la izquierda suelta la grabacion; la barra se queda en su sitio con pausar, cancelar y enviar. Al cancelar o enviar, la barra de la lista de pedido vuelve sola.
+- Fuera de forma permanente la lupa y el borrador de la barra inferior.
+- Fotos: los 30 productos que llegaban sin imagen desde la base central la reciben al bajar (se emparejan por nombre con el catalogo) y el arreglo se devuelve a la nube, asi ningun equipo vuelve a verlos vacios. Foto de respaldo por categoria, para que «Enlatados» y las demas nunca queden sin imagen.
+- Catalogo del panel en dos columnas (tres en tablet) con la foto mas grande.
+- Clientes y Suplidores: el detalle entra con un desplazamiento corto y las tarjetas escalonadas; al volver, la lista entra desde la izquierda. Navegacion entre pantallas mas corta, sin parpadeos.
+- Efectos al pasar el puntero en tarjetas, botones, categorias y barra de voz: solo con raton y respetando «reducir movimiento».
+- Sin cambios en el talonario, el cobro, la sincronizacion, el inventario ni la facturacion electronica.
+
 ## 2.15.0 (v126)
 - Panel de venta movil vertical: el catalogo deja de ser barra lateral y pasa a ser una hoja inferior que se arrastra hacia arriba y hacia abajo con el dedo. Siempre queda a la vista su encabezado y la fila de categorias (con desplazamiento lateral), sin botones para reabrir y sin desvanecimientos.
 - Al expandir la hoja aparece una barra inferior fija con el buscador "Buscar producto.." y el microfono de pedido por voz.

@@ -143,7 +143,10 @@
   /* ---------- Tarjeta de producto (catalogo y agregar producto) ---------- */
   function fotoDe(p) {
     if (p && p.img) return `<img src="${esc(p.img)}" alt="">`;
-    return I.box;   /* sin foto: icono de caja */
+    /* sin foto propia: la de su categoria, para que ninguna tarjeta quede vacia */
+    const f = (window.PPCatalogoDR && window.PPCatalogoDR.fotoCat) ? window.PPCatalogoDR.fotoCat(p && p.categoria) : "";
+    if (f) return `<img src="${esc(f)}" alt="">`;
+    return I.box;
   }
   function pcard(p, extra) {
     return `<button class="pcard" data-p="${esc(p.pid)}" ${extra || ""}>
@@ -647,18 +650,15 @@
   /* ---------- Catalogo del panel: hoja inferior arrastrable (movil vertical) ----------
      Siempre queda a la vista su encabezado y la fila de categorias. Se sube arrastrando
      para recorrer las tarjetas y se baja igual; no se desvanece ni necesita botones. */
-  let csCat = "", csQ = "", csFindQ = "", csFindAbierto = false, csFull = false, csScroll = 0;
+  let csCat = "", csQ = "", csFull = false, csScroll = 0;
 
   const catsPanel = () => [...new Set((db().products || []).filter((p) => p.activo !== false)
     .map((p) => p.categoria).filter(Boolean))].sort();
 
   function csLista() {
-    const q = window.PPVoice ? window.PPVoice.norm(csFindQ) : String(csFindQ || "").toLowerCase();
     const enTalonario = new Set(cart().lines.map((l) => l.pid));
     return (db().products || [])
-      .filter((p) => p.activo !== false && (!csCat || p.categoria === csCat) && (!q ||
-        (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q)
-                        : String(p.nombre).toLowerCase().includes(q))))
+      .filter((p) => p.activo !== false && (!csCat || p.categoria === csCat))
       /* los ya elegidos suben al principio: la tarjeta se ve sin buscarla */
       .sort((a, b) => (enTalonario.has(a.pid) ? 0 : 1) - (enTalonario.has(b.pid) ? 0 : 1));
   }
@@ -685,7 +685,9 @@
   /* icono de la categoria: la foto de uno de sus productos */
   function iconoCat(cat) {
     const p = (db().products || []).find((x) => x.categoria === cat && x.img && x.activo !== false);
-    return p ? `<img src="${esc(p.img)}" alt="">` : I.box;
+    if (p) return `<img src="${esc(p.img)}" alt="">`;
+    const f = (window.PPCatalogoDR && window.PPCatalogoDR.fotoCat) ? window.PPCatalogoDR.fotoCat(cat) : "";
+    return f ? `<img src="${esc(f)}" alt="">` : I.box;
   }
   function csGridHTML() {
     const lista = csLista();
@@ -711,15 +713,20 @@
       </div>
       <div class="cs-body" id="csBody"><div class="pgrid cs-grid" id="csGrid">${csGridHTML()}</div></div>
       <div class="cs-foot" id="csFoot">
-        <div class="cs-find" id="csFind">
-          <span class="cs-find-ico" aria-hidden="true">${I.search}</span>
-          <input id="csFindQ" placeholder="Buscar producto" autocomplete="off" spellcheck="false" enterkeyhint="search">
-          <button class="cs-find-x" id="csFindX" type="button" aria-label="Cerrar búsqueda">${I.xDown}</button>
-        </div>
-        <div class="cs-search cs-order">
-          <button class="cs-lupa" id="csLupa" type="button" aria-label="Buscar producto">${I.search}</button>
+        <div class="cs-search cs-order" id="csOrder">
           <textarea id="csQ" class="cs-ta" rows="1" placeholder="Lista de pedido" autocomplete="off" spellcheck="false"></textarea>
-          <button class="cs-erase" id="csErase" type="button" aria-label="Borrar lista" hidden>${I.eraser}</button>
+          <div class="csr-hold" id="csrHold" hidden>
+            <button class="csr-x" id="csRecX" type="button" aria-label="Cancelar grabación">${I.trashAnim}<small>Cancelar</small></button>
+            <span class="csr-dot" aria-hidden="true"></span><b id="csRecSeg">0:00</b>
+            <span class="csr-lock" id="csRecLock" aria-hidden="true">${I.lockAnim}<small>Manos libres</small></span>
+          </div>
+          <div class="csr-free" id="csrFree" hidden>
+            <button class="rd-btn rd-del" id="csRecDel" type="button" aria-label="Eliminar grabación">${I.trash}</button>
+            <div class="rwave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <b id="csRecSeg2">0:00</b>
+            <button class="rd-btn rd-pause" id="csRecP" type="button" aria-label="Pausar">${I.pausa}</button>
+            <button class="rd-btn rd-send" id="csRecSend" type="button" aria-label="Enviar pedido">${I.sendarrow}</button>
+          </div>
           <button class="cs-mic" id="csMic" data-mic="1" aria-label="Pedido por voz">${I.mic}</button>
           <button class="cs-mic cs-send" id="csSend" type="button" aria-label="Procesar lista" hidden>${I.sendarrow}</button>
         </div>
@@ -797,6 +804,7 @@
     };
     head.addEventListener("touchstart", (e) => {
       if (e.touches.length !== 1) return;
+      if (MIC.fase !== "libre") return;   /* grabando, la barra no se mueve de sitio */
       activo = true; decidido = false; dy = 0; t0 = Date.now();
       y0 = e.touches[0].clientY; base = actual();
     }, { passive: true });
@@ -815,6 +823,7 @@
     /* raton: mismo gesto para probar en computadora */
     head.addEventListener("mousedown", (e) => {
       if (e.target.closest(".cs-cat")) return;
+      if (MIC.fase !== "libre") return;
       activo = true; decidido = false; dy = 0; t0 = Date.now();
       y0 = e.clientY; base = actual();
       const mm = (ev) => { if (!activo) return; dy = ev.clientY - y0; if (!decidido) { if (Math.abs(dy) < 5) return; decidido = true; } poner(base + dy); };
@@ -824,6 +833,7 @@
     /* un toque corto en el encabezado (sin arrastrar) abre o cierra */
     head.addEventListener("click", (e) => {
       if (e.target.closest(".cs-cat")) return;
+      if (MIC.fase !== "libre") return;
       if (decidido) { decidido = false; return; }
       irA(!csFull, true);
     });
@@ -842,15 +852,10 @@
     const q = sh.querySelector("#csQ");
     const bMic = sh.querySelector("#csMic");
     const bSend = sh.querySelector("#csSend");
-    const bErase = sh.querySelector("#csErase");
-    const find = sh.querySelector("#csFind");
-    const findQ = sh.querySelector("#csFindQ");
-    const bLupa = sh.querySelector("#csLupa");
     const pintarBoton = () => {
       const hay = !!(q && q.value.trim());
       if (bMic) bMic.hidden = hay;
       if (bSend) bSend.hidden = !hay;
-      if (bErase) bErase.hidden = !hay;
     };
     /* el campo arranca con una linea pegada abajo y crece hacia arriba */
     const crecer = () => {
@@ -870,42 +875,23 @@
       crecer();
     }
     if (bSend) bSend.addEventListener("click", (e) => { e.preventDefault(); procesarListaCatalogo(); });
-    /* borrador: deja la lista vacia de un solo toque */
-    if (bErase) bErase.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (q) { q.value = ""; q.style.height = ""; }
-      csQ = "";
-      pintarBoton(); crecer(); tap();
-      if (q) { try { q.focus({ preventScroll: true }); } catch (_) {} }
-    });
-    /* lupa: abre un buscador pequeno y horizontal sobre el campo de la lista */
-    if (bLupa && find && findQ) {
-      const cerrarFind = () => {
-        csFindAbierto = false;
-        find.classList.remove("on");
-        findQ.value = ""; csFindQ = "";
-        pintarGrid(true);
+    /* La misma barra se transforma en grabadora: cancelar, pausar y enviar
+       viven dentro de ella, sin una segunda barra flotante. */
+    const enl = (el, fn) => {
+      if (!el) return;
+      let usado = 0;
+      const ir = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (Date.now() - usado < 400) return;
+        usado = Date.now(); fn();
       };
-      bLupa.addEventListener("click", (e) => {
-        e.preventDefault();
-        const abrir = !csFindAbierto;
-        csFindAbierto = abrir;
-        find.classList.toggle("on", abrir);
-        if (abrir) {
-          if (!csFull) irA(true, true);
-          setTimeout(() => { try { findQ.focus({ preventScroll: true }); } catch (_) {} }, 240);
-        } else cerrarFind();
-        tap();
-      });
-      findQ.addEventListener("input", () => {
-        csFindQ = findQ.value;
-        pintarGrid(true);
-        if (body) body.scrollTop = 0;
-      });
-      findQ.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); findQ.blur(); } });
-      const fx = sh.querySelector("#csFindX");
-      if (fx) fx.addEventListener("click", (e) => { e.preventDefault(); cerrarFind(); tap(); });
-    }
+      el.addEventListener("click", ir);
+      el.addEventListener("touchend", ir, { passive: false });
+    };
+    enl(sh.querySelector("#csRecX"), () => cancelarGrabacionGesto(true));
+    enl(sh.querySelector("#csRecDel"), () => cancelarGrabacionGesto(true));
+    enl(sh.querySelector("#csRecSend"), () => terminarGrabacionGesto());
+    enl(sh.querySelector("#csRecP"), alternarPausa);
     pintarBoton();
     /* tarjetas: agregan al talonario, se resaltan y suben al principio */
     sh.querySelector("#csGrid").addEventListener("click", (e) => {
@@ -931,10 +917,6 @@
     if (g) g.innerHTML = csGridHTML();
     const q = sh.querySelector("#csQ");
     if (q && q.value !== csQ) q.value = csQ;
-    const fq = sh.querySelector("#csFindQ");
-    if (fq && fq.value !== csFindQ) fq.value = csFindQ;
-    const find = sh.querySelector("#csFind");
-    if (find) find.classList.toggle("on", !!csFindAbierto);
     if (window.PPListaCampo) { window.PPListaCampo.pintar(); window.PPListaCampo.crecer(); }
     medirCatalogo(sh);
     irA(csFull, false);
@@ -1774,7 +1756,7 @@
      - Todo cierre limpia PRIMERO la interfaz y libera el microfono sin esperar a nadie.
      - Hay un salvavidas: si el estado no coincide con la realidad, la interfaz se restablece sola. */
   const MIC = { fase: "libre", activo: false, bloqueado: false, dx: 0, dy: 0, seg: 0, tick: null, pausado: false,
-                pendiente: null, dedo: false, token: 0, freno: null };
+                pendiente: null, dedo: false, token: 0, freno: null, donde: "dock" };
 
   function micVibra(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (_) {} }
   const UMBRAL = 64;        /* px hacia arriba para bloquear en manos libres */
@@ -1832,6 +1814,8 @@
       let x0 = 0, y0 = 0, t0 = 0;
       const inicio = (x, y) => {
         if (MIC.fase !== "libre") return;
+        /* el microfono del catalogo graba dentro de su propia barra; los demas usan la flotante */
+        MIC.donde = (mic.id === "csMic") ? "catalogo" : "dock";
         MIC.dedo = true; MIC.dx = 0; MIC.dy = 0; MIC.pendiente = null;
         x0 = x; y0 = y; t0 = Date.now();
         micVibra([28, 18, 50]);
@@ -1872,13 +1856,22 @@
   /* La decision unica de que hacer cuando el dedo se suelta. */
   function resolverSoltar(dur, dx, dy) {
     if (dur < 350) { micVibra(10); return cancelarGrabacionGesto(false, true); }   /* roce: no es un pedido */
-    if (dy < -UMBRAL) return bloquearGrabacionGesto();                              /* arriba: manos libres */
-    if (dx < -UMBRAL_X) { micVibra([30, 20, 45]); return cancelarGrabacionGesto(true); }  /* izquierda: cancelar */
+    /* hacia arriba o hacia la izquierda: la grabacion queda sola (manos libres).
+       Para cancelar esta el zafacon de la barra, a un toque. */
+    if (dy < -UMBRAL || dx < -UMBRAL_X) return bloquearGrabacionGesto();
     return terminarGrabacionGesto();                                                /* soltar: enviar */
   }
   MIC.resolver = resolverSoltar;
 
   const fmtSeg = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  /* El tiempo se pinta en la barra que este en uso: la del catalogo o la flotante. */
+  function pintarSeg() {
+    const t = fmtSeg(MIC.seg);
+    ["recSeg", "recSeg2", "csRecSeg", "csRecSeg2"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = t;
+    });
+  }
 
   async function iniciarGrabacionGesto() {
     if (MIC.fase !== "libre") return;
@@ -1908,12 +1901,7 @@
     /* confirmacion clara de que la grabacion arranco: sonido fuerte y vibracion */
     micVibra([45, 55, 45]);
     try { window.PPSound && window.PPSound.grabar && window.PPSound.grabar(); } catch (_) {}
-    MIC.tick = setInterval(() => {
-      MIC.seg++;
-      const a = document.getElementById("recSeg"), b = document.getElementById("recSeg2");
-      if (a) a.textContent = fmtSeg(MIC.seg);
-      if (b) b.textContent = fmtSeg(MIC.seg);
-    }, 1000);
+    MIC.tick = setInterval(() => { MIC.seg++; pintarSeg(); }, 1000);
     /* el dedo ya se habia soltado mientras arrancaba: se resuelve ahora */
     const pen = MIC.pendiente; MIC.pendiente = null;
     if (pen) {
@@ -1956,7 +1944,10 @@
     } catch (_) { /* si falla, queda el centrado por caja */ }
   }
 
+  /* La barra del catalogo, ya transformada en grabadora, o la flotante si el
+     microfono viene de otra pantalla. Nunca las dos a la vez. */
   function mostrarDock() {
+    if (MIC.donde === "catalogo") return mostrarGrabCatalogo();
     const d = asegurarDock();
     d.className = "recdock on";
     const grab = d.querySelector("#rdGrab"), free = d.querySelector("#recF");
@@ -1971,8 +1962,40 @@
   }
 
   /* Mientras el dedo se mueve: el microfono sube con el y el aviso elegido se enciende. */
+  /* Piezas de la barra del catalogo mientras graba. */
+  function piezasCatalogo() {
+    const sh = document.getElementById("catsheet");
+    const foot = sh && sh.querySelector("#csFoot");
+    if (!foot) return null;
+    return {
+      foot,
+      hold: foot.querySelector("#csrHold"),
+      free: foot.querySelector("#csrFree"),
+      mic: foot.querySelector("#csMic"),
+      lock: foot.querySelector("#csRecLock"),
+      onda: foot.querySelector(".rwave"),
+      pausa: foot.querySelector("#csRecP"),
+    };
+  }
+
+  /* La barra inferior del catalogo se transforma en grabadora: mismo lugar, mismos
+     bordes, sin una segunda barra encima. */
+  function mostrarGrabCatalogo() {
+    const p = piezasCatalogo();
+    if (!p) { MIC.donde = "dock"; return mostrarDock(); }
+    p.foot.classList.add("rec");
+    p.foot.classList.remove("free");
+    if (p.hold) p.hold.hidden = false;
+    if (p.free) p.free.hidden = true;
+    if (p.mic) p.mic.style.transform = "";
+    if (p.lock) { p.lock.classList.remove("on"); p.lock.style.transform = ""; }
+    document.body.classList.add("grabando");
+    pintarSeg();
+  }
+
   function actualizarArrastre() {
     if (MIC.fase !== "grabando") return;
+    if (MIC.donde === "catalogo") return arrastreCatalogo();
     const d = dockEl; if (!d) return;
     const subir = Math.max(0, -MIC.dy), izq = Math.max(0, -MIC.dx);
     const kSub = Math.min(1, subir / UMBRAL), kIzq = Math.min(1, izq / UMBRAL_X);
@@ -1997,11 +2020,26 @@
     }
   }
 
+  /* Arrastre sobre la barra del catalogo: el microfono sube con el dedo y el
+     candado de manos libres se enciende cuando el gesto ya cuenta. */
+  function arrastreCatalogo() {
+    const p = piezasCatalogo(); if (!p) return;
+    const subir = Math.max(0, -MIC.dy), izq = Math.max(0, -MIC.dx);
+    const k = Math.min(1, Math.max(subir / UMBRAL, izq / UMBRAL_X));
+    if (p.mic) p.mic.style.transform = "translateY(" + (-9 * k).toFixed(1) + "px) scale(" + (1 + 0.06 * k).toFixed(2) + ")";
+    if (p.lock) {
+      p.lock.classList.toggle("on", k > 0.55);
+      p.lock.style.transform = "scale(" + (0.94 + 0.1 * k).toFixed(2) + ")";
+    }
+  }
+
   /* pausar / continuar la grabacion a manos libres */
   function alternarPausa() {
     if (MIC.fase !== "bloqueado") return;
-    const d = dockEl;
-    const b = d && d.querySelector("#recP"), onda = d && d.querySelector(".rwave");
+    const cat = MIC.donde === "catalogo" ? piezasCatalogo() : null;
+    const d = cat ? cat.foot : dockEl;
+    const b = cat ? cat.pausa : (d && d.querySelector("#recP"));
+    const onda = cat ? cat.onda : (d && d.querySelector(".rwave"));
     if (!MIC.pausado) {
       if (!window.PPVoice.pauseRecording()) return;
       MIC.pausado = true; clearInterval(MIC.tick); MIC.tick = null;
@@ -2012,12 +2050,7 @@
       if (!window.PPVoice.resumeRecording()) return;
       MIC.pausado = false; micVibra(20);
       clearInterval(MIC.tick);
-      MIC.tick = setInterval(() => {
-        MIC.seg++;
-        const a = document.getElementById("recSeg"), c = document.getElementById("recSeg2");
-        if (a) a.textContent = fmtSeg(MIC.seg);
-        if (c) c.textContent = fmtSeg(MIC.seg);
-      }, 1000);
+      MIC.tick = setInterval(() => { MIC.seg++; pintarSeg(); }, 1000);
       if (b) { b.innerHTML = I.pausa; b.setAttribute("aria-label", "Pausar"); b.classList.remove("on"); }
       onda && onda.classList.remove("quieta");
     }
@@ -2045,6 +2078,17 @@
       const p = dockEl.querySelector("#recP");
       if (p) { p.innerHTML = I.pausa; p.classList.remove("on"); }
       const m = dockEl.querySelector("#rdMic"); if (m) m.style.transform = "";
+    }
+    /* la barra del catalogo vuelve a ser la de la lista de pedido */
+    const cat = piezasCatalogo();
+    if (cat) {
+      cat.foot.classList.remove("rec", "free");
+      if (cat.hold) cat.hold.hidden = true;
+      if (cat.free) cat.free.hidden = true;
+      if (cat.mic) cat.mic.style.transform = "";
+      if (cat.lock) { cat.lock.classList.remove("on"); cat.lock.style.transform = ""; }
+      if (cat.onda) cat.onda.classList.remove("quieta");
+      if (cat.pausa) { cat.pausa.innerHTML = I.pausa; cat.pausa.classList.remove("on"); cat.pausa.setAttribute("aria-label", "Pausar"); }
     }
   }
 
@@ -2081,6 +2125,24 @@
     if (MIC.fase !== "grabando") return;
     MIC.fase = "bloqueado"; MIC.bloqueado = true; MIC.dx = 0; MIC.dy = 0; MIC.dedo = false;
     micVibra(40);
+    /* En el catalogo la barra se queda donde esta y cambia de contenido: fuera el
+       campo de la lista, dentro pausar, cancelar y enviar. La barra principal no
+       reaparece hasta cancelar o enviar. */
+    if (MIC.donde === "catalogo") {
+      const p = piezasCatalogo();
+      if (p) {
+        p.foot.classList.remove("rec");
+        p.foot.classList.add("free");
+        if (p.hold) p.hold.hidden = true;
+        if (p.free) p.free.hidden = false;
+        if (p.mic) p.mic.style.transform = "";
+        if (p.lock) { p.lock.classList.remove("on"); p.lock.style.transform = ""; }
+        if (p.onda) p.onda.classList.remove("quieta");
+        pintarSeg();
+        return;
+      }
+      MIC.donde = "dock";
+    }
     activarManosLibres();
     const d = dockEl;
     if (d) {
@@ -3262,7 +3324,17 @@
   window.addEventListener("pp:quota", () => toast("Espacio casi lleno en el navegador. Tus ventas ya estan a salvo."));
   window.render = render; window.toast = toast; window.go = go;
   window.PPMic = { bloquear: bloquearGrabacionGesto, activar: activarManosLibres, desactivar: desactivarManosLibres, estado: () => ({ ...MIC }) };
-  window.PPUI = { volverConfig: () => { cfgSub = null; renderConfig(); }, sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
+  /* Al volver de una subpantalla la lista entra desde la izquierda, como en una app movil. */
+  function volverAnimado() {
+    const v = document.getElementById("view");
+    if (!v) return;
+    v.classList.remove("atras");
+    void v.offsetWidth;
+    v.classList.add("atras");
+    clearTimeout(v._atr);
+    v._atr = setTimeout(() => v.classList.remove("atras"), 340);
+  }
+  window.PPUI = { volverAnimado, volverConfig: () => { cfgSub = null; renderConfig(); }, sheet, closeSheet, toast, render, go, I, money, money2, esc, cart, tot, rate, db, initInstall, guiaInstalar, waLink, chatear, tap, setFab, clearFab, detalle: openDetalle, animarTal: window.animarTal };
 
   /* Sonido del sistema en toda accion: botones, tarjetas, iconos y accesos. */
   (function sonidoGlobal() {

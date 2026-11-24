@@ -2624,3 +2624,102 @@ body.grabando.cat-abierto .recdock,body.manos-libres.cat-abierto .recdock{bottom
 /* la pildora sin etiqueta: punto, tiempo y aire */
 .rd-pill{justify-content:flex-start;padding:0 16px;gap:12px}
 .rd-pill b{font-size:16.5px}
+
+/* =====================================================================
+   v129 · Barra de voz transformada, catalogo a dos columnas,
+   transiciones suaves y efectos al pasar el puntero.
+   ===================================================================== */
+
+/* --- 1) Catalogo del panel: dos columnas y foto grande --- */
+.cs-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cs-grid .pcard{padding:8px 9px 10px;border-radius:18px}
+.cs-grid .pcard .ph{height:104px;border-radius:12px;margin-bottom:6px}
+.cs-grid .pcard .nm{font-size:13px;min-height:33px;line-height:1.25}
+.cs-grid .pcard .pr{font-size:15px}
+.cs-grid .pcard .un{font-size:11px;padding:2px 7px}
+@media (min-width:720px){
+  .cs-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .cs-grid .pcard .ph{height:124px}
+}
+
+/* --- 2) La barra de la lista se transforma en grabadora --- */
+.cs-foot{position:relative}
+.cs-order{transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.cs-foot.rec .cs-ta,.cs-foot.free .cs-ta{display:none!important}
+.cs-foot.rec .cs-order,.cs-foot.free .cs-order{align-items:center;min-height:78px;padding:8px 8px 8px 10px;
+  background:#fff;border-color:#e4e9ec;box-shadow:0 8px 22px #0b141c14}
+.cs-foot.rec .cs-mic{animation:micLatido 1.7s ease-in-out infinite}
+@keyframes micLatido{50%{box-shadow:0 0 0 9px #1f9d5c1c}}
+.cs-foot.free .cs-mic{display:none!important}
+.csr-hold,.csr-free{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.csr-hold[hidden],.csr-free[hidden]{display:none!important}
+.csr-x{flex:none;width:46px;height:46px;border-radius:15px;border:0;background:#fdecec;color:var(--red);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  transition:transform .14s ease,background .14s ease}
+.csr-x svg{width:19px;height:19px}
+.csr-x small{font-size:7.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+.csr-x:active{transform:scale(.94)}
+.csr-dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+.csr-hold b,.csr-free b{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.csr-lock{flex:none;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:1px;
+  padding:5px 7px;border-radius:13px;background:#f1f4f6;color:#7c868e;font-size:7.5px;font-weight:800;
+  letter-spacing:.03em;text-transform:uppercase;
+  transition:background .16s ease,color .16s ease,transform .16s ease,box-shadow .16s ease}
+.csr-lock svg{width:19px;height:19px}
+.csr-lock.on{background:var(--g);color:#fff;box-shadow:0 6px 16px #0b8f5f4d}
+.csr-free{gap:7px}
+.csr-free .rwave{flex:1;height:26px;margin:0 2px}
+.csr-free .rwave i{background:var(--g);width:3px}
+.csr-free .rwave.quieta i{animation-play-state:paused;height:6px!important}
+
+/* --- 3) Detalle de cliente y suplidor: entrada suave, sin saltos --- */
+.subv.entra{animation:subIn .34s cubic-bezier(.22,.9,.3,1) both}
+@keyframes subIn{from{opacity:0;transform:translate3d(0,16px,0) scale(.988)}to{opacity:1;transform:none}}
+/* las tarjetas del detalle entran escalonadas, un pelo despues */
+.subv.entra .kpis .kpi{animation:kpiIn .42s cubic-bezier(.22,.9,.3,1) both}
+.subv.entra .kpis .kpi:nth-child(2){animation-delay:.05s}
+.subv.entra .kpis .kpi:nth-child(3){animation-delay:.1s}
+.subv.entra .kpis .kpi:nth-child(4){animation-delay:.15s}
+.subv.entra .subv-duo .btn,.subv.entra .seg2,.subv.entra #cxCaja{animation:kpiIn .44s cubic-bezier(.22,.9,.3,1) both}
+.subv.entra .subv-duo .btn{animation-delay:.16s}
+.subv.entra .seg2{animation-delay:.2s}
+.subv.entra #cxCaja{animation-delay:.24s}
+@keyframes kpiIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* --- 4) Volver de una subpantalla: la lista entra desde la izquierda --- */
+main#view.atras{animation:viewAtras .3s cubic-bezier(.22,.9,.3,1) both}
+@keyframes viewAtras{from{opacity:.35;transform:translate3d(-16px,0,0)}to{opacity:1;transform:none}}
+/* navegar entre pantallas: un poco mas corto y sin escalado, para que no parpadee */
+main#view.vin{animation-duration:.3s}
+
+/* --- 5) Puntero encima: realce sutil, sin mover el contenido --- */
+@media (hover:hover) and (pointer:fine){
+  .pcard{transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+  .pcard:hover:not(.sel){transform:translateY(-2px);border-color:#d7e2dd;box-shadow:0 10px 22px #0b141c14}
+  .pcard:hover .ph img{transform:scale(1.04)}
+  .pcard .ph img{transition:transform .35s cubic-bezier(.22,.9,.3,1)}
+  .clrow{transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
+  .clrow:hover{transform:translateY(-1px);border-color:#d7e2dd;box-shadow:0 8px 20px #0b141c12;background:#fff}
+  .cx{transition:transform .16s ease,background .16s ease,box-shadow .16s ease}
+  .cx:hover{transform:translateY(-1px);box-shadow:0 6px 16px #0b141c10}
+  .kpi{transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+  .kpi:hover{transform:translateY(-2px);border-color:#d7e2dd;box-shadow:0 10px 24px #0b141c12}
+  .btn,.fbtn,.subv-back,.sh-x,.fopt,.tile,.cfg-card,.an-kpi,.aviso{transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+  .btn:hover,.fbtn:hover,.subv-back:hover,.sh-x:hover,.fopt:hover,.tile:hover,.cfg-card:hover,.an-kpi:hover,.aviso:hover{
+    transform:translateY(-1px);box-shadow:0 8px 20px #0b141c14}
+  .cs-cat:hover i{transform:translateY(-2px);box-shadow:0 8px 18px #0b141c1a}
+  .cs-cat:hover span{color:#0B6B45}
+  .cs-mic:hover{background:var(--g-d);box-shadow:0 8px 20px #0b8f5f5c}
+  .csr-x:hover{background:#fbdede}
+  .dock button:hover small{color:var(--ink)}
+  .act button:hover{filter:brightness(.98)}
+  .rd-btn:hover{background:#e8eef2}
+  .rd-send:hover{background:var(--g-d)}
+  .rd-trash:hover{background:#fbdede}
+}
+@media (prefers-reduced-motion:reduce){
+  .subv.entra,.subv.entra .kpis .kpi,.subv.entra .subv-duo .btn,.subv.entra .seg2,.subv.entra #cxCaja,
+  main#view.atras,.cs-foot.rec .cs-mic{animation:none!important}
+  .pcard:hover:not(.sel),.clrow:hover,.cx:hover,.kpi:hover,.btn:hover,.fbtn:hover,.tile:hover,.cfg-card:hover{transform:none}
+  .pcard:hover .ph img{transform:none}
+}

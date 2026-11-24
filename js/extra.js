@@ -241,7 +241,10 @@
     animarSub = false; view.scrollTop = 0;
     limpiarEntrada(view);
     const wa = c.whatsapp || c.telefono;
-    $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
+    $("#svBack").onclick = () => {
+      document.body.classList.remove("focus"); sub = null; render();
+      if (window.PPUI && window.PPUI.volverAnimado) window.PPUI.volverAnimado();
+    };
     $("#svWa").onclick = () => window.PPUI.chatear(wa, "Hola " + c.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     $("#svEdit").onclick = () => editarCliente(c);
     const corte = $("#svCorte");
@@ -662,7 +665,10 @@
     <div class="subv-foot"><button class="btn sec" id="svEdit">${I.edit}<span>Editar suplidor</span></button></div>`;
     animarSub = false; view.scrollTop = 0;
     limpiarEntrada(view);
-    $("#svBack").onclick = () => { document.body.classList.remove("focus"); sub = null; render(); };
+    $("#svBack").onclick = () => {
+      document.body.classList.remove("focus"); sub = null; render();
+      if (window.PPUI && window.PPUI.volverAnimado) window.PPUI.volverAnimado();
+    };
     $("#svWa").onclick = () => window.PPUI.chatear(p.whatsapp || p.telefono, "Hola " + p.nombre + ", le escribo de " + (db().settings.negocio || "mi negocio") + ".");
     /* un solo manejador para todas las tarjetas: mas robusto que fila por fila */
     view.onclick = (ev) => {

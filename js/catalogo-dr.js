@@ -870,6 +870,24 @@
 }
 ];
 
+  /* Foto de respaldo por categoria: ninguna categoria queda con el icono vacio,
+     aunque ninguno de sus productos tenga foto todavia (Enlatados, por ejemplo). */
+  const CAT_FOTO = {
+    "Granos": "img/productos/arroz.jpg",
+    "Despensa": "img/productos/azucar.jpg",
+    "Lacteos": "img/productos/leche-evap.jpg",
+    "Carnes": "img/productos/pollo.jpg",
+    "Embutido": "img/productos/salami.jpg",
+    "Viveres": "img/productos/platano.jpg",
+    "Panaderia": "img/productos/pan.jpg",
+    "Snacks": "img/productos/galletas.jpg",
+    "Bebidas": "img/productos/jugo.jpg",
+    "Limpieza": "img/productos/detergente.jpg",
+    "Enlatados": "img/productos/atun-lata.jpg",
+    "Higiene": "img/productos/papel-toalla.jpg"
+  };
+  function fotoCat(cat) { return CAT_FOTO[cat] || ""; }
+
   const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 
@@ -894,17 +912,27 @@
   }
 
   /* Se ejecuta al abrir la app, despues de que la tienda cargue. */
-  /* Equipos que ya sembraron antes: los productos sin foto reciben la suya. */
-  function completarFotos(db) {
-    if (!db || !Array.isArray(db.products)) return 0;
+  /* Equipos que ya sembraron antes: los productos sin foto reciben la suya.
+     Devuelve la lista de los que se arreglaron, para devolverlos a la nube. */
+  function reparar(db) {
+    if (!db || !Array.isArray(db.products)) return [];
     const porNombre = new Map(PRODUCTOS.map((p) => [norm(p.nombre), p]));
-    let n = 0;
+    const tocados = [];
     for (const p of db.products) {
       if (p.img) continue;
       const ref = porNombre.get(norm(p.nombre));
-      if (ref && ref.img) { p.img = ref.img; n++; }
+      const img = (ref && ref.img) || fotoCat(p.categoria);
+      if (img) { p.img = img; tocados.push(p); }
     }
-    return n;
+    return tocados;
+  }
+  function completarFotos(db) { return reparar(db).length; }
+
+  /* Sube a la base central con la misma cola de siempre, sin bloquear nada. */
+  function subir(lista) {
+    try {
+      for (const p of lista || []) window.PPSync && window.PPSync.saveProduct && window.PPSync.saveProduct(p);
+    } catch (_) {}
   }
 
   function auto() {
@@ -912,16 +940,29 @@
     if (!S) return;
     const db = S.db;
     const nuevos = sembrar(db, S.uid);
-    const conFoto = completarFotos(db);
-    if (!nuevos && !conFoto) return;
+    const tocados = reparar(db);
+    if (!nuevos && !tocados.length) return;
     S.save();
-    /* suben a la base central con la misma cola de siempre, sin bloquear nada */
-    try {
-      const lista = db.products.filter((p) => p.dr);
-      for (const p of lista) window.PPSync && window.PPSync.saveProduct && window.PPSync.saveProduct(p);
-    } catch (_) {}
-    window.dispatchEvent(new CustomEvent("pp:catalogo", { detail: { nuevos } }));
+    subir(nuevos ? db.products.filter((p) => p.dr) : tocados);
+    window.dispatchEvent(new CustomEvent("pp:catalogo", { detail: { nuevos, fotos: tocados.length } }));
   }
 
-  window.PPCatalogoDR = { PRODUCTOS, sembrar, completarFotos, auto, norm };
+  /* Al bajar de la nube pueden llegar productos sin foto (equipos que sembraron el
+     catalogo antes de que existieran las imagenes, o ventas viejas). Se completan
+     en el acto y se devuelven a la nube para que ningun equipo vuelva a verlos sin foto. */
+  let _rep = 0;
+  function repararTrasBajar() {
+    const S = window.PPStore;
+    if (!S || !S.db) return;
+    const tocados = reparar(S.db);
+    if (!tocados.length) return;
+    S.save();
+    subir(tocados);
+    window.dispatchEvent(new CustomEvent("pp:catalogo", { detail: { fotos: tocados.length } }));
+  }
+  if (window.addEventListener) {
+    window.addEventListener("pp:data", () => { clearTimeout(_rep); _rep = setTimeout(repararTrasBajar, 120); });
+  }
+
+  window.PPCatalogoDR = { PRODUCTOS, CAT_FOTO, sembrar, completarFotos, reparar, repararTrasBajar, fotoCat, subir, auto, norm };
 })();
