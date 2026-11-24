@@ -1,3 +1,12 @@
+## 2.15.0 (v126)
+- Panel de venta movil vertical: el catalogo deja de ser barra lateral y pasa a ser una hoja inferior que se arrastra hacia arriba y hacia abajo con el dedo. Siempre queda a la vista su encabezado y la fila de categorias (con desplazamiento lateral), sin botones para reabrir y sin desvanecimientos.
+- Al expandir la hoja aparece una barra inferior fija con el buscador "Buscar producto.." y el microfono de pedido por voz.
+- El talonario sube hasta el encabezado (se elimino el espacio muerto) y la barra NUEVA/COBRAR/microfono se apoya justo encima de la hoja.
+- Venta por voz estilo nota de voz: mantener pulsado el microfono para dictar y soltar para procesar; deslizar hacia arriba durante la grabacion la deja en manos libres (con eliminar, onda, tiempo, pausar y enviar); deslizar a la izquierda cancela. Indicadores de grabacion, duracion, bloqueo y cancelacion en una barra unica.
+- Catalogo base dominicano: 42 productos de colmado (Granos, Despensa, Lacteos, Carnes, Embutido, Viveres, Panaderia, Snacks, Bebidas y Limpieza) con precio en RD$, unidad y foto descargada de Wikimedia Commons. Se siembra una sola vez por equipo y sube a la base central con la cola de sincronizacion existente. Creditos en img/productos/CREDITOS.md.
+- Nuevo `js/catalogo-dr.js` (datos y siembra) y `img/productos/` (42 fotos recortadas a 420x420).
+- Sin cambios en el procesamiento de pedidos, el talonario, la sincronizacion ni la facturacion electronica: solo interfaz, disposicion, gestos y la experiencia de voz.
+
 ## 2.14.0 (v125)
 - Reparto de numeros e-NCF sin perdidas: servicio propio `pediposSecuencia` (copia en backend/). Probado con 2 a 8 cajas a la vez: sin duplicados ni numeros perdidos.
 - La emision ahora SI usa el bloque reservado (antes preguntaba por una funcion inexistente y caia al contador local).
@@ -9,6 +18,17 @@
 # Historial de cambios · PediPOS
 
 Todas las versiones notables de este proyecto. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado es [SemVer](https://semver.org/lang/es/).
+
+## [2.15.0] - 2026-11-24
+
+### Anadido
+- **Hoja inferior del catalogo** en el Panel de venta movil: arrastrable, con encabezado y categorias siempre visibles, buscador y microfono fijos al expandir.
+- **Venta por voz estilo nota de voz**: mantener para grabar y enviar, deslizar arriba para manos libres, deslizar a la izquierda para cancelar, con tiempo, pausa y envio manual.
+- **Catalogo base dominicano**: 42 productos de colmado con foto, categoria, unidad y precio (`js/catalogo-dr.js`, `img/productos/`).
+
+### Cambiado
+- El icono del carrito del talonario ya no abre una pantalla aparte: expande la hoja del catalogo.
+- El talonario se pega al encabezado y la barra de accion se coloca encima de la hoja.
 
 ## [2.13.1] - 2026-11-23
 

@@ -2368,3 +2368,114 @@ body.grabando .act .recbar,.act.rec .recbar{border-radius:999px!important}
 .cmp-i b{font-size:15px}.cmp-i small{font-size:12px;color:var(--mut)}
 .cmp-nuevo{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .cmp-nuevo input{height:48px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;font-size:15px}
+
+/* ============================================================
+   v126 · Panel de venta movil vertical
+   - El catalogo deja de ser barra lateral: es una hoja inferior
+     arrastrable que siempre deja ver su encabezado y sus categorias.
+   - Al expandirse trae buscador y microfono fijos abajo.
+   - La grabacion de voz usa una barra unica estilo nota de voz.
+   ============================================================ */
+
+/* el talonario sube hasta el encabezado y la barra de venta se apoya en la hoja */
+@media (max-width:1023px){
+  body.panel-view main#view{padding-top:0!important;
+    padding-bottom:calc(env(safe-area-inset-bottom) + var(--cs-peek,150px) + 92px)!important}
+  body.panel-view #view > .tick{margin-top:4px!important}
+  body.panel-view .act{bottom:calc(env(safe-area-inset-bottom) + var(--cs-peek,150px) + 8px)}
+}
+
+/* ---------- Hoja del catalogo ---------- */
+.catsheet{position:fixed;left:0;right:0;bottom:0;z-index:34;display:none;flex-direction:column;
+  height:min(78dvh,760px);background:#fff;border-radius:26px 26px 0 0;
+  box-shadow:0 -16px 36px #0b141c26;border-top:1px solid #eef1f4;
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.22,.9,.3,1);
+  will-change:transform;padding-bottom:env(safe-area-inset-bottom)}
+.catsheet.on{display:flex}
+@media (min-width:1024px){.catsheet{display:none!important}}
+
+.cs-head{flex:none;padding:8px 0 4px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.cs-head:active{cursor:grabbing}
+.cs-grip{display:block;width:46px;height:5px;border-radius:999px;background:#d7dde2;margin:0 auto 7px;
+  transition:width .2s ease,background .2s ease}
+.catsheet.full .cs-grip{width:34px;background:#c3cbd2}
+.cs-hint{margin:0 0 9px;text-align:center;font-size:12.5px;font-weight:600;color:#8a949c;letter-spacing:.01em}
+.cs-cats{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;padding:2px 12px 10px;
+  scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+.cs-cats::-webkit-scrollbar{display:none}
+.cs-cat{flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent;border:0;
+  padding:0;width:62px;transition:transform .14s ease}
+.cs-cat i{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;overflow:hidden;
+  background:#f1f4f6;color:#9aa5ad;border:2px solid transparent;
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.cs-cat i img{width:100%;height:100%;object-fit:cover;display:block}
+.cs-cat i svg{width:23px;height:23px}
+.cs-cat span{font-size:11.5px;font-weight:700;color:#6b767f;max-width:62px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;text-align:center}
+.cs-cat.on i{border-color:var(--g);box-shadow:0 5px 14px #0b8f5f33;transform:translateY(-1px)}
+.cs-cat.on span{color:#0B6B45}
+.cs-cat:active i{transform:scale(.95)}
+
+.cs-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;padding:2px 12px 8px}
+.cs-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:4px 0 6px}
+.cs-grid .pcard{padding:7px 8px 8px;border-radius:16px}
+.cs-grid .pcard .ph{height:70px;border-radius:10px;margin-bottom:4px}
+.cs-grid .pcard .nm{font-size:12px;min-height:29px}
+.cs-grid .pcard .pr{font-size:13.5px}
+.cs-grid .pcard .un{font-size:10.5px;padding:1px 6px}
+
+.cs-foot{flex:none;padding:8px 12px 12px;background:#fff;border-top:1px solid #eef1f4;
+  box-shadow:0 -10px 20px -16px #0b141c40}
+.cs-search{display:flex;align-items:center;gap:9px;height:50px;padding:0 6px 0 14px;border-radius:999px;
+  background:#f2f5f7;border:1.5px solid #e7ecef;transition:border-color .18s ease,background .18s ease}
+.cs-search:focus-within{border-color:var(--g-line);background:#fff}
+.cs-search > svg{width:20px;height:20px;color:#8a949c;flex:none}
+.cs-search input{flex:1;min-width:0;height:100%;border:0;background:transparent;font-size:15px;outline:none;color:var(--ink)}
+.cs-search input::placeholder{color:#98a2a9}
+.cs-mic{flex:none;width:40px;height:40px;border-radius:50%;border:0;display:grid;place-items:center;
+  background:var(--g);color:#fff;box-shadow:0 5px 12px #0b8f5f42;transition:transform .14s ease,background .14s ease}
+.cs-mic svg{width:21px;height:21px;color:#fff}
+.cs-mic:active{transform:scale(.93);background:var(--g-d)}
+
+/* ---------- Barra de grabacion (estilo nota de voz) ---------- */
+.recdock{position:fixed;left:50%;transform:translateX(-50%);z-index:96;display:none;
+  bottom:calc(env(safe-area-inset-bottom) + 14px);width:min(100% - 20px,540px)}
+.recdock.on{display:block;animation:rdSube .22s cubic-bezier(.22,.9,.3,1) both}
+@keyframes rdSube{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+.rd-grab,.rd-free{position:relative;display:flex;align-items:center;gap:10px;height:62px;
+  border-radius:999px;background:#fff;border:1.5px solid #eef1f3;box-shadow:0 14px 34px #0b141c38}
+.rd-grab{padding:0 9px 0 18px}
+.rd-free{padding:0 10px}
+.rd-free[hidden],.rd-grab[hidden]{display:none}
+.rd-dot{width:11px;height:11px;border-radius:50%;background:var(--red);animation:blink 1s infinite;flex:none}
+.rd-grab b,.rd-free b{font-size:16px;font-variant-numeric:tabular-nums;color:var(--ink);min-width:44px;font-weight:700}
+.rd-tip{flex:1;font-size:12.5px;line-height:1.25;color:#6b767f;text-align:right;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;transition:color .15s ease}
+.rd-tip.warn{color:var(--red);font-weight:700}
+.rd-mic{width:44px;height:44px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;
+  flex:none;box-shadow:0 6px 16px #0b8f5f4d;will-change:transform}
+.rd-mic svg{width:22px;height:22px}
+.rd-lock,.rd-trash{position:absolute;top:50%;display:flex;flex-direction:column;align-items:center;gap:1px;
+  border-radius:16px;padding:6px 8px;background:#f1f4f6;color:#5b646d;font-size:9px;font-weight:800;
+  letter-spacing:.05em;text-transform:uppercase;opacity:.5;pointer-events:none;
+  transform:translateY(-50%) scale(.86);
+  transition:background .15s ease,color .15s ease,opacity .15s ease,transform .15s ease}
+.rd-lock{left:14px}
+.rd-trash{right:14px}
+.rd-lock svg,.rd-trash svg{width:20px;height:20px}
+.rd-lock.on{background:var(--g);color:#fff;box-shadow:0 8px 18px #0b8f5f4d}
+.rd-trash.on{background:var(--red);color:#fff;box-shadow:0 8px 18px #e5484d55}
+.rd-btn{width:42px;height:42px;border-radius:50%;border:0;display:grid;place-items:center;flex:none;
+  background:#f1f4f6;color:#3f4a53;transition:transform .14s ease,background .14s ease}
+.rd-btn svg{width:20px;height:20px}
+.rd-btn:active{transform:scale(.93)}
+.rd-del{color:var(--red);background:#fdecec}
+.rd-send{margin-left:auto;background:var(--g);color:#fff;box-shadow:0 6px 16px #0b8f5f4d}
+.rd-send svg{width:21px;height:21px}
+.rd-pause.on{background:#0B6B45;color:#fff}
+.rd-free .rwave{flex:1;height:28px;margin:0 4px}
+.rd-free .rwave i{background:var(--g);width:3px}
+.rd-free .rwave.quieta i{animation-play-state:paused;height:6px!important}
+body.grabando .act{pointer-events:none}
+body.grabando .act .mic{opacity:.35}

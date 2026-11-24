@@ -626,6 +626,206 @@
     en.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); guardar(); } };
   }
 
+  /* ---------- Catalogo del panel: hoja inferior arrastrable (movil vertical) ----------
+     Siempre queda a la vista su encabezado y la fila de categorias. Se sube arrastrando
+     para recorrer las tarjetas y se baja igual; no se desvanece ni necesita botones. */
+  let csCat = "", csQ = "", csFull = false, csScroll = 0;
+
+  const catsPanel = () => [...new Set((db().products || []).filter((p) => p.activo !== false)
+    .map((p) => p.categoria).filter(Boolean))].sort();
+
+  function csLista() {
+    const q = window.PPVoice ? window.PPVoice.norm(csQ) : String(csQ || "").toLowerCase();
+    return (db().products || []).filter((p) => p.activo !== false && (!csCat || p.categoria === csCat) && (!q ||
+      (window.PPVoice ? window.PPVoice.norm(p.nombre + " " + (p.categoria || "")).includes(q) : String(p.nombre).toLowerCase().includes(q))));
+  }
+  /* icono de la categoria: la foto de uno de sus productos */
+  function iconoCat(cat) {
+    const p = (db().products || []).find((x) => x.categoria === cat && x.img && x.activo !== false);
+    return p ? `<img src="${esc(p.img)}" alt="">` : I.box;
+  }
+  function csGridHTML() {
+    const lista = csLista();
+    return lista.length ? lista.map((p) => pcard(p)).join("") : '<p class="cnt" style="padding:22px 4px;text-align:center">Sin productos que coincidan.</p>';
+  }
+  function csCatsHTML() {
+    return `<button class="cs-cat${csCat ? "" : " on"}" data-cat=""><i>${I.cart}</i><span>Todos</span></button>` +
+      catsPanel().map((c) => `<button class="cs-cat${csCat === c ? " on" : ""}" data-cat="${esc(c)}"><i>${iconoCat(c)}</i><span>${esc(c)}</span></button>`).join("");
+  }
+
+  /* La hoja se crea una sola vez: al repintar el panel solo se actualiza su contenido,
+     asi no se pierde el arrastre ni el scroll del catalogo. */
+  function asegurarCatalogo() {
+    let sh = document.getElementById("catsheet");
+    if (sh) return sh;
+    sh = document.createElement("section");
+    sh.className = "catsheet";
+    sh.id = "catsheet";
+    sh.innerHTML = `<div class="cs-head" id="csHead">
+        <span class="cs-grip" aria-hidden="true"></span>
+        <p class="cs-hint" id="csHint">Desliza hacia arriba para ver catálogo</p>
+        <div class="cs-cats" id="csCats">${csCatsHTML()}</div>
+      </div>
+      <div class="cs-body" id="csBody"><div class="pgrid cs-grid" id="csGrid">${csGridHTML()}</div></div>
+      <div class="cs-foot" id="csFoot">
+        <div class="cs-search">${I.search}<input id="csQ" placeholder="Buscar producto.." autocomplete="off" enterkeyhint="search"><button class="cs-mic" id="csMic" data-mic="1" aria-label="Pedido por voz">${I.mic}</button></div>
+      </div>`;
+    document.body.append(sh);
+    engancharCatalogo(sh);
+    return sh;
+  }
+
+  function medirCatalogo(sh) {
+    const head = sh.querySelector("#csHead");
+    if (!head) return 0;
+    const h = Math.round(head.getBoundingClientRect().height) + 8;
+    document.documentElement.style.setProperty("--cs-peek", h + "px");
+    return h;
+  }
+
+  function irA(full, animar) {
+    const sh = document.getElementById("catsheet");
+    if (!sh) return;
+    const peek = medirCatalogo(sh);
+    const oculto = Math.max(0, Math.round(sh.getBoundingClientRect().height) - peek);
+    csFull = !!full;
+    sh.style.transition = animar === false ? "none" : "";
+    sh.style.transform = "translateY(" + (full ? 0 : oculto) + "px)";
+    sh.classList.toggle("full", !!full);
+    document.body.classList.toggle("cat-abierto", !!full);
+    const hint = sh.querySelector("#csHint");
+    if (hint) hint.textContent = full ? "Desliza hacia abajo para cerrar" : "Desliza hacia arriba para ver catálogo";
+  }
+
+  function abrirCatalogo(full) {
+    const sh = asegurarCatalogo();
+    sh.classList.add("on");
+    medirCatalogo(sh);
+    requestAnimationFrame(() => irA(full !== false, true));
+    if (full) {
+      const q = sh.querySelector("#csQ");
+      if (q && !esPC()) setTimeout(() => { try { q.focus({ preventScroll: true }); } catch (_) {} }, 320);
+    }
+  }
+  function ocultarCatalogo() {
+    const sh = document.getElementById("catsheet");
+    if (sh) { sh.classList.remove("on"); irA(false, false); }
+    document.body.classList.remove("cat-abierto");
+  }
+
+  /* Arrastre vertical: sigue el dedo y, al soltar, se acomoda arriba o abajo. */
+  function engancharCatalogo(sh) {
+    const head = sh.querySelector("#csHead");
+    const body = sh.querySelector("#csBody");
+    const cats = sh.querySelector("#csCats");
+    let y0 = 0, base = 0, dy = 0, activo = false, decidido = false, t0 = 0;
+    const alto = () => Math.round(sh.getBoundingClientRect().height);
+    const oculto = () => Math.max(0, alto() - medirCatalogo(sh));
+    const actual = () => {
+      const m = /translateY\((-?[\d.]+)px\)/.exec(sh.style.transform || "");
+      return m ? parseFloat(m[1]) : (csFull ? 0 : oculto());
+    };
+    const poner = (y) => {
+      const tope = oculto();
+      const v = y < 0 ? y * 0.35 : (y > tope ? tope + (y - tope) * 0.35 : y);
+      sh.style.transition = "none";
+      sh.style.transform = "translateY(" + v.toFixed(1) + "px)";
+    };
+    const soltar = () => {
+      if (!activo) return;
+      activo = false;
+      if (!decidido) return;
+      const y = actual(), tope = oculto();
+      const rapido = Date.now() - t0 < 240;
+      const sube = dy < -14, baja = dy > 14;
+      const abrir = rapido && sube ? true : (rapido && baja ? false : y < tope * 0.55);
+      irA(abrir, true);
+    };
+    head.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      activo = true; decidido = false; dy = 0; t0 = Date.now();
+      y0 = e.touches[0].clientY; base = actual();
+    }, { passive: true });
+    head.addEventListener("touchmove", (e) => {
+      if (!activo) return;
+      dy = e.touches[0].clientY - y0;
+      if (!decidido) {
+        if (Math.abs(dy) < 5) return;
+        decidido = true;
+      }
+      if (e.cancelable) e.preventDefault();
+      poner(base + dy);
+    }, { passive: false });
+    head.addEventListener("touchend", soltar);
+    head.addEventListener("touchcancel", () => { activo = false; irA(csFull, true); });
+    /* raton: mismo gesto para probar en computadora */
+    head.addEventListener("mousedown", (e) => {
+      if (e.target.closest(".cs-cat")) return;
+      activo = true; decidido = false; dy = 0; t0 = Date.now();
+      y0 = e.clientY; base = actual();
+      const mm = (ev) => { if (!activo) return; dy = ev.clientY - y0; if (!decidido) { if (Math.abs(dy) < 5) return; decidido = true; } poner(base + dy); };
+      const up = () => { document.removeEventListener("mousemove", mm); document.removeEventListener("mouseup", up); soltar(); };
+      document.addEventListener("mousemove", mm); document.addEventListener("mouseup", up);
+    });
+    /* un toque corto en el encabezado (sin arrastrar) abre o cierra */
+    head.addEventListener("click", (e) => {
+      if (e.target.closest(".cs-cat")) return;
+      if (decidido) { decidido = false; return; }
+      irA(!csFull, true);
+    });
+    /* categorias: filtran sin cerrar la hoja */
+    cats.addEventListener("click", (e) => {
+      const b = e.target.closest(".cs-cat");
+      if (!b) return;
+      csCat = b.dataset.cat || "";
+      cats.innerHTML = csCatsHTML();
+      const g = sh.querySelector("#csGrid");
+      if (g) g.innerHTML = csGridHTML();
+      if (body) body.scrollTop = 0;
+      tap();
+    });
+    /* buscador */
+    const q = sh.querySelector("#csQ");
+    if (q) {
+      q.addEventListener("input", () => {
+        csQ = q.value;
+        const g = sh.querySelector("#csGrid");
+        if (g) g.innerHTML = csGridHTML();
+      });
+      q.addEventListener("focus", () => { if (!csFull) irA(true, true); });
+      q.addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+    }
+    /* tarjetas: agregan al talonario sin cerrar el catalogo */
+    sh.querySelector("#csGrid").addEventListener("click", (e) => {
+      const b = e.target.closest(".pcard");
+      if (!b) return;
+      const p = (db().products || []).find((x) => x.pid === b.dataset.p);
+      if (!p) return;
+      addLine(p, 1); S.save(); tap();
+      csScroll = body ? body.scrollTop : 0;
+      render();
+    });
+    if (body) body.addEventListener("scroll", () => { csScroll = body.scrollTop; }, { passive: true });
+  }
+
+  /* Al repintar el panel: contenido al dia y posicion recordada. */
+  function sincronizarCatalogo() {
+    if (esPC()) { ocultarCatalogo(); return; }
+    const sh = asegurarCatalogo();
+    sh.classList.add("on");
+    const cats = sh.querySelector("#csCats");
+    if (cats) cats.innerHTML = csCatsHTML();
+    const g = sh.querySelector("#csGrid");
+    if (g) g.innerHTML = csGridHTML();
+    const q = sh.querySelector("#csQ");
+    if (q && q.value !== csQ) q.value = csQ;
+    medirCatalogo(sh);
+    irA(csFull, false);
+    const body = sh.querySelector("#csBody");
+    if (body) body.scrollTop = csScroll;
+    bindMicGestos();
+  }
+
   function renderPanel() {
     const c = cart(), t = tot(), n = c.lines.length;
     document.body.classList.add("panel-view");
@@ -635,7 +835,7 @@
     const actHTML = `<div class="act ${n ? "hay" : ""}" id="actbar">
         <button class="n ${n ? "on" : ""}" id="bNew">NUEVA</button>
         <button class="c" id="bPay" ${n ? "" : "disabled"}>COBRAR</button>
-        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
+        <div class="mic ${voice.phase === "wait" ? "wait" : ""}" id="bMic" data-mic="1" role="button" aria-label="Pedido por voz"><i>${voice.phase === "wait" ? I.clock : I.mic}</i></div>
       </div>`;
     $("#view").innerHTML = `
       <div class="panel-work">
@@ -704,7 +904,8 @@
       const n2 = $("#pwq"); if (n2) { n2.focus(); n2.setSelectionRange(pos, pos); }
     };
     if (window.PPUI && window.PPUI.alDock) window.PPUI.alDock();
-    $("#bSearch").onclick = openSearch; $("#bList").onclick = () => openOrder("");
+    $("#bSearch").onclick = () => { if (esPC()) return openSearch(); abrirCatalogo(true); };
+    $("#bList").onclick = () => openOrder("");
     $("#bPlus").onclick = () => {
       /* siempre se puede agregar a mano: el talonario muestra 5 y el resto se desliza */
       manual = true; render(); const f = $("#mnm"); f && f.focus();
@@ -748,6 +949,7 @@
     };
     $("#bPay").onclick = openPay;
     bindMicGestos();
+    sincronizarCatalogo();
     $$(".row .q").forEach((inp) => (inp.onchange = () => {
       const v = parseFloat(String(inp.value).replace(",", "."));
       const i = +inp.dataset.i;
@@ -1430,64 +1632,105 @@
        el microfono responde (antes la barra quedaba en rojo, con el microfono vivo y sin dueño).
      - Todo cierre limpia PRIMERO la interfaz y libera el microfono sin esperar a nadie.
      - Hay un salvavidas: si el estado no coincide con la realidad, la interfaz se restablece sola. */
-  const MIC = { fase: "libre", activo: false, bloqueado: false, dx: 0, seg: 0, tick: null, pausado: false,
+  const MIC = { fase: "libre", activo: false, bloqueado: false, dx: 0, dy: 0, seg: 0, tick: null, pausado: false,
                 pendiente: null, dedo: false, token: 0, freno: null };
 
   function micVibra(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (_) {} }
-  const UMBRAL = 70;   /* px de deslizamiento para cancelar o bloquear */
+  const UMBRAL = 64;        /* px hacia arriba para bloquear en manos libres */
+  const UMBRAL_X = 72;      /* px hacia la izquierda para cancelar */
 
+  /* ====== Barra de grabacion unica (estilo nota de voz) ======
+     Vive flotando sobre el borde inferior, la dispare el microfono del talonario o el del catalogo.
+     Estados visuales: grabando (pildora con punto rojo y tiempo), bloqueado (papelera, onda,
+     pausa y enviar) y cancelando (papelera roja). */
+  let dockEl = null;
+  function dockHTML() {
+    return `<div class="rd-grab" id="rdGrab">
+        <span class="rd-dot"></span><b id="recSeg">0:00</b>
+        <span class="rd-tip" id="recTip">Desliza hacia arriba para manos libres</span>
+      </div>
+      <div class="rd-free" id="recF" hidden>
+        <button class="rd-btn rd-del" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
+        <div class="rwave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <b id="recSeg2">0:00</b>
+        <button class="rd-btn rd-pause" id="recP" aria-label="Pausar">${I.pausa}</button>
+        <button class="rd-btn rd-send" id="recSend" aria-label="Enviar pedido">${I.sendarrow}</button>
+      </div>
+      <span class="rd-lock" id="recLock" aria-hidden="true">${I.lockAnim}<small>Bloquear</small></span>
+      <span class="rd-trash" id="recX" aria-hidden="true">${I.trashAnim}<small>Cancelar</small></span>
+      <span class="rd-mic" id="rdMic" aria-hidden="true">${I.mic}</span>`;
+  }
+  function asegurarDock() {
+    if (dockEl && document.body.contains(dockEl)) return dockEl;
+    dockEl = document.createElement("div");
+    dockEl.id = "recdock"; dockEl.className = "recdock";
+    dockEl.innerHTML = dockHTML();
+    document.body.append(dockEl);
+    const enl = (el, fn) => {
+      if (!el) return; let usado = 0;
+      const ir = (e) => { e.preventDefault(); e.stopPropagation(); if (Date.now() - usado < 400) return; usado = Date.now(); fn(); };
+      el.addEventListener("click", ir); el.addEventListener("touchend", ir, { passive: false });
+    };
+    enl(dockEl.querySelector("#recDel"), () => cancelarGrabacionGesto(true));
+    enl(dockEl.querySelector("#recSend"), () => terminarGrabacionGesto());
+    enl(dockEl.querySelector("#recP"), alternarPausa);
+    return dockEl;
+  }
+
+  /* Todos los microfonos de la app comparten el mismo gesto: mantener para hablar,
+     subir para manos libres, a la izquierda para cancelar y soltar para enviar. */
   function bindMicGestos() {
-    const mic = $("#bMic");
-    if (!mic) return;
-    let x0 = 0, t0 = 0, idPuntero = null;
-
-    const inicio = (x) => {
-      if (MIC.fase !== "libre") return;          /* ya hay una grabacion en curso: se ignora */
-      MIC.dedo = true; MIC.dx = 0; MIC.pendiente = null;
-      x0 = x; t0 = Date.now();
-      micVibra([30, 20, 60]);
-      iniciarGrabacionGesto();
-    };
-    const mueve = (x) => {
-      if (!MIC.dedo || MIC.fase === "bloqueado" || MIC.fase === "cerrando") return;
-      MIC.dx = x - x0;
-      if (MIC.fase === "grabando") actualizarArrastre();
-    };
-    const fin = () => {
-      if (!MIC.dedo) return;
-      MIC.dedo = false;
-      const dur = Date.now() - t0, dx = MIC.dx;
-      if (MIC.fase === "bloqueado" || MIC.fase === "cerrando" || MIC.fase === "libre") return;
-      if (MIC.fase === "arrancando") { MIC.pendiente = { dur, dx }; return; }   /* se resuelve al arrancar */
-      resolverSoltar(dur, dx);
-    };
-    /* la decision unica de que hacer cuando el dedo se suelta */
-    function resolverSoltar(dur, dx) {
-      if (dur < 350) { micVibra(10); return cancelarGrabacionGesto(false, true); }      /* roce: no es un pedido */
-      if (dx < -UMBRAL) { micVibra([30, 20, 45]); return cancelarGrabacionGesto(true); }  /* izquierda: cancelar */
-      if (dx > UMBRAL) return bloquearGrabacionGesto();                                   /* derecha: manos libres */
-      return terminarGrabacionGesto();                                                    /* soltar: enviar */
-    }
-    MIC.resolver = resolverSoltar;
-
-    mic.addEventListener("touchstart", (e) => { e.preventDefault(); const t = e.touches[0]; inicio(t.clientX); }, { passive: false });
-    mic.addEventListener("touchmove", (e) => { const t = e.touches[0]; if (t) mueve(t.clientX); }, { passive: true });
-    mic.addEventListener("touchend", (e) => { e.preventDefault(); fin(); });
-    mic.addEventListener("touchcancel", () => {
-      /* el sistema se llevo el gesto (llamada, notificacion): no se deja grabando sin dedo */
-      if (!MIC.dedo) return;
-      MIC.dedo = false;
-      if (MIC.fase === "arrancando") MIC.pendiente = { dur: 0, dx: 0, cancelar: true };
-      else if (MIC.fase === "grabando") cancelarGrabacionGesto(false);
-    });
-    /* raton (pruebas en computadora) */
-    mic.addEventListener("mousedown", (e) => {
-      inicio(e.clientX);
-      const mm = (ev) => mueve(ev.clientX);
-      const up = () => { document.removeEventListener("mousemove", mm); document.removeEventListener("mouseup", up); fin(); };
-      document.addEventListener("mousemove", mm); document.addEventListener("mouseup", up);
+    $$("[data-mic]").forEach((mic) => {
+      if (mic.dataset.micListo) return;
+      mic.dataset.micListo = "1";
+      let x0 = 0, y0 = 0, t0 = 0;
+      const inicio = (x, y) => {
+        if (MIC.fase !== "libre") return;
+        MIC.dedo = true; MIC.dx = 0; MIC.dy = 0; MIC.pendiente = null;
+        x0 = x; y0 = y; t0 = Date.now();
+        micVibra([28, 18, 50]);
+        iniciarGrabacionGesto();
+      };
+      const mueve = (x, y) => {
+        if (!MIC.dedo || MIC.fase === "bloqueado" || MIC.fase === "cerrando") return;
+        MIC.dx = x - x0; MIC.dy = y - y0;
+        if (MIC.fase === "grabando") actualizarArrastre();
+      };
+      const fin = () => {
+        if (!MIC.dedo) return;
+        MIC.dedo = false;
+        const dur = Date.now() - t0, dx = MIC.dx, dy = MIC.dy;
+        if (MIC.fase === "bloqueado" || MIC.fase === "cerrando" || MIC.fase === "libre") return;
+        if (MIC.fase === "arrancando") { MIC.pendiente = { dur, dx, dy }; return; }
+        resolverSoltar(dur, dx, dy);
+      };
+      mic.addEventListener("touchstart", (e) => { e.preventDefault(); const t = e.touches[0]; if (t) inicio(t.clientX, t.clientY); }, { passive: false });
+      mic.addEventListener("touchmove", (e) => { const t = e.touches[0]; if (t) mueve(t.clientX, t.clientY); }, { passive: true });
+      mic.addEventListener("touchend", (e) => { e.preventDefault(); fin(); });
+      mic.addEventListener("touchcancel", () => {
+        if (!MIC.dedo) return;
+        MIC.dedo = false;
+        if (MIC.fase === "arrancando") MIC.pendiente = { dur: 0, dx: 0, dy: 0, cancelar: true };
+        else if (MIC.fase === "grabando") cancelarGrabacionGesto(false);
+      });
+      mic.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        inicio(e.clientX, e.clientY);
+        const mm = (ev) => mueve(ev.clientX, ev.clientY);
+        const up = () => { document.removeEventListener("mousemove", mm); document.removeEventListener("mouseup", up); fin(); };
+        document.addEventListener("mousemove", mm); document.addEventListener("mouseup", up);
+      });
     });
   }
+
+  /* La decision unica de que hacer cuando el dedo se suelta. */
+  function resolverSoltar(dur, dx, dy) {
+    if (dur < 350) { micVibra(10); return cancelarGrabacionGesto(false, true); }   /* roce: no es un pedido */
+    if (dy < -UMBRAL) return bloquearGrabacionGesto();                              /* arriba: manos libres */
+    if (dx < -UMBRAL_X) { micVibra([30, 20, 45]); return cancelarGrabacionGesto(true); }  /* izquierda: cancelar */
+    return terminarGrabacionGesto();                                                /* soltar: enviar */
+  }
+  MIC.resolver = resolverSoltar;
 
   const fmtSeg = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 
@@ -1512,178 +1755,25 @@
     /* durante la espera el gesto pudo cancelarse o la pantalla cambiar: no se enciende nada huerfano */
     if (MIC.token !== mi || MIC.fase !== "arrancando") { try { window.PPVoice.resetRecording(); } catch (_) {} return; }
     MIC.fase = "grabando";
-    transformarBarra(true);
+    mostrarDock();
     MIC.tick = setInterval(() => {
       MIC.seg++;
-      const sg = document.getElementById("recSeg");
-      if (sg) sg.textContent = fmtSeg(MIC.seg);
-      const tx = document.getElementById("recTxt");
-      if (tx && voice && voice.text) tx.textContent = String(voice.text).slice(-70);
+      const a = document.getElementById("recSeg"), b = document.getElementById("recSeg2");
+      if (a) a.textContent = fmtSeg(MIC.seg);
+      if (b) b.textContent = fmtSeg(MIC.seg);
     }, 1000);
     /* el dedo ya se habia soltado mientras arrancaba: se resuelve ahora */
     const pen = MIC.pendiente; MIC.pendiente = null;
     if (pen) {
       if (pen.cancelar) return cancelarGrabacionGesto(false);
-      if (!MIC.dedo) return MIC.resolver(Math.max(pen.dur, 0), pen.dx);
+      if (!MIC.dedo) return MIC.resolver(Math.max(pen.dur, 0), pen.dx, pen.dy || 0);
     }
     if (MIC.dedo) actualizarArrastre();
   }
 
-  /* la barra de venta se convierte en la barra de grabacion */
-  function transformarBarra(on) {
-    const bar = $("#actbar");
-    if (!bar) return;
-    document.body.classList.toggle("grabando", on);
-    if (!on) { bar.classList.remove("rec", "lock", "izq", "der"); bar.querySelector(".recbar") && bar.querySelector(".recbar").remove(); const m = $("#bMic"); m && (m.style.transform = ""); return; }
-    bar.classList.add("rec");
-    let rb = bar.querySelector(".recbar");
-    if (!rb) {
-      rb = document.createElement("div"); rb.className = "recbar";
-      rb.innerHTML = `<span class="rtrash" id="recX" aria-hidden="true">${I.trashAnim}</span>
-        <span class="rlock2" id="recLock" aria-hidden="true">${I.lockAnim}</span>
-        <div class="rlive" id="recLive" hidden><b id="recSeg">0:00</b><span id="recTxt">Escuchando...</span></div>
-        <div class="rfree" id="recF" hidden>
-          <button class="rdel" id="recDel" aria-label="Eliminar audio">${I.trash}</button>
-          <div class="rwave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <button class="rpause" id="recP" aria-label="Pausar">${I.pausa}</button>
-          <button class="rsend" id="recSend" aria-label="Guardar pedido">${I.bag}</button>
-        </div>`;
-      bar.append(rb);
-      /* los botones responden tambien al toque directo (touchend) para no depender del "clic" retardado */
-      const enlazar = (el, fn) => { if (!el) return; let usado = 0;
-        const ir = (e) => { e.preventDefault(); e.stopPropagation(); if (Date.now() - usado < 400) return; usado = Date.now(); fn(); };
-        el.addEventListener("click", ir); el.addEventListener("touchend", ir, { passive: false }); };
-      enlazar($("#recDel"), () => cancelarGrabacionGesto(true));
-      enlazar($("#recSend"), () => terminarGrabacionGesto());
-      enlazar($("#recP"), alternarPausa);
-    }
-    const m = $("#bMic"); m && m.classList.add("grab");
-    /* los dos avisos aparecen desde el primer instante, en modo suave */
-    const X0 = $("#recX"), L0 = $("#recLock");
-    if (X0) { X0.hidden = false; X0.style.opacity = "0.45"; X0.classList.add("sutil"); }
-    if (L0) { L0.hidden = false; L0.style.opacity = "0.45"; L0.classList.add("sutil"); }
-  }
-
-  /* El arrastre decide que aviso se ve: hacia la izquierda solo la papelera, hacia la derecha solo el candado.
-     El aviso contrario se oculta del todo (antes el candado se quedaba visible al ir a la izquierda). */
-  function actualizarArrastre() {
-    if (MIC.fase !== "grabando") return;
-    const m = $("#bMic");
-    const dx = MIC.dx;
-    if (m) m.style.transform = "translateX(" + Math.max(-110, Math.min(110, dx)) + "px) scale(1.18)";
-    const X = $("#recX"), L2 = $("#recLock"), bar = $("#actbar");
-    const kIzq = Math.min(1, Math.max(0, -dx / UMBRAL)), kDer = Math.min(1, Math.max(0, dx / UMBRAL));
-    const izq = dx < -6, der = dx > 6;
-    if (X) {
-      /* se oculta cuando el dedo va a la derecha */
-      X.style.opacity = der ? "0" : String(0.45 + 0.55 * kIzq);
-      X.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * kIzq) + ")";
-      X.classList.toggle("on", dx < -34);
-      if (izq) X.classList.remove("sutil");
-    }
-    if (L2 && !L2.classList.contains("enviar")) {
-      /* se oculta del todo cuando el dedo va a la izquierda */
-      L2.style.opacity = izq ? "0" : String(0.45 + 0.55 * kDer);
-      L2.style.transform = "translateY(-50%) scale(" + (0.86 + 0.34 * kDer) + ")";
-      L2.classList.toggle("on", kDer > 0.38);
-      if (der) L2.classList.remove("sutil");
-    }
-    if (bar) { bar.classList.toggle("izq", izq); bar.classList.toggle("der", der); }
-  }
-
-  /* pausar / continuar la grabacion a manos libres */
-  function alternarPausa() {
-    if (MIC.fase !== "bloqueado") return;
-    const b = $("#recP"), onda = $(".rwave"), dot = $(".rdot");
-    if (!MIC.pausado) {
-      if (!window.PPVoice.pauseRecording()) return;
-      MIC.pausado = true; clearInterval(MIC.tick); MIC.tick = null;
-      micVibra(20);
-      if (b) { b.innerHTML = I.seguir; b.setAttribute("aria-label", "Continuar"); b.classList.add("on"); }
-      onda && onda.classList.add("quieta"); dot && dot.classList.add("quieto");
-    } else {
-      if (!window.PPVoice.resumeRecording()) return;
-      MIC.pausado = false; micVibra(20);
-      clearInterval(MIC.tick);
-      MIC.tick = setInterval(() => { MIC.seg++; const sg = document.getElementById("recSeg"); if (sg) sg.textContent = fmtSeg(MIC.seg); }, 1000);
-      if (b) { b.innerHTML = I.pausa; b.setAttribute("aria-label", "Pausar"); b.classList.remove("on"); }
-      onda && onda.classList.remove("quieta"); dot && dot.classList.remove("quieto");
-    }
-  }
-
-  /* La barra de venta vive SIEMPRE dentro de la tarjeta del talonario, debajo de los tres iconos.
-     En manos libres solo cambia de aspecto (se vuelve barra de grabacion): ya no se saca del talonario,
-     asi nunca queda encima de los iconos ni flotando sobre la rejilla. */
-  function asegurarBarraEnTalonario() {
-    const bar = document.getElementById("actbar");
-    const tick = document.querySelector(".tick");
-    if (bar && tick && bar.parentElement !== tick) tick.appendChild(bar);
-    if (bar) bar.classList.remove("flotante");
-    return bar;
-  }
-  function activarManosLibres() {
-    document.body.classList.add("manos-libres");
-    const bar = asegurarBarraEnTalonario();
-    if (!bar) return;
-    const live = document.getElementById("recLive");
-    if (live) live.hidden = false;
-  }
-  function desactivarManosLibres() {
-    document.body.classList.remove("manos-libres");
-    asegurarBarraEnTalonario();
-  }
-
-  /* Cierre total e INMEDIATO: libera el microfono, apaga la barra y deja el boton listo.
-     No espera ninguna promesa, asi nunca puede quedarse a medias. Es seguro llamarlo varias veces. */
-  function limpiarGrabacionGesto() {
-    MIC.token++;                                   /* invalida cualquier arranque que siga esperando */
-    clearTimeout(MIC.freno); MIC.freno = null;
-    clearInterval(MIC.tick); MIC.tick = null;
-    MIC.fase = "libre"; MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.pausado = false;
-    MIC.seg = 0; MIC.pendiente = null; MIC.dedo = false;
-    try { window.PPVoice && window.PPVoice.resetRecording && window.PPVoice.resetRecording(); } catch (_) {}
-    document.body.classList.remove("grabando", "manos-libres");
-    const bar0 = asegurarBarraEnTalonario();
-    if (bar0) {
-      bar0.classList.remove("rec", "lock", "izq", "der", "flotante");
-      const rb0 = bar0.querySelector(".recbar"); if (rb0) rb0.remove();
-    }
-    /* el microfono vuelve siempre visible y tocable */
-    const m = $("#bMic"); if (m) { m.classList.remove("grab"); m.style.transform = ""; m.style.display = ""; }
-  }
-
-  /* Cancelar: primero se limpia todo (sin esperar), el audio simplemente se descarta. */
-  function cancelarGrabacionGesto(vibra, silencio) {
-    if (vibra) micVibra([30, 40, 30]);
-    const habia = MIC.fase !== "libre";
-    limpiarGrabacionGesto();
-    if (habia && !silencio) toast("Grabacion cancelada");
-    else if (habia && silencio) toast("Manten presionado para grabar");
-  }
-
-  /* Red de seguridad: si el gesto se pierde (llamada, cambio de app, puntero cancelado) no queda en rojo. */
-  function rescatarGrabacion() {
-    if (MIC.fase === "libre" && !document.body.classList.contains("grabando")) return;
-    if (MIC.fase === "cerrando") return;
-    limpiarGrabacionGesto();
-  }
-  window.addEventListener("pointercancel", rescatarGrabacion, true);
-  window.addEventListener("blur", rescatarGrabacion);
-  document.addEventListener("visibilitychange", () => { if (document.hidden) rescatarGrabacion(); });
-
-  /* Salvavidas de coherencia: cada 1.5 s comprueba que lo que se ve coincida con el estado real.
-     Si la barra esta en rojo pero ya no hay grabacion viva (o al reves), se restablece sola. */
-  setInterval(() => {
-    const rojo = document.body.classList.contains("grabando");
-    const viva = !!(window.PPVoice && window.PPVoice.recording);
-    if (MIC.fase === "libre" && (rojo || viva)) limpiarGrabacionGesto();
-    else if (MIC.fase === "grabando" && !viva && !MIC.dedo) limpiarGrabacionGesto();
-  }, 1500);
-
+  /* Enciende la barra de grabacion flotante. */
   /* Centra un icono dentro de su circulo por su CENTRO DE MASA visual, no por su caja.
-     Un avioncito de papel tiene la punta a la derecha: aunque su caja este centrada, a simple vista
-     se ve corrido a la izquierda. Se dibuja el icono en un lienzo, se calcula donde esta el peso del
-     dibujo y se compensa con un desplazamiento exacto. Es automatico: sirve para cualquier icono. */
+     Lo usa la bolsa por voz del inventario para que el avion de enviar quede al centro. */
   function centrarIconoEnCirculo(contenedor) {
     try {
       const svg = contenedor && contenedor.querySelector("svg");
@@ -1714,35 +1804,144 @@
     } catch (_) { /* si falla, queda el centrado por caja */ }
   }
 
+  function mostrarDock() {
+    const d = asegurarDock();
+    d.className = "recdock on";
+    const grab = d.querySelector("#rdGrab"), free = d.querySelector("#recF");
+    if (grab) grab.hidden = false;
+    if (free) free.hidden = true;
+    const m = d.querySelector("#rdMic"); if (m) m.style.transform = "";
+    const X = d.querySelector("#recX"), L = d.querySelector("#recLock");
+    if (X) { X.style.opacity = "0.5"; X.style.transform = "translateY(-50%) scale(.86)"; X.classList.remove("on"); }
+    if (L) { L.style.opacity = "0.5"; L.style.transform = "translateY(-50%) scale(.86)"; L.classList.remove("on"); }
+    document.body.classList.add("grabando");
+    const tip = d.querySelector("#recTip"); if (tip) { tip.textContent = "Desliza hacia arriba para manos libres"; tip.classList.remove("warn"); }
+  }
+
+  /* Mientras el dedo se mueve: el microfono sube con el y el aviso elegido se enciende. */
+  function actualizarArrastre() {
+    if (MIC.fase !== "grabando") return;
+    const d = dockEl; if (!d) return;
+    const subir = Math.max(0, -MIC.dy), izq = Math.max(0, -MIC.dx);
+    const kSub = Math.min(1, subir / UMBRAL), kIzq = Math.min(1, izq / UMBRAL_X);
+    const m = d.querySelector("#rdMic");
+    if (m) m.style.transform = "translateY(" + (-subir * 0.5).toFixed(1) + "px) scale(" + (1 + 0.08 * kSub).toFixed(2) + ")";
+    const L = d.querySelector("#recLock"), X = d.querySelector("#recX");
+    if (L) {
+      L.style.opacity = kIzq > 0.3 ? "0" : String(0.5 + 0.5 * kSub);
+      L.style.transform = "translateY(-50%) scale(" + (0.86 + 0.3 * kSub).toFixed(2) + ")";
+      L.classList.toggle("on", kSub > 0.55);
+    }
+    if (X) {
+      X.style.opacity = String(0.5 + 0.5 * kIzq);
+      X.style.transform = "translateY(-50%) scale(" + (0.86 + 0.3 * kIzq).toFixed(2) + ")";
+      X.classList.toggle("on", kIzq > 0.5);
+    }
+    const tip = d.querySelector("#recTip");
+    if (tip) {
+      tip.classList.toggle("warn", kIzq > 0.5);
+      tip.textContent = kIzq > 0.5 ? "Suelta para cancelar" : (kSub > 0.55 ? "Suelta para manos libres" : "Desliza hacia arriba para manos libres");
+    }
+  }
+
+  /* pausar / continuar la grabacion a manos libres */
+  function alternarPausa() {
+    if (MIC.fase !== "bloqueado") return;
+    const d = dockEl;
+    const b = d && d.querySelector("#recP"), onda = d && d.querySelector(".rwave");
+    if (!MIC.pausado) {
+      if (!window.PPVoice.pauseRecording()) return;
+      MIC.pausado = true; clearInterval(MIC.tick); MIC.tick = null;
+      micVibra(20);
+      if (b) { b.innerHTML = I.seguir; b.setAttribute("aria-label", "Continuar"); b.classList.add("on"); }
+      onda && onda.classList.add("quieta");
+    } else {
+      if (!window.PPVoice.resumeRecording()) return;
+      MIC.pausado = false; micVibra(20);
+      clearInterval(MIC.tick);
+      MIC.tick = setInterval(() => {
+        MIC.seg++;
+        const a = document.getElementById("recSeg"), c = document.getElementById("recSeg2");
+        if (a) a.textContent = fmtSeg(MIC.seg);
+        if (c) c.textContent = fmtSeg(MIC.seg);
+      }, 1000);
+      if (b) { b.innerHTML = I.pausa; b.setAttribute("aria-label", "Pausar"); b.classList.remove("on"); }
+      onda && onda.classList.remove("quieta");
+    }
+  }
+
+  function activarManosLibres() { document.body.classList.add("manos-libres"); }
+  function desactivarManosLibres() { document.body.classList.remove("manos-libres"); }
+
+  /* Cierre total e INMEDIATO: libera el microfono, apaga la barra y deja el boton listo.
+     No espera ninguna promesa, asi nunca puede quedarse a medias. Es seguro llamarlo varias veces. */
+  function limpiarGrabacionGesto() {
+    MIC.token++;
+    clearTimeout(MIC.freno); MIC.freno = null;
+    clearInterval(MIC.tick); MIC.tick = null;
+    MIC.fase = "libre"; MIC.activo = false; MIC.bloqueado = false; MIC.dx = 0; MIC.dy = 0; MIC.pausado = false;
+    MIC.seg = 0; MIC.pendiente = null; MIC.dedo = false;
+    try { window.PPVoice && window.PPVoice.resetRecording && window.PPVoice.resetRecording(); } catch (_) {}
+    document.body.classList.remove("grabando", "manos-libres");
+    if (dockEl) {
+      dockEl.className = "recdock";
+      const grab = dockEl.querySelector("#rdGrab"), free = dockEl.querySelector("#recF");
+      if (grab) grab.hidden = false;
+      if (free) free.hidden = true;
+      const onda = dockEl.querySelector(".rwave"); onda && onda.classList.remove("quieta");
+      const p = dockEl.querySelector("#recP");
+      if (p) { p.innerHTML = I.pausa; p.classList.remove("on"); }
+      const m = dockEl.querySelector("#rdMic"); if (m) m.style.transform = "";
+    }
+  }
+
+  /* Cancelar: primero se limpia todo (sin esperar), el audio simplemente se descarta. */
+  function cancelarGrabacionGesto(vibra, silencio) {
+    if (vibra) micVibra([30, 40, 30]);
+    const habia = MIC.fase !== "libre";
+    limpiarGrabacionGesto();
+    if (habia && !silencio) toast("Grabacion cancelada");
+    else if (habia && silencio) toast("Manten presionado para grabar");
+  }
+
+  /* Red de seguridad: si el gesto se pierde (llamada, cambio de app, puntero cancelado) no queda en rojo. */
+  function rescatarGrabacion() {
+    if (MIC.fase === "libre" && !document.body.classList.contains("grabando")) return;
+    if (MIC.fase === "cerrando") return;
+    limpiarGrabacionGesto();
+  }
+  window.addEventListener("pointercancel", rescatarGrabacion, true);
+  window.addEventListener("blur", rescatarGrabacion);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) rescatarGrabacion(); });
+
+  /* Salvavidas de coherencia: cada 1.5 s comprueba que lo que se ve coincida con el estado real. */
+  setInterval(() => {
+    const rojo = document.body.classList.contains("grabando");
+    const viva = !!(window.PPVoice && window.PPVoice.recording);
+    if (MIC.fase === "libre" && (rojo || viva)) limpiarGrabacionGesto();
+    else if (MIC.fase === "grabando" && !viva && !MIC.dedo) limpiarGrabacionGesto();
+  }, 1500);
+
+  /* Manos libres: la grabacion queda sola y se puede recorrer el catalogo mientras se habla.
+     La barra cambia a: eliminar, onda, tiempo, pausar y enviar. */
   function bloquearGrabacionGesto() {
     if (MIC.fase !== "grabando") return;
-    MIC.fase = "bloqueado"; MIC.bloqueado = true; MIC.dx = 0; MIC.dedo = false;
+    MIC.fase = "bloqueado"; MIC.bloqueado = true; MIC.dx = 0; MIC.dy = 0; MIC.dedo = false;
     micVibra(40);
     activarManosLibres();
-    /* el icono del microfono se retira: en manos libres mandan la papelera, la pausa y enviar */
-    const m = $("#bMic"); if (m) { m.style.transform = ""; m.style.display = "none"; }
-    const bar = $("#actbar"); if (bar) bar.classList.remove("izq", "der");
-    /* la papelera de arrastre desaparece del todo: ahora existe el boton eliminar de manos libres */
-    const X = $("#recX"); if (X) { X.hidden = true; X.style.opacity = "0"; }
-    /* el candado se transforma en enviar: ya quedo bloqueado y se puede mandar */
-    const l2 = $("#recLock");
-    if (l2) {
-      l2.hidden = false;
-      l2.classList.remove("sutil", "on");
-      l2.classList.add("enviar");
-      l2.innerHTML = I.sendarrow;
-      l2.setAttribute("aria-label", "Enviar pedido");
-      l2.setAttribute("role", "button");
-      l2.style.opacity = "1";
-      l2.style.transform = "translateY(-50%) scale(1)";
-      let usado = 0;
-      const ir = (ev) => { ev.preventDefault(); ev.stopPropagation(); if (Date.now() - usado < 400) return; usado = Date.now(); terminarGrabacionGesto(); };
-      l2.onclick = ir; l2.ontouchend = ir;
-      centrarIconoEnCirculo(l2);
+    const d = dockEl;
+    if (d) {
+      d.classList.add("libre");
+      const grab = d.querySelector("#rdGrab"), free = d.querySelector("#recF");
+      if (grab) grab.hidden = true;
+      if (free) free.hidden = false;
+      const m = d.querySelector("#rdMic"); if (m) m.style.transform = "";
+      const X = d.querySelector("#recX"); if (X) { X.style.opacity = "0"; X.classList.remove("on"); }
+      const L = d.querySelector("#recLock"); if (L) { L.style.opacity = "0"; L.classList.remove("on"); }
     }
-    const rf = $("#recF"); if (rf) rf.hidden = false;
-    if (bar) bar.classList.add("lock");
+    const seg = document.getElementById("recSeg2"); if (seg) seg.textContent = fmtSeg(MIC.seg);
   }
+
 
   /* Termina la grabacion: PRIMERO se captura el audio y DESPUES se limpia la interfaz.
      Si la captura se cuelga, el tope de 2.5 s de stopRecording la libera igual. */
@@ -2754,6 +2953,7 @@
     else if (tab === "fiscal") { if (window.PPFiscal) window.PPFiscal.render($("#view")); }
     else if (tab === "rechazos") { if (window.PPRechazos) window.PPRechazos.render($("#view")); }
     else if (tab === "certificacion") { if (window.PPCertificacion) window.PPCertificacion.render($("#view")); }
+    if (tab !== "panel") ocultarCatalogo();
     drawDock();   /* la navegacion se rehace en cada pantalla y al cambiar de tamano */
     const h1t = document.getElementById("title");
     if (h1t && esPC()) h1t.textContent = TITULOS[tab] || "PediPOS";
@@ -2934,6 +3134,8 @@
     window.PPImprimirTicket();
   }, true);
   if (window.PPNube) window.PPNube.engancharContador();
+  /* catalogo base dominicano: entra una sola vez por equipo, sin tocar lo que ya existe */
+  try { if (window.PPCatalogoDR) window.PPCatalogoDR.auto(); } catch (_) {}
   go("panel"); netbar(); revisarAvisos(); window.PPSync.start(); initInstall();
   /* las ventas viven en IndexedDB: se cargan al arrancar y se repinta con ellas */
   if (window.PPStore && window.PPStore.hydrate) window.PPStore.hydrate().then(() => {
