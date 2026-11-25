@@ -1084,6 +1084,19 @@
     return n;
   }
 
+  /* La foto de una categoria viaja dentro de sus productos (campo catImg).
+     Al bajar de la nube se recoge aqui para que todos los equipos la vean. */
+  function absorberCatFotos(db) {
+    if (!db || !Array.isArray(db.products)) return 0;
+    db.catFotos = db.catFotos || {};
+    let n = 0;
+    for (const p of db.products) {
+      if (!p.catImg || !p.categoria) continue;
+      if (db.catFotos[p.categoria] !== p.catImg) { db.catFotos[p.categoria] = p.catImg; n++; }
+    }
+    return n;
+  }
+
   /* Se ejecuta al abrir la app, despues de que la tienda cargue. */
   /* Equipos que ya sembraron antes: los productos sin foto reciben la suya.
      Devuelve la lista de los que se arreglaron, para devolverlos a la nube. */
@@ -1133,6 +1146,7 @@
 
   function auto() {
     const S = window.PPStore;
+    if (S && S.db) absorberCatFotos(S.db);
     if (!S) return;
     const db = S.db;
     const nuevos = sembrar(db, S.uid);
@@ -1155,6 +1169,7 @@
      en el acto y se devuelven a la nube para que ningun equipo vuelva a verlos sin foto. */
   let _rep = 0;
   function repararTrasBajar() {
+    if (window.PPStore && window.PPStore.db) absorberCatFotos(window.PPStore.db);
     const S = window.PPStore;
     if (!S || !S.db) return;
     const tocados = unir(reparar(S.db), sincronizarCompartidos(S.db));
@@ -1167,5 +1182,5 @@
     window.addEventListener("pp:data", () => { clearTimeout(_rep); _rep = setTimeout(repararTrasBajar, 120); });
   }
 
-  window.PPCatalogoDR = { PRODUCTOS, CAT_FOTO, GID, gidDe, porGid, sembrar, completarFotos, reparar, sincronizarCompartidos, repararTrasBajar, fotoCat, subir, auto, norm };
+  window.PPCatalogoDR = { PRODUCTOS, CAT_FOTO, GID, gidDe, porGid, sembrar, completarFotos, reparar, sincronizarCompartidos, repararTrasBajar, absorberCatFotos, fotoCat, subir, auto, norm };
 })();

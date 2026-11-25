@@ -1,3 +1,8 @@
+## 2.22.0 (v133)
+- La foto de cada categoria ahora viaja a la nube: se guarda en el negocio y se copia en los productos de esa categoria (campo catImg); al bajar en otro equipo se recoge sola. No hizo falta cambiar el servidor.
+- La foto propia de la categoria manda sobre la del producto, tanto en la fila de categorias como en las tarjetas que no tienen imagen.
+- v133 en index.html, sw.js y version.json.
+
 ## 2.21.0 (v132)
 - Controles de voz: zafacon y candado mas grandes (54 px), con animacion de tapa y de arco que abren y cierran, y el candado mas arriba. Al grabar aparecen dos flechas animadas, una a la izquierda del microfono apuntando al zafacon y otra encima apuntando al candado, con separacion pareja.
 - Catalogo: las tarjetas se ordenan solas por volumen de ventas del negocio (mas vendidos, medianos, ocasionales, pocos y sin ventas) usando todo el historial; dentro de cada escalon primero lo que ya esta en el talonario.

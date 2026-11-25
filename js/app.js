@@ -144,7 +144,8 @@
   function fotoDe(p) {
     if (p && p.img) return `<img src="${esc(p.img)}" alt="">`;
     /* sin foto propia: la de su categoria, para que ninguna tarjeta quede vacia */
-    const f = (window.PPCatalogoDR && window.PPCatalogoDR.fotoCat) ? window.PPCatalogoDR.fotoCat(p && p.categoria) : "";
+    const f = fotoCategoria(p && p.categoria) ||
+      ((window.PPCatalogoDR && window.PPCatalogoDR.fotoCat) ? window.PPCatalogoDR.fotoCat(p && p.categoria) : "");
     if (f) return `<img src="${esc(f)}" alt="">`;
     return I.box;
   }
@@ -724,12 +725,27 @@
     return m[cat] || "";
   }
   function ponerFotoCategoria(cat, dataUrl) {
+    cat = String(cat || "").trim();
     if (!cat) return;
     db().catFotos = db().catFotos || {};
     if (dataUrl) db().catFotos[cat] = dataUrl;
     else delete db().catFotos[cat];
+    /* la foto viaja dentro de los productos de la categoria (campo catImg):
+       asi llega a los demas equipos del negocio sin cambiar el contrato del servidor */
+    (db().products || []).forEach((p) => {
+      if (p.categoria !== cat) return;
+      if (dataUrl) p.catImg = dataUrl;
+      else delete p.catImg;
+      try { if (window.PPSync && window.PPSync.saveProduct) window.PPSync.saveProduct(p); } catch (_) {}
+    });
     S.save();
+    /* la fila de categorias del catalogo se repinta en el acto */
+    try {
+      const fila = document.getElementById("csCats");
+      if (fila) fila.innerHTML = csCatsHTML();
+    } catch (_) {}
   }
+
   function iconoCat(cat) {
     const propia = fotoCategoria(cat);
     if (propia) return `<img src="${esc(propia)}" alt="">`;
