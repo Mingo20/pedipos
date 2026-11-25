@@ -179,7 +179,9 @@
   let panelCat = "";
 
   /* ---------- Dock ---------- */
-  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Suplidor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"], ["infraestructura", "Mi infra", "bolt"]];
+  /* Mi infraestructura vive en el menu lateral y en la barra del PC, no en la del
+     telefono: ahi quedaba un rayo suelto debajo de Clientes. */
+  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Suplidor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"]];
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
@@ -659,12 +661,42 @@
   const catsPanel = () => [...new Set((db().products || []).filter((p) => p.activo !== false)
     .map((p) => p.categoria).filter(Boolean))].sort();
 
+  /* ---------- Que tan vendido es cada producto ----------
+     Se cuenta todo lo vendido en el historial del negocio y se reparte en cinco
+     escalones: mas vendidos, medianos, ocasionales, pocos y sin ventas. */
+  function ventasPorProducto() {
+    const u = {};
+    for (const s of (db().sales || [])) {
+      const ls = s.lines || s.items || [];
+      for (const l of ls) {
+        const pid = l.pid || l.producto_id || l.id;
+        if (!pid) continue;
+        u[pid] = (u[pid] || 0) + (Number(l.cant || l.qty || l.cantidad || 1) || 1);
+      }
+    }
+    return u;
+  }
+  /* escalon 0 = mas vendido ... 4 = sin ventas */
+  function escalonDe(n, max) {
+    if (!n || !max) return 4;
+    const k = n / max;
+    if (k >= 0.55) return 0;
+    if (k >= 0.28) return 1;
+    if (k >= 0.12) return 2;
+    return 3;
+  }
   function csLista() {
     const enTalonario = new Set(cart().lines.map((l) => l.pid));
+    const vendidos = ventasPorProducto();
+    const max = Object.values(vendidos).reduce((a, b) => Math.max(a, b), 0);
     return (db().products || [])
       .filter((p) => p.activo !== false && (!csCat || p.categoria === csCat))
-      /* los ya elegidos suben al principio: la tarjeta se ve sin buscarla */
-      .sort((a, b) => (enTalonario.has(a.pid) ? 0 : 1) - (enTalonario.has(b.pid) ? 0 : 1));
+      .map((p) => ({ p, n: vendidos[p.pid] || 0, e: escalonDe(vendidos[p.pid] || 0, max) }))
+      /* primero el escalon de ventas; dentro del escalon, lo que ya esta en el
+         talonario y despues lo mas vendido */
+      .sort((a, b) => (a.e - b.e) || (b.n - a.n) ||
+        ((enTalonario.has(a.p.pid) ? 0 : 1) - (enTalonario.has(b.p.pid) ? 0 : 1)))
+      .map((x) => x.p);
   }
 
   /* Entrada escalonada de las tarjetas: al cambiar de categoria o al buscar. */
@@ -687,7 +719,20 @@
     if (animar) animarTarjetas(g);
   }
   /* icono de la categoria: la foto de uno de sus productos */
+  function fotoCategoria(cat) {
+    const m = db().catFotos || {};
+    return m[cat] || "";
+  }
+  function ponerFotoCategoria(cat, dataUrl) {
+    if (!cat) return;
+    db().catFotos = db().catFotos || {};
+    if (dataUrl) db().catFotos[cat] = dataUrl;
+    else delete db().catFotos[cat];
+    S.save();
+  }
   function iconoCat(cat) {
+    const propia = fotoCategoria(cat);
+    if (propia) return `<img src="${esc(propia)}" alt="">`;
     const p = (db().products || []).find((x) => x.categoria === cat && x.img && x.activo !== false);
     if (p) return `<img src="${esc(p.img)}" alt="">`;
     const f = (window.PPCatalogoDR && window.PPCatalogoDR.fotoCat) ? window.PPCatalogoDR.fotoCat(cat) : "";
@@ -718,11 +763,13 @@
       <div class="cs-body" id="csBody"><div class="pgrid cs-grid" id="csGrid">${csGridHTML()}</div></div>
       <div class="cs-foot" id="csFoot">
         <span class="csr-lock" id="csRecLock" hidden aria-hidden="true">${I.lockAnim}</span>
+        <span class="csr-arrow csr-arrow-u" id="csRecArrowU" hidden aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="M7 11l5-5 5 5"/></svg></span>
         <div class="cs-search cs-order" id="csOrder">
           <textarea id="csQ" class="cs-ta" rows="1" placeholder="Pega tu Lista aquí" autocomplete="off" spellcheck="false"></textarea>
           <div class="csr-hold" id="csrHold" hidden>
             <button class="csr-x" id="csRecX" type="button" aria-label="Cancelar grabación">${I.trashAnim}</button>
             <span class="csr-dot" aria-hidden="true"></span><b id="csRecSeg">0:00</b>
+            <span class="csr-arrow csr-arrow-l" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H6"/><path d="M11 7l-5 5 5 5"/></svg></span>
           </div>
           <div class="csr-free" id="csrFree" hidden>
             <button class="rd-btn rd-del" id="csRecDel" type="button" aria-label="Eliminar grabación">${I.trash}</button>
@@ -2518,6 +2565,11 @@
         <label class="field"><span>Categoría</span><input id="fc" list="fcatList" value="${esc(p.categoria)}" placeholder="Elige o escribe">
           <datalist id="fcatList">${catsPanel().map((c) => `<option value="${esc(c)}"></option>`).join("")}</datalist></label>
       </div>
+      <div class="cat-foto" id="cfBox">
+        <span class="cf-prev" id="cfPrev">${(p.categoria && fotoCategoria(p.categoria)) ? `<img src="${esc(fotoCategoria(p.categoria))}" alt="">` : I.image}</span>
+        <div class="cf-tx"><b>Foto de la categoría</b><small id="cfHint">${p.categoria ? "Toca para cambiarla" : "Escribe la categoría y sube su foto"}</small></div>
+        <input type="file" accept="image/*" id="cfFile" hidden>
+      </div>
       <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
       <div class="field"><span>Foto del producto</span>
         <div class="upimg"><span class="pv" id="pv">${fotoDe(p)}</span>
@@ -2528,6 +2580,37 @@
       ${p.gid ? `<button class="btn-global" id="fres">${I.check}<span>Restaurar nombre, categoría y foto del catálogo</span></button>` : ""}
       <button class="btn" id="sv" style="margin-top:12px">Guardar</button>${n ? "" : '<button class="btn red" id="dl" style="margin-top:10px">Eliminar</button>'}`);
     $("#x", s).onclick = closeSheet;
+    /* foto de la categoria: se comprime y se guarda con el nombre de la categoria,
+       asi la ficha del catalogo muestra esa imagen en la fila de categorias */
+    const cfBox = $("#cfBox", s), cfFile = $("#cfFile", s);
+    if (cfBox && cfFile) {
+      cfBox.onclick = () => {
+        if (!$("#fc").value.trim()) { toast("Escribe primero la categoría"); return; }
+        cfFile.click();
+      };
+      cfFile.onchange = () => {
+        const f = cfFile.files && cfFile.files[0]; if (!f) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+          const im = new Image();
+          im.onload = () => {
+            const cv = document.createElement("canvas");
+            const lado = 300, k = Math.min(1, lado / Math.max(im.width, im.height));
+            cv.width = Math.max(1, Math.round(im.width * k));
+            cv.height = Math.max(1, Math.round(im.height * k));
+            cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+            const url = cv.toDataURL("image/jpeg", 0.82);
+            const cat = $("#fc").value.trim();
+            ponerFotoCategoria(cat, url);
+            $("#cfPrev").innerHTML = `<img src="${url}" alt="">`;
+            $("#cfHint").textContent = "Foto guardada en " + cat;
+            tap();
+          };
+          im.src = rd.result;
+        };
+        rd.readAsDataURL(f);
+      };
+    }
     /* foto opcional: se guarda comprimida y se usa en las tarjetas */
     let img = p.img || "";
     const procesar = (input) => {

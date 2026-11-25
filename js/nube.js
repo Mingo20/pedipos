@@ -221,9 +221,9 @@
   }
 
   function filaServicio(nombre, detalle, usado, quedan) {
-    var txt = usado === 1 ? "1 llamada" : usado + " llamadas";
+    var txt = usado === 1 ? "1 crédito" : usado + " créditos";
     var dis = (quedan === null || quedan === undefined) ? "sin dato de disponibilidad"
-      : (quedan === 1 ? "queda 1 llamada" : "quedan " + quedan + " llamadas");
+      : (quedan === 1 ? "queda 1 crédito" : "quedan " + quedan + " créditos");
     return '<div class="pp-srv"><div class="pp-srv-t"><b>' + nombre + '</b><span>' + txt + "</span></div>" +
       '<small>' + detalle + " &middot; " + dis + "</small></div>";
   }
@@ -234,8 +234,7 @@
     var volver = (typeof opts.volver === "function") ? opts.volver : function () {
       if (global.PPUI && global.PPUI.volverConfig) global.PPUI.volverConfig();
     };
-    var cab = '<div class="pp-head"><button class="pp-back" id="ppBack" aria-label="Volver">' + ((global.PPUI || {}).I || {}).chev + "</button>" +
-      "<div><h2>Mi consumo en Puter</h2><p>Todo lo que PediPOS usa de la infraestructura, en un solo lugar.</p></div></div>";
+    var cab = '<div class="pp-head"><div><h2>Mi consumo en Puter</h2><p>Todo lo que PediPOS usa de la infraestructura, en un solo lugar.</p></div></div>';
     view.innerHTML = '<div class="pp-wrap">' + cab +
       '<div id="ppBody"><div class="pp-card"><p class="cnt">Leyendo tu consumo...</p></div></div></div>';
     var b = $("#ppBack", view);
@@ -309,8 +308,11 @@
     var chat = usoDeApi(u, "chat"), voz = usoDeApi(u, "voz");
     var nChat = chat ? chat.count : llamadasDe("deepseek-chat");
     var nVoz = voz ? voz.count : llamadasDe("whisper");
-    var qChat = (chat && chat.count > 0 && chat.cost > 0) ? Math.floor(queda / (chat.cost / chat.count)) : null;
-    var qVoz = (voz && voz.count > 0 && voz.cost > 0) ? Math.floor(queda / (voz.cost / voz.count)) : null;
+    /* consumo real de creditos de cada modelo, con la misma escala de la tarjeta */
+    var cChat = (chat && chat.cost > 0 && total > 0) ? Math.round((chat.cost / total) * creditoTotal) : 0;
+    var cVoz = (voz && voz.cost > 0 && total > 0) ? Math.round((voz.cost / total) * creditoTotal) : 0;
+    var qChat = (total > 0) ? Math.round((queda / total) * creditoTotal) : null;
+    var qVoz = qChat;
 
     return '<div class="pp-grid">' +
       '<div class="pp-card pp-plan"><small>Estas usando ahora</small><b>' + planTxt + "</b>" +
@@ -334,9 +336,9 @@
       '<div class="pp-card pp-uso"><h3>Creditos mensuales</h3>' +
         '<p class="pp-sub"><b>' + pctCred + '%</b> &middot; ' + creditosUsados + ' usado de ' + creditoTotal + ' creditos</p>' +
         barra(pctCred, pctCred >= 90 ? "#D64545" : "#C4A81F") +
-        filaServicio("DeepSeek Chat", "Interpreta los pedidos dictados", nChat, qChat) +
-        filaServicio("Whisper", "Transcribe la voz a texto", nVoz, qVoz) +
-        '<p class="cnt" style="font-size:11.5px;margin:8px 0 0">Las llamadas son las del mes en curso; la disponibilidad se estima con los creditos que te quedan.</p>' +
+        filaServicio("DeepSeek Chat", "Interpreta los pedidos dictados", cChat, qChat) +
+        filaServicio("Whisper", "Transcribe la voz a texto", cVoz, qVoz) +
+        '<p class="cnt" style="font-size:11.5px;margin:8px 0 0">El consumo es el del mes en curso, en créditos; la disponibilidad se estima con los créditos que te quedan.</p>' +
       "</div>" +
       "</div>" +
       '<div class="pp-foot"><button class="btn sec" id="ppUpd">Actualizar datos</button></div>';

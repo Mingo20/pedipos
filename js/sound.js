@@ -20,7 +20,7 @@
     /* el mismo toque puede llegar desde el listener global y desde el codigo:
        se ignora el segundo disparo para que suene una sola vez */
     const ahora = Date.now();
-    if (ahora - ultimoTock < 70) return;
+    if (ahora - ultimoTock < 420) return;
     ultimoTock = ahora;
     const c = audio();
     if (!c) return;
@@ -92,6 +92,7 @@
     ".fab",                             /* botones + flotantes */
     ".mnu",                             /* enlaces del menu lateral */
     ".sh-x", ".inv-b",                  /* flechas de cerrar y volver */
+    ".cs-cat", ".pcard", ".csr-x", ".csr-lock", ".btn", ".mnu b", ".pp-opt"
 
   ].join(",");
 

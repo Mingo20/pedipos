@@ -1,3 +1,12 @@
+## 2.21.0 (v132)
+- Controles de voz: zafacon y candado mas grandes (54 px), con animacion de tapa y de arco que abren y cierran, y el candado mas arriba. Al grabar aparecen dos flechas animadas, una a la izquierda del microfono apuntando al zafacon y otra encima apuntando al candado, con separacion pareja.
+- Catalogo: las tarjetas se ordenan solas por volumen de ventas del negocio (mas vendidos, medianos, ocasionales, pocos y sin ventas) usando todo el historial; dentro de cada escalon primero lo que ya esta en el talonario.
+- Categoria con foto: en Crear y Editar producto, el campo Categoria deja elegir, escribir o cambiar la categoria y subir una foto desde el telefono; esa foto se usa en la fila de categorias del catalogo.
+- Barra movil: fuera el icono de rayos que quedaba debajo de Clientes; Mi infraestructura sigue en el menu y en la barra del PC.
+- Mi infraestructura: la tarjeta de creditos muestra el consumo real en creditos de DeepSeek Chat y Whisper, y la pantalla ya no lleva icono de retroceso.
+- Sonidos: un solo toque de confirmacion por interaccion; se amplio la ventana que descarta el sonido repetido y se sumaron las tarjetas y botones que sonaban dos veces.
+- v132 en index.html, sw.js y version.json.
+
 ## 2.20.0 (v131)
 - Tarjetas de producto: el precio queda a la izquierda y la unidad en la esquina derecha.
 - Barra del catalogo: el campo dice «Pega tu Lista aquí».
