@@ -867,7 +867,172 @@
  "precio": 120,
  "stock": 50,
  "img": "img/productos/pasta-dental.jpg"
-}
+},
+ {
+  "nombre": "Guandules Verdes",
+  "categoria": "Granos",
+  "unidad": "libra",
+  "precio": 95,
+  "stock": 80,
+  "img": "img/productos/guandules.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Pigeon_peas_dried_(cropped).jpg",
+  "licencia": "CC0",
+  "autor": "David E Mead"
+ },
+ {
+  "nombre": "Aguacate",
+  "categoria": "Viveres",
+  "unidad": "unidad",
+  "precio": 65,
+  "stock": 60,
+  "img": "img/productos/aguacate.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Avocado_-_single_and_halved.jpg",
+  "licencia": "CC BY-SA 4.0",
+  "autor": "Splintercell10"
+ },
+ {
+  "nombre": "Naranja Agria",
+  "categoria": "Viveres",
+  "unidad": "unidad",
+  "precio": 15,
+  "stock": 100,
+  "img": "img/productos/naranja-agria.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Bitter_orange_-_Citrus_aurantium_01.JPG",
+  "licencia": "CC BY-SA 4.0",
+  "autor": "Zeynel Cebeci"
+ },
+ {
+  "nombre": "Chinola",
+  "categoria": "Viveres",
+  "unidad": "unidad",
+  "precio": 20,
+  "stock": 80,
+  "img": "img/productos/chinola.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Passiflora_edulis_fruit_on_white_background.jpg",
+  "licencia": "CC BY-SA 4.0",
+  "autor": "Filo gèn'"
+ },
+ {
+  "nombre": "Aceite Manicero",
+  "categoria": "Despensa",
+  "unidad": "unidad",
+  "precio": 850,
+  "stock": 12,
+  "img": "img/productos/aceite-manicero.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Peanut_oil_bottle.jpg",
+  "licencia": "CC BY-SA 2.0",
+  "autor": "Adam Engelhart"
+ },
+ {
+  "nombre": "Lavaplatos Liquido",
+  "categoria": "Limpieza",
+  "unidad": "unidad",
+  "precio": 165,
+  "stock": 30,
+  "img": "img/productos/lavaplatos.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Afwasmiddel.jpg",
+  "licencia": "CC BY-SA 3.0",
+  "autor": "M.Minderhoud"
+ },
+ {
+  "nombre": "Mostaza",
+  "categoria": "Despensa",
+  "unidad": "unidad",
+  "precio": 145,
+  "stock": 25,
+  "img": "img/productos/mostaza.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:French%27s_classic_yellow_mustard_(cropped).jpg",
+  "licencia": "CC BY-SA 3.0",
+  "autor": "User:Aeæ~commonswiki"
+ },
+ {
+  "nombre": "Pimienta Molida",
+  "categoria": "Despensa",
+  "unidad": "onza",
+  "precio": 55,
+  "stock": 40,
+  "img": "img/productos/pimienta-molida.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Black_Peppercorns.jpg",
+  "licencia": "CC BY-SA 4.0",
+  "autor": "Xitop753"
+ },
+ {
+  "nombre": "Queso Blanco",
+  "categoria": "Lacteos",
+  "unidad": "libra",
+  "precio": 260,
+  "stock": 30,
+  "img": "img/productos/queso-blanco.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Queso_fresco.JPG",
+  "licencia": "CC BY-SA 3.0",
+  "autor": "Geoff"
+ },
+ {
+  "nombre": "Pan Sobao",
+  "categoria": "Panaderia",
+  "unidad": "unidad",
+  "precio": 25,
+  "stock": 60,
+  "img": "img/productos/pan-sobao.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Pan_sobao.jpg",
+  "licencia": "CC BY 4.0",
+  "autor": "LittleT889"
+ },
+ {
+  "nombre": "Harina de Trigo",
+  "categoria": "Despensa",
+  "unidad": "libra",
+  "precio": 45,
+  "stock": 70,
+  "img": "img/productos/harina-trigo.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:All-Purpose_Flour_(4107895947).jpg",
+  "licencia": "CC BY-SA 2.0",
+  "autor": "Veganbaking.net from USA"
+ },
+ {
+  "nombre": "Servilletas",
+  "categoria": "Limpieza",
+  "unidad": "unidad",
+  "precio": 85,
+  "stock": 40,
+  "img": "img/productos/servilletas.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Napkins_-_isolated.png",
+  "licencia": "CC0",
+  "autor": "Alanthebox"
+ },
+ {
+  "nombre": "Bolsas de Basura",
+  "categoria": "Limpieza",
+  "unidad": "unidad",
+  "precio": 95,
+  "stock": 35,
+  "img": "img/productos/bolsas-basura.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:A_typical_black_bin_bag_from_the_UK_20060811.jpg",
+  "licencia": "Public domain",
+  "autor": "Yuyudevil"
+ },
+ {
+  "nombre": "Casabe",
+  "categoria": "Panaderia",
+  "unidad": "unidad",
+  "precio": 90,
+  "stock": 40,
+  "img": "img/productos/casabe.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Casabe-2.jpg",
+  "licencia": "CC BY-SA 3.0",
+  "autor": "Luisovalles"
+ },
+ {
+  "nombre": "Leche de Coco",
+  "categoria": "Despensa",
+  "unidad": "unidad",
+  "precio": 120,
+  "stock": 25,
+  "img": "img/productos/leche-coco.jpg",
+  "fuente": "https://commons.wikimedia.org/wiki/File:Coconut_milk_from_can01.JPG",
+  "licencia": "CC BY-SA 3.0",
+  "autor": "Meursault2004"
+ }
 ];
 
   /* Foto de respaldo por categoria: ninguna categoria queda con el icono vacio,
@@ -891,6 +1056,13 @@
   const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 
+  /* Identificador del catalogo GLOBAL: el mismo en todos los negocios.
+     Los datos compartidos (nombre, categoria, unidad, foto) cuelgan de aqui;
+     el precio, el costo y la existencia son de cada negocio. */
+  const gidDe = (nombre) => norm(nombre).replace(/ /g, "-") || "producto";
+  const GID = new Map(PRODUCTOS.map((p) => [gidDe(p.nombre), p]));
+  const porGid = (gid) => GID.get(gid) || null;
+
   /* Agrega al catalogo los que falten. Devuelve cuantos entraron. */
   function sembrar(db, uid) {
     if (!db || !Array.isArray(db.products)) return 0;
@@ -902,6 +1074,7 @@
       hay.add(clave);
       db.products.push({
         pid: uid ? uid("P") : "P-" + Math.random().toString(36).slice(2, 9),
+        gid: gidDe(p.nombre),
         nombre: p.nombre, categoria: p.categoria, unidad: p.unidad,
         precio: p.precio, stock: p.stock, img: p.img,
         itbis: true, activo: true, dr: true,
@@ -919,13 +1092,36 @@
     const porNombre = new Map(PRODUCTOS.map((p) => [norm(p.nombre), p]));
     const tocados = [];
     for (const p of db.products) {
-      if (p.img) continue;
       const ref = porNombre.get(norm(p.nombre));
-      const img = (ref && ref.img) || fotoCat(p.categoria);
-      if (img) { p.img = img; tocados.push(p); }
+      let cambio = false;
+      if (!p.gid && p.dr && ref) { p.gid = gidDe(ref.nombre); cambio = true; }
+      if (!p.img) {
+        const img = (ref && ref.img) || fotoCat(p.categoria);
+        if (img) { p.img = img; cambio = true; }
+      }
+      if (cambio) tocados.push(p);
     }
     return tocados;
   }
+
+  /* Mantiene al dia lo que es COMPARTIDO (nombre, categoria, unidad y foto) sin
+     tocar lo que es de cada negocio: precio, costo, existencia y si esta activo. */
+  function sincronizarCompartidos(db) {
+    if (!db || !Array.isArray(db.products)) return [];
+    const tocados = [];
+    for (const p of db.products) {
+      const ref = p.gid ? porGid(p.gid) : (p.dr ? porNombreDe(p.nombre) : null);
+      if (!ref) continue;
+      if (!p.gid) p.gid = gidDe(ref.nombre);
+      let cambio = false;
+      for (const campo of ["nombre", "categoria", "unidad", "img"]) {
+        if (ref[campo] && p[campo] !== ref[campo]) { p[campo] = ref[campo]; cambio = true; }
+      }
+      if (cambio) tocados.push(p);
+    }
+    return tocados;
+  }
+  function porNombreDe(nombre) { return GID.get(gidDe(nombre)) || null; }
   function completarFotos(db) { return reparar(db).length; }
 
   /* Sube a la base central con la misma cola de siempre, sin bloquear nada. */
@@ -940,11 +1136,18 @@
     if (!S) return;
     const db = S.db;
     const nuevos = sembrar(db, S.uid);
-    const tocados = reparar(db);
+    /* lo compartido se pone al dia y lo de cada negocio (precio, costo, stock) no se toca */
+    const tocados = unir(reparar(db), sincronizarCompartidos(db));
     if (!nuevos && !tocados.length) return;
     S.save();
     subir(nuevos ? db.products.filter((p) => p.dr) : tocados);
     window.dispatchEvent(new CustomEvent("pp:catalogo", { detail: { nuevos, fotos: tocados.length } }));
+  }
+
+  /* Une dos listas de productos sin repetir. */
+  function unir(a, b) {
+    const vistos = new Set((a || []).map((p) => p.pid));
+    return (a || []).concat((b || []).filter((p) => !vistos.has(p.pid)));
   }
 
   /* Al bajar de la nube pueden llegar productos sin foto (equipos que sembraron el
@@ -954,7 +1157,7 @@
   function repararTrasBajar() {
     const S = window.PPStore;
     if (!S || !S.db) return;
-    const tocados = reparar(S.db);
+    const tocados = unir(reparar(S.db), sincronizarCompartidos(S.db));
     if (!tocados.length) return;
     S.save();
     subir(tocados);
@@ -964,5 +1167,5 @@
     window.addEventListener("pp:data", () => { clearTimeout(_rep); _rep = setTimeout(repararTrasBajar, 120); });
   }
 
-  window.PPCatalogoDR = { PRODUCTOS, CAT_FOTO, sembrar, completarFotos, reparar, repararTrasBajar, fotoCat, subir, auto, norm };
+  window.PPCatalogoDR = { PRODUCTOS, CAT_FOTO, GID, gidDe, porGid, sembrar, completarFotos, reparar, sincronizarCompartidos, repararTrasBajar, fotoCat, subir, auto, norm };
 })();

@@ -713,12 +713,13 @@
       </div>
       <div class="cs-body" id="csBody"><div class="pgrid cs-grid" id="csGrid">${csGridHTML()}</div></div>
       <div class="cs-foot" id="csFoot">
+        <span class="csr-lock" id="csRecLock" hidden aria-hidden="true">${I.lockAnim}<small>Manos libres</small></span>
         <div class="cs-search cs-order" id="csOrder">
-          <textarea id="csQ" class="cs-ta" rows="1" placeholder="Lista de pedido" autocomplete="off" spellcheck="false"></textarea>
+          <textarea id="csQ" class="cs-ta" rows="1" placeholder="Pega tu lista" autocomplete="off" spellcheck="false"></textarea>
           <div class="csr-hold" id="csrHold" hidden>
             <button class="csr-x" id="csRecX" type="button" aria-label="Cancelar grabación">${I.trashAnim}<small>Cancelar</small></button>
             <span class="csr-dot" aria-hidden="true"></span><b id="csRecSeg">0:00</b>
-            <span class="csr-lock" id="csRecLock" aria-hidden="true">${I.lockAnim}<small>Manos libres</small></span>
+            <span class="csr-tip" id="csRecTip">Desliza para cancelar</span>
           </div>
           <div class="csr-free" id="csrFree" hidden>
             <button class="rd-btn rd-del" id="csRecDel" type="button" aria-label="Eliminar grabación">${I.trash}</button>
@@ -772,6 +773,28 @@
     const sh = document.getElementById("catsheet");
     if (sh) { sh.classList.remove("on"); irA(false, false); }
     document.body.classList.remove("cat-abierto");
+    pasarControlesAlDock();
+  }
+
+  /* Si la hoja del catalogo sale de la pantalla mientras se graba a manos libres,
+     los controles (pausar, cancelar, enviar) pasan a la barra flotante, para que
+     la grabacion nunca se quede sin salida. */
+  function pasarControlesAlDock() {
+    if (MIC.fase !== "bloqueado" || MIC.donde !== "catalogo") return;
+    const p = piezasCatalogo();
+    if (p) {
+      p.foot.classList.remove("rec", "free");
+      if (p.lock) p.lock.hidden = true;
+      if (p.mic) p.mic.style.transform = "";
+    }
+    MIC.donde = "dock";
+    const d = asegurarDock();
+    d.className = "recdock on libre";
+    const grab = d.querySelector("#rdGrab"), free = d.querySelector("#recF");
+    if (grab) grab.hidden = true;
+    if (free) free.hidden = false;
+    const onda = d.querySelector(".rwave"); if (onda) onda.classList.remove("quieta");
+    pintarSeg();
   }
 
   /* Arrastre vertical: sigue el dedo y, al soltar, se acomoda arriba o abajo. */
@@ -1856,9 +1879,9 @@
   /* La decision unica de que hacer cuando el dedo se suelta. */
   function resolverSoltar(dur, dx, dy) {
     if (dur < 350) { micVibra(10); return cancelarGrabacionGesto(false, true); }   /* roce: no es un pedido */
-    /* hacia arriba o hacia la izquierda: la grabacion queda sola (manos libres).
-       Para cancelar esta el zafacon de la barra, a un toque. */
-    if (dy < -UMBRAL || dx < -UMBRAL_X) return bloquearGrabacionGesto();
+    /* arriba: la grabacion queda sola (manos libres). Izquierda: se cancela. */
+    if (dy < -UMBRAL) return bloquearGrabacionGesto();
+    if (dx < -UMBRAL_X) { micVibra([30, 20, 45]); return cancelarGrabacionGesto(true); }
     return terminarGrabacionGesto();                                                /* soltar: enviar */
   }
   MIC.resolver = resolverSoltar;
@@ -1953,7 +1976,7 @@
     const grab = d.querySelector("#rdGrab"), free = d.querySelector("#recF");
     if (grab) grab.hidden = false;
     if (free) free.hidden = true;
-    const m = d.querySelector("#rdMic"); if (m) m.style.transform = "";
+    const m = d.querySelector("#rdMic"); if (m) m.style.transform = "scale(1.12)";
     const X = d.querySelector("#recX"), L = d.querySelector("#recLock");
     if (X) { X.style.opacity = "1"; X.style.transform = "none"; X.classList.remove("on"); }
     if (L) { L.style.opacity = "0.45"; L.style.transform = "none"; L.classList.remove("on"); }
@@ -1973,6 +1996,7 @@
       free: foot.querySelector("#csrFree"),
       mic: foot.querySelector("#csMic"),
       lock: foot.querySelector("#csRecLock"),
+      tip: foot.querySelector("#csRecTip"),
       onda: foot.querySelector(".rwave"),
       pausa: foot.querySelector("#csRecP"),
     };
@@ -1987,8 +2011,9 @@
     p.foot.classList.remove("free");
     if (p.hold) p.hold.hidden = false;
     if (p.free) p.free.hidden = true;
-    if (p.mic) p.mic.style.transform = "";
-    if (p.lock) { p.lock.classList.remove("on"); p.lock.style.transform = ""; }
+    if (p.mic) p.mic.style.transform = "scale(1.12)";
+    if (p.lock) { p.lock.hidden = false; p.lock.classList.remove("on"); p.lock.style.transform = ""; }
+    if (p.tip) { p.tip.classList.remove("warn"); p.tip.textContent = "Desliza para cancelar"; }
     document.body.classList.add("grabando");
     pintarSeg();
   }
@@ -2025,12 +2050,25 @@
   function arrastreCatalogo() {
     const p = piezasCatalogo(); if (!p) return;
     const subir = Math.max(0, -MIC.dy), izq = Math.max(0, -MIC.dx);
-    const k = Math.min(1, Math.max(subir / UMBRAL, izq / UMBRAL_X));
-    if (p.mic) p.mic.style.transform = "translateY(" + (-9 * k).toFixed(1) + "px) scale(" + (1 + 0.06 * k).toFixed(2) + ")";
-    if (p.lock) {
-      p.lock.classList.toggle("on", k > 0.55);
-      p.lock.style.transform = "scale(" + (0.94 + 0.1 * k).toFixed(2) + ")";
+    const kSub = Math.min(1, subir / UMBRAL), kIzq = Math.min(1, izq / UMBRAL_X);
+    /* el microfono acompaña al dedo en cualquier direccion, como una nota de voz */
+    if (p.mic) {
+      const dx = Math.max(-140, Math.min(40, MIC.dx));
+      const dy = Math.max(-140, Math.min(40, MIC.dy));
+      p.mic.style.transform = "translate(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px) scale(" + (1.12 + 0.1 * kSub).toFixed(2) + ")";
     }
+    /* arriba: se enciende el candado (manos libres) */
+    if (p.lock) {
+      p.lock.classList.toggle("on", kSub > 0.55);
+      p.lock.style.transform = "scale(" + (0.94 + 0.1 * kSub).toFixed(2) + ")";
+    }
+    /* izquierda: el zafacon y el aviso se ponen rojos (cancelar) */
+    if (p.tip) {
+      p.tip.classList.toggle("warn", kIzq > 0.5);
+      p.tip.textContent = kIzq > 0.5 ? "Suelta para cancelar" : "Desliza para cancelar";
+    }
+    const x = p.foot.querySelector("#csRecX");
+    if (x) x.classList.toggle("on", kIzq > 0.5);
   }
 
   /* pausar / continuar la grabacion a manos libres */
@@ -2086,7 +2124,8 @@
       if (cat.hold) cat.hold.hidden = true;
       if (cat.free) cat.free.hidden = true;
       if (cat.mic) cat.mic.style.transform = "";
-      if (cat.lock) { cat.lock.classList.remove("on"); cat.lock.style.transform = ""; }
+      if (cat.lock) { cat.lock.hidden = true; cat.lock.classList.remove("on"); cat.lock.style.transform = ""; }
+      if (cat.tip) { cat.tip.classList.remove("warn"); cat.tip.textContent = "Desliza para cancelar"; }
       if (cat.onda) cat.onda.classList.remove("quieta");
       if (cat.pausa) { cat.pausa.innerHTML = I.pausa; cat.pausa.classList.remove("on"); cat.pausa.setAttribute("aria-label", "Pausar"); }
     }
@@ -2103,6 +2142,9 @@
 
   /* Red de seguridad: si el gesto se pierde (llamada, cambio de app, puntero cancelado) no queda en rojo. */
   function rescatarGrabacion() {
+    /* a manos libres la grabacion solo la cierran cancelar o enviar: tocar el catalogo,
+       deslizar las tarjetas o cambiar de pantalla no la puede tumbar */
+    if (MIC.fase === "bloqueado") return;
     if (MIC.fase === "libre" && !document.body.classList.contains("grabando")) return;
     if (MIC.fase === "cerrando") return;
     limpiarGrabacionGesto();
@@ -2117,6 +2159,7 @@
     const viva = !!(window.PPVoice && window.PPVoice.recording);
     if (MIC.fase === "libre" && (rojo || viva)) limpiarGrabacionGesto();
     else if (MIC.fase === "grabando" && !viva && !MIC.dedo) limpiarGrabacionGesto();
+    else if (MIC.fase === "bloqueado" && !viva) limpiarGrabacionGesto();
   }, 1500);
 
   /* Manos libres: la grabacion queda sola y se puede recorrer el catalogo mientras se habla.
@@ -2136,7 +2179,8 @@
         if (p.hold) p.hold.hidden = true;
         if (p.free) p.free.hidden = false;
         if (p.mic) p.mic.style.transform = "";
-        if (p.lock) { p.lock.classList.remove("on"); p.lock.style.transform = ""; }
+        if (p.lock) { p.lock.hidden = true; p.lock.classList.remove("on"); p.lock.style.transform = ""; }
+        if (p.tip) { p.tip.classList.remove("warn"); p.tip.textContent = "Desliza para cancelar"; }
         if (p.onda) p.onda.classList.remove("quieta");
         pintarSeg();
         return;
@@ -2424,6 +2468,11 @@
           ${cats.map((c) => `<button class="fopt ${catCat === c ? "on" : ""}" data-cat="${esc(c)}">${esc(c)} ${I.check}</button>`).join("")}
         </div>
       </div>
+      <div class="cat-global">
+        <span class="cg-ico">${I.globe}</span>
+        <div><b>Catálogo global compartido</b>
+        <span>${(window.PPCatalogoDR && window.PPCatalogoDR.PRODUCTOS.length) || 0} productos disponibles para todos los negocios. El precio, el costo y el stock que pongas aqui son solo de este negocio.</span></div>
+      </div>
       <div class="pgrid" id="cl"></div>
       `;
     const draw = () => {
@@ -2453,6 +2502,7 @@
   function editProduct(p) {
     const n = !p; p = p || { pid: S.uid("P"), nombre: "", precio: 0, unidad: "unidad", categoria: "", stock: 0, itbis: true, activo: true };
     const s = sheet(`<div class="sh-h"><h2>${n ? "Crear item" : "Editar item"}</h2><button class="sh-x" id="x">${I.xDown}</button></div>
+      ${p.gid ? `<div class="nota-global">${I.globe}<span>Del catálogo global: el nombre, la categoría y la foto son compartidos. El precio, el costo y el stock son solo de tu negocio.</span></div>` : ""}
       <label class="field"><span>Nombre</span><input id="fn" value="${esc(p.nombre)}"></label>
       <div class="duo">
         <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
@@ -2469,7 +2519,8 @@
           <label class="btn gris fbtn2" style="margin:0">${I.cam}<span>Tomar</span><input type="file" accept="image/*" capture="environment" id="fcam" hidden></label>
         </div>
       </div>
-      <button class="btn" id="sv">Guardar</button>${n ? "" : '<button class="btn red" id="dl" style="margin-top:10px">Eliminar</button>'}`);
+      ${p.gid ? `<button class="btn-global" id="fres">${I.check}<span>Restaurar nombre, categoría y foto del catálogo</span></button>` : ""}
+      <button class="btn" id="sv" style="margin-top:12px">Guardar</button>${n ? "" : '<button class="btn red" id="dl" style="margin-top:10px">Eliminar</button>'}`);
     $("#x", s).onclick = closeSheet;
     /* foto opcional: se guarda comprimida y se usa en las tarjetas */
     let img = p.img || "";
@@ -2502,8 +2553,21 @@
       const co = parseFloat(String(($("#fco", s) || {}).value || "").replace(",", "."));
       Object.assign(p, { nombre: nom, precio: pr, unidad: $("#fu", s).value, categoria: $("#fc", s).value.trim(), stock: parseFloat($("#fs", s).value) || 0, img });
       if (isNaN(co)) delete p.costo; else p.costo = co;
+      /* si le cambia el nombre a un producto del catalogo global, deja de ser compartido */
+      if (p.gid && window.PPCatalogoDR && window.PPCatalogoDR.porGid) {
+        const ref = window.PPCatalogoDR.porGid(p.gid);
+        if (ref && window.PPCatalogoDR.norm(ref.nombre) !== window.PPCatalogoDR.norm(nom)) delete p.gid;
+      }
       if (n) db().products.push(p);
       S.save(); window.PPSync.saveProduct(p); closeSheet(); toast("Producto guardado"); render();
+    };
+    const fres = $("#fres", s);
+    if (fres) fres.onclick = () => {
+      const ref = window.PPCatalogoDR && window.PPCatalogoDR.porGid ? window.PPCatalogoDR.porGid(p.gid) : null;
+      if (!ref) return toast("Ese producto ya no está en el catálogo");
+      Object.assign(p, { nombre: ref.nombre, categoria: ref.categoria, unidad: ref.unidad, img: ref.img });
+      S.save(); if (window.PPSync) window.PPSync.saveProduct(p);
+      closeSheet(); toast("Datos del catálogo restaurados"); render();
     };
     const dl = $("#dl", s);
     if (dl) dl.onclick = () => { db().products = db().products.filter((x) => x.pid !== p.pid); S.save(); window.PPSync.deleteProduct(p.pid); closeSheet(); toast("Producto eliminado"); render(); };

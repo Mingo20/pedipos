@@ -96,3 +96,18 @@ Fotos descargadas de Wikimedia Commons y recortadas a 420x420 para el catalogo d
 | Yautia | yautia.jpg | Paxsimius | CC BY-SA 2.5 | https://commons.wikimedia.org/wiki/File:Taro_corms.JPG |
 | Yogurt | yogurt.jpg | Orrling | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Yogurt.jpg |
 | Zanahoria | zanahoria.jpg | Aastha12gogo | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Carrots_001.jpg |
+| Guandules Verdes | guandules.jpg | David E Mead | CC0 | https://commons.wikimedia.org/wiki/File:Pigeon_peas_dried_(cropped).jpg |
+| Aguacate | aguacate.jpg | Splintercell10 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Avocado_-_single_and_halved.jpg |
+| Naranja Agria | naranja-agria.jpg | Zeynel Cebeci | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Bitter_orange_-_Citrus_aurantium_01.JPG |
+| Chinola | chinola.jpg | Filo gèn' | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Passiflora_edulis_fruit_on_white_background.jpg |
+| Aceite Manicero | aceite-manicero.jpg | Adam Engelhart | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Peanut_oil_bottle.jpg |
+| Lavaplatos Liquido | lavaplatos.jpg | M.Minderhoud | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Afwasmiddel.jpg |
+| Mostaza | mostaza.jpg | User:Aeæ~commonswiki | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:French%27s_classic_yellow_mustard_(cropped).jpg |
+| Pimienta Molida | pimienta-molida.jpg | Xitop753 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Black_Peppercorns.jpg |
+| Queso Blanco | queso-blanco.jpg | Geoff | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Queso_fresco.JPG |
+| Pan Sobao | pan-sobao.jpg | LittleT889 | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:Pan_sobao.jpg |
+| Harina de Trigo | harina-trigo.jpg | Veganbaking.net from USA | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:All-Purpose_Flour_(4107895947).jpg |
+| Servilletas | servilletas.jpg | Alanthebox | CC0 | https://commons.wikimedia.org/wiki/File:Napkins_-_isolated.png |
+| Bolsas de Basura | bolsas-basura.jpg | Yuyudevil | Public domain | https://commons.wikimedia.org/wiki/File:A_typical_black_bin_bag_from_the_UK_20060811.jpg |
+| Casabe | casabe.jpg | Luisovalles | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Casabe-2.jpg |
+| Leche de Coco | leche-coco.jpg | Meursault2004 | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Coconut_milk_from_can01.JPG |

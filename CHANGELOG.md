@@ -1,3 +1,15 @@
+## 2.19.0 (v130)
+- Barra de la lista: el campo ahora dice «Pega tu lista» en letra mas grande y el microfono crece un poco.
+- Grabacion estilo nota de voz: el candado de manos libres vive encima del microfono, alineado con el, y el lado izquierdo queda libre para cancelar (el zafacon y el aviso «Desliza para cancelar» se ponen rojos al llegar).
+- El microfono acompaña al dedo en cualquier direccion, crece al empezar a grabar y confirma con vibracion y un sonido mas fuerte de tres tonos.
+- Deslizar hacia arriba deja la grabacion a manos libres y ya no se corta al tocar el catalogo, deslizar las tarjetas o cambiar de pantalla: solo la detienen cancelar o enviar. Si la hoja del catalogo sale de la pantalla, los controles pasan a la barra flotante para que nunca se quede sin salida.
+- El talonario usa el mismo blanco puro de la hoja del catalogo.
+- 15 productos nuevos del colmado dominicano, con foto y credito: Guandules Verdes, Aguacate, Naranja Agria, Chinola, Aceite Manicero, Lavaplatos Liquido, Mostaza, Pimienta Molida, Queso Blanco, Pan Sobao, Harina de Trigo, Servilletas, Bolsas de Basura, Casabe y Leche de Coco. El catalogo queda con 107 productos, sin duplicados.
+- Catalogo global compartido: los 107 productos son la base comun de todos los negocios. El nombre, la categoria, la unidad y la foto son compartidos (se ponen al dia solos en cada equipo); el precio, el costo y el stock son de cada negocio y no se pisan entre si.
+- Cada comercio sincroniza en su propio espacio de la base central (ORG-PEDIPOS-<comercio>); el comercio por defecto conserva el espacio historico para no perder nada.
+- En Inventario se avisa que el catalogo es global; al editar un producto compartido se puede restaurar su nombre, categoria y foto del catalogo sin tocar el precio ni el stock. Si el comerciante le cambia el nombre, el producto pasa a ser suyo.
+- Sin cambios en el cobro, la sincronizacion de ventas, el inventario ni la facturacion electronica.
+
 ## 2.18.0 (v129)
 - Venta por voz en el catalogo: al tocar el microfono es la MISMA barra inferior la que se transforma en grabadora (zafacon, punto rojo con el tiempo, candado de manos libres y microfono). Ya no se abre una segunda barra encima de la primera.
 - Manos libres: deslizar el microfono hacia arriba o hacia la izquierda suelta la grabacion; la barra se queda en su sitio con pausar, cancelar y enviar. Al cancelar o enviar, la barra de la lista de pedido vuelve sola.

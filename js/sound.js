@@ -61,14 +61,14 @@
     const c = audio();
     if (!c) return;
     const t = c.currentTime;
-    [[784, 0], [1175, 0.11]].forEach(function (par) {
+    [[784, 0], [1175, 0.1], [1568, 0.2]].forEach(function (par) {
       const o = c.createOscillator();
       const g = c.createGain();
       o.type = "sine";
       o.frequency.setValueAtTime(par[0], t + par[1]);
       g.gain.setValueAtTime(0.0001, t + par[1]);
-      g.gain.exponentialRampToValueAtTime(0.3, t + par[1] + 0.014);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + par[1] + 0.19);
+      g.gain.exponentialRampToValueAtTime(0.42, t + par[1] + 0.014);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + par[1] + 0.2);
       o.connect(g); g.connect(c.destination);
       o.start(t + par[1]); o.stop(t + par[1] + 0.22);
     });
@@ -78,8 +78,8 @@
     o2.type = "triangle";
     o2.frequency.setValueAtTime(392, t);
     g2.gain.setValueAtTime(0.0001, t);
-    g2.gain.exponentialRampToValueAtTime(0.22, t + 0.016);
-    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    g2.gain.exponentialRampToValueAtTime(0.32, t + 0.016);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
     o2.connect(g2); g2.connect(c.destination);
     o2.start(t); o2.stop(t + 0.24);
   }

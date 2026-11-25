@@ -14,6 +14,15 @@
   })();
   const uid = (p) => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
+  /* Cada comercio sincroniza en SU espacio de la base central. Asi los precios,
+     costos y existencias de un negocio no pisan los de otro. El comercio por
+     defecto conserva el espacio historico para no perder nada de lo que ya hay. */
+  function orgDeComercio() {
+    let id = "default";
+    try { id = (window.PPTenant && window.PPTenant.actual) ? window.PPTenant.actual() : "default"; } catch (e) {}
+    return (!id || id === "default") ? "ORG-PEDIPOS" : "ORG-PEDIPOS-" + id;
+  }
+
   const SEED_PRODUCTS = [
     { nombre: "Arroz Campo", precio: 45, unidad: "libra", categoria: "Granos", stock: 200, img: "img/productos/arroz.jpg" },
     { nombre: "Habichuelas Rojas", precio: 60, unidad: "libra", categoria: "Granos", stock: 80, img: "img/productos/habichuelas.jpg" },
@@ -28,7 +37,7 @@
   function fresh() {
     return {
       v: 1,
-      org: "ORG-PEDIPOS",
+      org: orgDeComercio(),
       session: null,
       products: SEED_PRODUCTS.map((p) => ({ pid: uid("P"), itbis: true, activo: true, ...p })),
       sales: [],
@@ -51,6 +60,7 @@
       const raw = localStorage.getItem(KEY);
       db = raw ? JSON.parse(raw) : fresh();
       if (!db || !db.products) db = fresh();
+      db.org = orgDeComercio();   /* siempre el espacio del comercio activo */
       if (Array.isArray(db.sales) && db.sales.length) legado = db.sales.slice();
       db.sales = [];        /* el espejo en memoria lo llena hydrate() desde IndexedDB */
     } catch (_) {

@@ -2723,3 +2723,56 @@ main#view.vin{animation-duration:.3s}
   .pcard:hover:not(.sel),.clrow:hover,.cx:hover,.kpi:hover,.btn:hover,.fbtn:hover,.tile:hover,.cfg-card:hover{transform:none}
   .pcard:hover .ph img{transform:none}
 }
+
+/* =====================================================================
+   v130 · Barra de la lista mas legible, grabacion estilo nota de voz,
+   talonario en blanco puro y catalogo global.
+   ===================================================================== */
+
+/* --- 1) Barra inferior: texto mas grande y microfono mas grande --- */
+.cs-ta{font-size:17px;line-height:1.42}
+.cs-ta::placeholder{color:#8f9aa2;font-weight:600;font-size:17px}
+.cs-order .cs-mic{width:50px;height:50px;box-shadow:0 6px 16px #0b8f5f4a}
+.cs-order .cs-mic svg{width:27px;height:27px}
+.cs-foot.rec .cs-order,.cs-foot.free .cs-order{min-height:82px}
+
+/* --- 2) Candado encima del microfono, alineado con el --- */
+.cs-foot .csr-lock{position:absolute;right:16px;bottom:calc(100% + 2px);left:auto;top:auto;
+  margin:0;width:58px;flex-direction:column;align-items:center;justify-content:center;
+  padding:5px 4px;border-radius:14px;background:#f1f4f6;color:#7c868e;
+  font-size:7px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
+  box-shadow:0 6px 16px #0b141c14;z-index:3;
+  transition:background .16s ease,color .16s ease,transform .16s ease,box-shadow .16s ease}
+.cs-foot .csr-lock[hidden]{display:none!important}
+.cs-foot .csr-lock svg{width:21px;height:21px}
+.cs-foot .csr-lock small{font-size:7px;line-height:1;margin-top:1px}
+.cs-foot .csr-lock.on{background:var(--g);color:#fff;box-shadow:0 8px 18px #0b8f5f4d}
+.cs-foot.free .csr-lock{display:none!important}
+
+/* --- 3) Aviso de cancelar a la izquierda --- */
+.csr-tip{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:#98a2a9;text-align:left;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s ease}
+.csr-tip.warn{color:var(--red)}
+.csr-x.on{background:var(--red);color:#fff}
+
+/* --- 4) El microfono acompaña al dedo y crece al empezar --- */
+.cs-foot .cs-mic{transition:transform .06s linear,background .14s ease,box-shadow .14s ease;will-change:transform}
+.cs-foot.free .cs-mic{transition:none}
+
+/* --- 5) El talonario, en el mismo blanco puro de la hoja del catalogo --- */
+.tick,.tick-h,.tick-f,.tick-b{background:#fff!important;background-image:none!important}
+
+/* --- 6) Catalogo global compartido --- */
+.cat-global{display:flex;align-items:flex-start;gap:9px;margin:0 0 12px;padding:11px 13px;
+  border-radius:16px;background:#EAF6F0;border:1.5px solid #CDE9DC;color:#0B5B3C}
+.cat-global .cg-ico{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:9px;
+  background:#0B8F5F;color:#fff}
+.cat-global .cg-ico svg{width:16px;height:16px}
+.cat-global b{display:block;font-size:13px;font-weight:800;letter-spacing:.01em}
+.cat-global span{display:block;font-size:11.5px;line-height:1.35;color:#3C6B58;margin-top:2px}
+.nota-global{display:flex;align-items:flex-start;gap:8px;margin:0 0 12px;padding:10px 12px;border-radius:14px;
+  background:#F2F5F7;border:1.5px solid #E7ECEF;color:#4B5563;font-size:12px;line-height:1.35}
+.nota-global svg{flex:none;width:17px;height:17px;color:#0B8F5F;margin-top:1px}
+.btn-global{margin-top:8px;width:100%;height:44px;border-radius:14px;border:1.5px solid var(--line);
+  background:#fff;color:#0B6B45;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-global svg{width:17px;height:17px}
