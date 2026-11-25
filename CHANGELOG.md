@@ -1,3 +1,18 @@
+## 2.20.0 (v131)
+- Tarjetas de producto: el precio queda a la izquierda y la unidad en la esquina derecha.
+- Barra del catalogo: el campo dice «Pega tu Lista aquí».
+- Grabacion: zafacon y candado sin etiqueta, mas grandes y en circulos (rojo claro y verde claro) que se intensifican al deslizar el microfono hacia ellos. El microfono solo se mueve hacia arriba (manos libres) y hacia la izquierda (cancelar). Fuera los avisos «Desliza para cancelar» y «Suelta para cancelar».
+- Grabar arranca al instante: el microfono se prepara al abrir el catalogo y la confirmacion suena mas fuerte.
+- Hoja del catalogo mas alta (86% de la pantalla).
+- Crear y editar producto: los encabezados dicen «producto», el costo se llama solo «Costo (RD$)» y la categoria queda junto al costo, con lista para elegir o escribir una nueva.
+- Mi infraestructura: pantalla propia con acceso en la barra movil, en la barra lateral del PC y en el menu. Abre al instante y los datos de Puter llegan despues. Ya no vive dentro de Configuracion.
+- Mi consumo en Puter: Puter Drive explica para que sirve, la tarjeta de creditos muestra las llamadas de DeepSeek Chat y Whisper con su disponibilidad, y se retiro la tarjeta de modelos.
+- Nube y perfil: el boton de retroceso vuelve a funcionar.
+- Sincronizacion: Google Drive ya se puede elegir como destino de las facturas con un clic.
+- Inventario: el conteo ahora es el real. Antes el aviso del catalogo compartido se leia como si el negocio tuviera 107 productos; ahora dice cuantos productos hay en tu inventario (y cuantos inactivos), aclara que el catalogo compartido trae 107, y al filtrar muestra «N de M con este filtro».
+- Mi infraestructura en la barra movil usa la etiqueta corta «Mi infra» para que quepa, con el nombre completo en el menu y en la barra del PC.
+- v131 en index.html, sw.js y version.json.
+
 ## 2.19.0 (v130)
 - Barra de la lista: el campo ahora dice «Pega tu lista» en letra mas grande y el microfono crece un poco.
 - Grabacion estilo nota de voz: el candado de manos libres vive encima del microfono, alineado con el, y el lado izquierdo queda libre para cancelar (el zafacon y el aviso «Desliza para cancelar» se ponen rojos al llegar).

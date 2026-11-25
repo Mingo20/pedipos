@@ -1,7 +1,7 @@
 /* PediPOS service worker: red primero para tener siempre la ultima version, cache como respaldo sin internet. */
-const V = "pedipos-v130";
+const V = "pedipos-v131";
 const ASSETS = ["./", "index.html", "manifest.json", "img/logo-96.png", "img/logo-192.png", "img/logo-512.png", "img/logo-maskable-512.png",
-  "css/app.css?v=130", "js/store.js?v=130", "js/catalogo-dr.js?v=130", "js/sync.js?v=130", "js/voice.js?v=130", "js/extra.js?v=130", "js/ticket.js?v=130", "js/sound.js?v=130", "js/onboarding.js?v=130", "js/nube.js?v=130", "js/nubeperfil.js?v=130", "js/nubecert.js?v=130", "js/nubecert-ui.js?v=130", "js/app.js?v=130"];
+  "css/app.css?v=131", "js/store.js?v=131", "js/catalogo-dr.js?v=131", "js/sync.js?v=131", "js/voice.js?v=131", "js/extra.js?v=131", "js/ticket.js?v=131", "js/sound.js?v=131", "js/onboarding.js?v=131", "js/nube.js?v=131", "js/nubeperfil.js?v=131", "js/nubecert.js?v=131", "js/nubecert-ui.js?v=131", "js/app.js?v=131"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(V).then((c) => c.addAll(ASSETS).catch(() => {})).then(() => self.skipWaiting()));

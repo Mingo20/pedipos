@@ -2776,3 +2776,49 @@ main#view.vin{animation-duration:.3s}
 .btn-global{margin-top:8px;width:100%;height:44px;border-radius:14px;border:1.5px solid var(--line);
   background:#fff;color:#0B6B45;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px}
 .btn-global svg{width:17px;height:17px}
+
+/* =====================================================================
+   v131 · Unidad a la derecha en las tarjetas, controles de voz circulares,
+   hoja del catalogo mas alta y filas de servicio en Mi infraestructura.
+   ===================================================================== */
+
+/* --- 1) tarjetas: precio a la izquierda, unidad en la esquina derecha --- */
+.pcard .prow{justify-content:space-between;align-items:center;gap:6px}
+.pcard .prow .un{margin-left:auto;text-align:right}
+
+/* --- 2) zafacon y candado: circulos con color propio y sin etiqueta --- */
+.csr-x{width:46px;height:46px;border-radius:50%;background:#fdecec;color:#D64545;
+  display:grid;place-items:center;transition:background .16s ease,color .16s ease,transform .16s ease,box-shadow .16s ease}
+.csr-x svg{width:23px;height:23px}
+.csr-x.on{background:#D64545;color:#fff;transform:scale(1.1);box-shadow:0 8px 18px #d6454559}
+.csr-lock{border-radius:50%;width:46px;height:46px;padding:0;gap:0;
+  background:#e6f6ee;color:#0B8F5F;box-shadow:none}
+.csr-lock svg{width:23px;height:23px}
+.csr-lock.on{background:var(--g);color:#fff;box-shadow:0 8px 18px #0b8f5f59}
+.csr-lock[hidden]{display:none!important}
+/* el candado queda centrado sobre el microfono */
+.cs-foot .csr-lock{position:absolute;right:16px;bottom:calc(100% + 6px);width:46px;height:46px;
+  display:grid;place-items:center;z-index:3}
+.cs-foot.rec .csr-lock{display:grid}
+.cs-foot.free .csr-lock{display:none!important}
+.rd-trash{border-radius:50%}
+
+/* --- 3) hoja del catalogo un poco mas alta --- */
+.catsheet{height:min(86dvh,820px)}
+
+/* --- 4) Mi infraestructura: llamadas por servicio --- */
+.pp-srv{padding:9px 0;border-top:1px solid #eef1f4}
+.pp-srv:first-of-type{border-top:0}
+.pp-srv-t{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.pp-srv-t b{font-size:14px;color:var(--ink)}
+.pp-srv-t span{font-size:13px;font-weight:700;color:#0B6B45;white-space:nowrap}
+.pp-srv small{display:block;font-size:11.5px;color:var(--mut);margin-top:2px}
+@media (prefers-reduced-motion:reduce){.csr-x,.csr-lock{transition:none}}
+/* --- 5) precisiones: la unidad si llega a la esquina y el candado es un circulo --- */
+.pcard .prow{width:100%}
+.cs-foot .csr-lock{border-radius:50%;background:#e6f6ee;color:#0B8F5F;box-shadow:none;
+  padding:0;margin:0;right:22px;width:46px;height:46px;display:grid;place-items:center}
+.cs-foot .csr-lock svg{width:23px;height:23px}
+.cs-foot .csr-lock.on{background:var(--g);color:#fff;box-shadow:0 8px 18px #0b8f5f59}
+.cat-filtro{margin:-4px 2px 10px;font-size:12px;font-weight:600;color:#5F6975}
+.cat-filtro:empty{display:none}

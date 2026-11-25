@@ -179,7 +179,7 @@
   let panelCat = "";
 
   /* ---------- Dock ---------- */
-  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Suplidor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"]];
+  const TABS = [["clientes", "Clientes", "group"], ["proveedores", "Suplidor", "truck2"], ["panel", "Talonario", "ticket"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"], ["infraestructura", "Mi infra", "bolt"]];
   function drawDock() {
     const d = $("#dock");
     if (tab !== "panel") document.body.classList.remove("panel-view");
@@ -193,13 +193,17 @@
     const lista = pc
       ? [["panel", "Panel", "ticket"], ["fiscal", "Fiscal", "shield"], ["historial", "Pedidos", "bagnav"], ["catalogo", "Inventario", "box"],
          ["analitica", "Analitica", "chart"], ["clientes", "Clientes", "group"], ["proveedores", "Proveedor", "truck2"],
+         ["infraestructura", "Mi infraestructura", "bolt"],
          ["config", "Ajustes", "gear"], ["soporte", "Soporte", "help"], ["avisos", "Avisos", "bell"]]
       : TABS;
     const marca = pc ? `<div class="dock-brand"><img src="img/logo-96.png" alt=""><b>PediPOS</b></div>` : "";
     const contraer = "";
-    d.innerHTML = marca + lista.map(([k, lb, ic]) => k === "panel"
-      ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${lb}"><span class="orb">${I[ic]}</span></button>`
-      : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${lb}">${I[ic]}<small>${lb}</small></button>`).join("") + contraer;
+    d.innerHTML = marca + lista.map(([k, lb, ic]) => {
+      const aria = k === "infraestructura" ? "Mi infraestructura" : lb;
+      return k === "panel"
+        ? `<button data-t="${k}" class="mid ${tab === k ? "on" : ""}" aria-label="${aria}"><span class="orb">${I[ic]}</span></button>`
+        : `<button data-t="${k}" class="${tab === k ? "on" : ""}" aria-label="${aria}" title="${aria}">${I[ic]}<small>${lb}</small></button>`;
+    }).join("") + contraer;
     $$("#dock button").forEach((b) => (b.onclick = () => {
       if (b.id === "dockFold") { document.body.classList.toggle("nav-off"); return; }
       /* el acceso al panel va en silencio */
@@ -213,7 +217,7 @@
       go(b.dataset.t);
     }));
   }
-  const TITULOS = { fiscal: "FACTURACION", rechazos: "RECHAZOS", certificacion: "CERTIFICACION DGII", panel: "PANEL", catalogo: "INVENTARIO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "SUPLIDORES" };
+  const TITULOS = { fiscal: "FACTURACION", rechazos: "RECHAZOS", certificacion: "CERTIFICACION DGII", panel: "PANEL", catalogo: "INVENTARIO", avisos: "NOTIFICACIONES", soporte: "SOPORTE", analitica: "ANALITICA", historial: "PEDIDOS", config: "CONFIGURACION", clientes: "CLIENTES", proveedores: "SUPLIDORES", infraestructura: "MI INFRAESTRUCTURA" };
   /* ----- Avisos de pagos a credito ----- */
   const DIAS = 86400000;
   function avisosPago() {
@@ -713,13 +717,12 @@
       </div>
       <div class="cs-body" id="csBody"><div class="pgrid cs-grid" id="csGrid">${csGridHTML()}</div></div>
       <div class="cs-foot" id="csFoot">
-        <span class="csr-lock" id="csRecLock" hidden aria-hidden="true">${I.lockAnim}<small>Manos libres</small></span>
+        <span class="csr-lock" id="csRecLock" hidden aria-hidden="true">${I.lockAnim}</span>
         <div class="cs-search cs-order" id="csOrder">
-          <textarea id="csQ" class="cs-ta" rows="1" placeholder="Pega tu lista" autocomplete="off" spellcheck="false"></textarea>
+          <textarea id="csQ" class="cs-ta" rows="1" placeholder="Pega tu Lista aquí" autocomplete="off" spellcheck="false"></textarea>
           <div class="csr-hold" id="csrHold" hidden>
-            <button class="csr-x" id="csRecX" type="button" aria-label="Cancelar grabación">${I.trashAnim}<small>Cancelar</small></button>
+            <button class="csr-x" id="csRecX" type="button" aria-label="Cancelar grabación">${I.trashAnim}</button>
             <span class="csr-dot" aria-hidden="true"></span><b id="csRecSeg">0:00</b>
-            <span class="csr-tip" id="csRecTip">Desliza para cancelar</span>
           </div>
           <div class="csr-free" id="csrFree" hidden>
             <button class="rd-btn rd-del" id="csRecDel" type="button" aria-label="Eliminar grabación">${I.trash}</button>
@@ -799,6 +802,8 @@
 
   /* Arrastre vertical: sigue el dedo y, al soltar, se acomoda arriba o abajo. */
   function engancharCatalogo(sh) {
+    /* el microfono queda listo desde que se abre el catalogo: grabar arranca al instante */
+    try { if (window.PPVoice && window.PPVoice.preparar) window.PPVoice.preparar(); } catch (_) {}
     const head = sh.querySelector("#csHead");
     const body = sh.querySelector("#csBody");
     const cats = sh.querySelector("#csCats");
@@ -1795,7 +1800,7 @@
        y el microfono abajo a la derecha, alineado con el candado: se desliza hacia arriba
        hasta el candado, igual que una nota de voz de WhatsApp. */
     return `<div class="rd-grab" id="rdGrab">
-        <button class="rd-trash" id="recX" type="button" aria-label="Cancelar grabación">${I.trashAnim}<small>Cancelar</small></button>
+        <button class="rd-trash" id="recX" type="button" aria-label="Cancelar grabación">${I.trashAnim}</button>
         <div class="rd-pill">
           <span class="rd-dot"></span><b id="recSeg">0:00</b>
         </div>
@@ -1996,7 +2001,6 @@
       free: foot.querySelector("#csrFree"),
       mic: foot.querySelector("#csMic"),
       lock: foot.querySelector("#csRecLock"),
-      tip: foot.querySelector("#csRecTip"),
       onda: foot.querySelector(".rwave"),
       pausa: foot.querySelector("#csRecP"),
     };
@@ -2013,7 +2017,6 @@
     if (p.free) p.free.hidden = true;
     if (p.mic) p.mic.style.transform = "scale(1.12)";
     if (p.lock) { p.lock.hidden = false; p.lock.classList.remove("on"); p.lock.style.transform = ""; }
-    if (p.tip) { p.tip.classList.remove("warn"); p.tip.textContent = "Desliza para cancelar"; }
     document.body.classList.add("grabando");
     pintarSeg();
   }
@@ -2051,10 +2054,10 @@
     const p = piezasCatalogo(); if (!p) return;
     const subir = Math.max(0, -MIC.dy), izq = Math.max(0, -MIC.dx);
     const kSub = Math.min(1, subir / UMBRAL), kIzq = Math.min(1, izq / UMBRAL_X);
-    /* el microfono acompaña al dedo en cualquier direccion, como una nota de voz */
+    /* el microfono solo se mueve en dos direcciones: arriba (manos libres) e izquierda (cancelar) */
     if (p.mic) {
-      const dx = Math.max(-140, Math.min(40, MIC.dx));
-      const dy = Math.max(-140, Math.min(40, MIC.dy));
+      const dx = Math.max(-140, Math.min(0, MIC.dx));
+      const dy = Math.max(-140, Math.min(0, MIC.dy));
       p.mic.style.transform = "translate(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px) scale(" + (1.12 + 0.1 * kSub).toFixed(2) + ")";
     }
     /* arriba: se enciende el candado (manos libres) */
@@ -2062,11 +2065,7 @@
       p.lock.classList.toggle("on", kSub > 0.55);
       p.lock.style.transform = "scale(" + (0.94 + 0.1 * kSub).toFixed(2) + ")";
     }
-    /* izquierda: el zafacon y el aviso se ponen rojos (cancelar) */
-    if (p.tip) {
-      p.tip.classList.toggle("warn", kIzq > 0.5);
-      p.tip.textContent = kIzq > 0.5 ? "Suelta para cancelar" : "Desliza para cancelar";
-    }
+    /* izquierda: el zafacon se intensifica (cancelar) */
     const x = p.foot.querySelector("#csRecX");
     if (x) x.classList.toggle("on", kIzq > 0.5);
   }
@@ -2125,7 +2124,6 @@
       if (cat.free) cat.free.hidden = true;
       if (cat.mic) cat.mic.style.transform = "";
       if (cat.lock) { cat.lock.hidden = true; cat.lock.classList.remove("on"); cat.lock.style.transform = ""; }
-      if (cat.tip) { cat.tip.classList.remove("warn"); cat.tip.textContent = "Desliza para cancelar"; }
       if (cat.onda) cat.onda.classList.remove("quieta");
       if (cat.pausa) { cat.pausa.innerHTML = I.pausa; cat.pausa.classList.remove("on"); cat.pausa.setAttribute("aria-label", "Pausar"); }
     }
@@ -2180,8 +2178,7 @@
         if (p.free) p.free.hidden = false;
         if (p.mic) p.mic.style.transform = "";
         if (p.lock) { p.lock.hidden = true; p.lock.classList.remove("on"); p.lock.style.transform = ""; }
-        if (p.tip) { p.tip.classList.remove("warn"); p.tip.textContent = "Desliza para cancelar"; }
-        if (p.onda) p.onda.classList.remove("quieta");
+            if (p.onda) p.onda.classList.remove("quieta");
         pintarSeg();
         return;
       }
@@ -2457,7 +2454,11 @@
   /* ---------- Catalogo ---------- */
   let catQ = "", catCat = "";
   function renderCatalogo() {
-    const cats = [...new Set(db().products.map((p) => p.categoria).filter(Boolean))].sort();
+    const todos = db().products || [];
+    const activos = todos.filter((p) => p.activo !== false);
+    const inactivos = todos.length - activos.length;
+    const compartidos = (window.PPCatalogoDR && window.PPCatalogoDR.PRODUCTOS.length) || 0;
+    const cats = [...new Set(todos.map((p) => p.categoria).filter(Boolean))].sort();
     $("#view").innerHTML = `<div class="stickbar pegada">
         <div class="searchrow">
           <div class="search">${I.search}<input id="cq" placeholder="Buscar" value="${esc(catQ)}" autocomplete="off"></div>
@@ -2469,16 +2470,20 @@
         </div>
       </div>
       <div class="cat-global">
-        <span class="cg-ico">${I.globe}</span>
-        <div><b>Catálogo global compartido</b>
-        <span>${(window.PPCatalogoDR && window.PPCatalogoDR.PRODUCTOS.length) || 0} productos disponibles para todos los negocios. El precio, el costo y el stock que pongas aqui son solo de este negocio.</span></div>
+        <span class="cg-ico">${I.box}</span>
+        <div><b id="catTotal">${activos.length} ${activos.length === 1 ? "producto" : "productos"} en tu inventario</b>
+        <span>${inactivos ? inactivos + (inactivos === 1 ? " inactivo" : " inactivos") + " aparte. " : ""}El catálogo compartido trae ${compartidos} productos, pero el precio, el costo y el stock que pongas aquí son solo de este negocio.</span></div>
       </div>
+      <p class="cnt cat-filtro" id="catFiltro"></p>
       <div class="pgrid" id="cl"></div>
       `;
     const draw = () => {
       const t = window.PPVoice.norm(catQ);
       const l = db().products.filter((p) => p.activo !== false && (!catCat || p.categoria === catCat) && (!t || window.PPVoice.norm(p.nombre).includes(t)));
       $("#cl").innerHTML = l.length ? l.map((p) => pcard(p, `title="${esc(p.categoria || "General")}"`)).join("") : '<div class="empty">Sin productos con ese filtro.</div>';
+      /* el conteo siempre dice la verdad: total registrado y cuantos caen en el filtro */
+      const fil = $("#catFiltro");
+      if (fil) fil.textContent = (catCat || t) ? l.length + " de " + activos.length + " productos con este filtro" : "";
       $$("#cl .pcard").forEach((el) => (el.onclick = () => { editProduct(db().products.find((p) => p.pid === el.dataset.p)); }));
     };
     $("#cq").oninput = (e) => { catQ = e.target.value; draw(); };
@@ -2501,19 +2506,20 @@
 
   function editProduct(p) {
     const n = !p; p = p || { pid: S.uid("P"), nombre: "", precio: 0, unidad: "unidad", categoria: "", stock: 0, itbis: true, activo: true };
-    const s = sheet(`<div class="sh-h"><h2>${n ? "Crear item" : "Editar item"}</h2><button class="sh-x" id="x">${I.xDown}</button></div>
+    const s = sheet(`<div class="sh-h"><h2>${n ? "Crear producto" : "Editar producto"}</h2><button class="sh-x" id="x">${I.xDown}</button></div>
       ${p.gid ? `<div class="nota-global">${I.globe}<span>Del catálogo global: el nombre, la categoría y la foto son compartidos. El precio, el costo y el stock son solo de tu negocio.</span></div>` : ""}
       <label class="field"><span>Nombre</span><input id="fn" value="${esc(p.nombre)}"></label>
       <div class="duo">
-        <label class="field"><span>Categoria</span><input id="fc" value="${esc(p.categoria)}"></label>
         <label class="field"><span>Precio (RD$)</span><input id="fp" inputmode="decimal" value="${p.precio || ""}"></label>
-      </div>
-      <label class="field"><span>Costo (RD$) &middot; lo que te cuesta cada ${esc(p.unidad || "unidad")}</span><input id="fco" inputmode="decimal" value="${p.costo || ""}" placeholder="Para calcular tus ganancias"></label>
-      <div class="duo">
         <label class="field"><span>Stock</span><input id="fs" inputmode="decimal" value="${p.stock || 0}"></label>
-        <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
       </div>
-      <div class="field"><span>Foto del item</span>
+      <div class="duo">
+        <label class="field"><span>Costo (RD$)</span><input id="fco" inputmode="decimal" value="${p.costo || ""}" placeholder="Para calcular tus ganancias"></label>
+        <label class="field"><span>Categoría</span><input id="fc" list="fcatList" value="${esc(p.categoria)}" placeholder="Elige o escribe">
+          <datalist id="fcatList">${catsPanel().map((c) => `<option value="${esc(c)}"></option>`).join("")}</datalist></label>
+      </div>
+      <label class="field"><span>Unidad</span><select id="fu">${["unidad", "libra", "onza", "litro", "funda", "caja", "docena"].map((u) => `<option ${u === p.unidad ? "selected" : ""}>${u}</option>`).join("")}</select></label>
+      <div class="field"><span>Foto del producto</span>
         <div class="upimg"><span class="pv" id="pv">${fotoDe(p)}</span>
           <label class="btn gris fbtn2" style="margin:0">${I.image}<span>Subir</span><input type="file" accept="image/*" id="fi" hidden></label>
           <label class="btn gris fbtn2" style="margin:0">${I.cam}<span>Tomar</span><input type="file" accept="image/*" capture="environment" id="fcam" hidden></label>
@@ -2683,7 +2689,7 @@
   /* ---------- Menu lateral ---------- */
   function openMenu() {
     const items = [["panel", "Panel", "ticket"], ["clientes", "Clientes", "group"], ["catalogo", "Inventario", "box"], ["proveedores", "Suplidores", "truck2"],
-      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["analitica", "Analitica", "chart"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
+      ["historial", "Pedidos", "bagnav"], ["fiscal", "Fiscal", "shield"], ["analitica", "Analitica", "chart"], ["infraestructura", "Mi infraestructura", "bolt"], ["soporte", "Soporte", "help"], ["config", "Configuracion", "gear"]];
     const s = sheet(`<div class="sh-h"><h2>Men&uacute;</h2><button class="sh-x flecha-lado" id="x" aria-label="Cerrar menu">${I.chev}</button></div>
       ${items.map(([k, t, ic]) => `<button class="mnu" data-g="${k}"><span class="mi">${I[ic]}</span><span>${t}</span>${I.chev}</button>`).join("")}`, null, { lado: true });
     $("#x", s).onclick = () => closeSheet();
@@ -2847,6 +2853,15 @@
     return `<div class="cfg-foot">PediPOS · ${esc("2.7.0")}</div>`;
   }
 
+  /* Mi infraestructura es su propia pantalla: se pinta al instante y los datos
+     de Puter llegan despues, sin dejar la pantalla en blanco ni retrasar la barra. */
+  function renderInfraestructura() {
+    document.body.classList.remove("config-view", "config-sub");
+    const v = $("#view");
+    if (window.PPConsumo) { window.PPConsumo.render(v, { volver: () => go("panel") }); return; }
+    v.innerHTML = '<div class="cfg-panel"><div class="card"><p class="cnt">La infraestructura no esta disponible en este navegador.</p></div></div>';
+  }
+
   function renderConfig() {
     document.body.classList.add("config-view");
     document.body.classList.toggle("config-sub", !!cfgSub);
@@ -2856,7 +2871,6 @@
     const tarjetas = [
       ["negocio", "Mi negocio", st.negocio || "Sin nombre", "Nombre, direccion, ITBIS y ubicacion"],
       ["caja", "Caja y acceso", ses ? (ses.nombre + " · " + ses.rol) : "Sin sesion iniciada", "PIN, avisos, impresora y sesion"],
-      ["ia", "Mi Infraestructura", "Consumo de IA y almacenamiento", "Plan, creditos y modelos que usa PediPOS"],
       ["impresora", "Ajustes de impresora", "Tickets y stickers termicos", "Texto, papel y ticket de prueba"],
       ["sync", "Sincronizacion", online ? "Conectado" : "Sin conexion", "Estado y sincronizar ahora"],
       ["nube", "Nube y perfil", "Secuencia y cambio de equipo", "Bloques e-NCF y restauracion en equipo nuevo"]
@@ -2896,6 +2910,7 @@
         </div>
         <div class="card" style="margin-top:12px" id="nCert"></div>
         ${cfgPie()}</div>`;
+      $("#cfgBack").onclick = volver;
       if (window.PPNubeCertUI) window.PPNubeCertUI.bloqueNube($("#nCert"));
       $("#nGo").onclick = () => {
         c.rnc = ($("#nRnc").value || "").replace(/\D/g, "");
@@ -2993,7 +3008,8 @@
         <div class="card"><h3>Donde se guardan las facturas</h3>
           <p class="cnt" style="font-size:12.5px;margin:0 0 10px">Elige la nube donde PediPOS archiva tus comprobantes electronicos.</p>
           <div class="pp-switch" id="ppDest">
-            <button class="pp-opt on" data-n="puter">Puter Drive</button>
+            <button class="pp-opt" data-n="puter">Puter Drive</button>
+            <button class="pp-opt" data-n="google">Google Drive</button>
           </div>
           <p class="cnt" style="font-size:11.5px;margin:8px 0 0" id="ppDestTxt"></p>
         </div>
@@ -3228,6 +3244,7 @@
     else if (tab === "clientes") renderClientes();
     else if (tab === "proveedores") renderProveedores();
     else if (tab === "historial") renderHistorial();
+    else if (tab === "infraestructura") renderInfraestructura();
     else if (tab === "config") renderConfig();
     else if (tab === "avisos") renderAvisos();
     else if (tab === "fiscal") { if (window.PPFiscal) window.PPFiscal.render($("#view")); }

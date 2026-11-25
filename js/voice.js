@@ -79,6 +79,28 @@
      El costo corre en la cuenta Puter del usuario. */
   let mediaRec = null, chunks = [], stopping = false;
 
+  /* Microfono listo de antemano: pedirlo al abrir el catalogo evita el retraso de
+     2 o 3 segundos al pulsar el boton. Se suelta solo, a los 20 s sin usarse. */
+  let streamListo = null, tListo = null;
+  function soltarListo() {
+    clearTimeout(tListo); tListo = null;
+    if (!streamListo) return;
+    try { streamListo.getTracks().forEach((t) => t.stop()); } catch (_) {}
+    streamListo = null;
+  }
+  function mantenerListo() {
+    clearTimeout(tListo);
+    tListo = setTimeout(soltarListo, 20000);
+  }
+  async function preparar() {
+    if (!canRecord() || streamListo) { mantenerListo(); return !!streamListo; }
+    try {
+      streamListo = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mantenerListo();
+      return true;
+    } catch (_) { streamListo = null; return false; }
+  }
+
   function canRecord() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
   }
@@ -88,8 +110,14 @@
     /* nunca abrir una grabacion encima de otra: era la causa del microfono pegado en rojo */
     if (mediaRec) { try { resetRecording(); } catch (_) {} }
     let stream;
-    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-    catch (e) { mediaRec = null; listening = false; throw e; }
+    /* si el microfono ya estaba caliente, la grabacion arranca en el acto */
+    if (streamListo && streamListo.active) { stream = streamListo; }
+    else {
+      try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+      catch (e) { mediaRec = null; listening = false; throw e; }
+      streamListo = stream;
+    }
+    mantenerListo();
     chunks = []; stopping = false;
     mediaRec = new MediaRecorder(stream);
     mediaRec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
@@ -270,5 +298,5 @@
     return out;
   }
 
-  window.PPVoice = { dedupe, supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, startRecording, stopRecording, pauseRecording, resumeRecording, recordAndTranscribe, resetRecording, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
+  window.PPVoice = { dedupe, supportsDictation, startDictation, stopDictation, transcribeBlob, canRecord, preparar, soltarListo, startRecording, stopRecording, pauseRecording, resumeRecording, recordAndTranscribe, resetRecording, get recording() { return !!mediaRec; }, interpret, localParse, parseQty, norm, get listening() { return listening; } };
 })();

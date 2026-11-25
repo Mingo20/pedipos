@@ -67,7 +67,7 @@
       o.type = "sine";
       o.frequency.setValueAtTime(par[0], t + par[1]);
       g.gain.setValueAtTime(0.0001, t + par[1]);
-      g.gain.exponentialRampToValueAtTime(0.42, t + par[1] + 0.014);
+      g.gain.exponentialRampToValueAtTime(0.5, t + par[1] + 0.014);
       g.gain.exponentialRampToValueAtTime(0.0001, t + par[1] + 0.2);
       o.connect(g); g.connect(c.destination);
       o.start(t + par[1]); o.stop(t + par[1] + 0.22);
@@ -78,7 +78,7 @@
     o2.type = "triangle";
     o2.frequency.setValueAtTime(392, t);
     g2.gain.setValueAtTime(0.0001, t);
-    g2.gain.exponentialRampToValueAtTime(0.32, t + 0.016);
+    g2.gain.exponentialRampToValueAtTime(0.4, t + 0.016);
     g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
     o2.connect(g2); g2.connect(c.destination);
     o2.start(t); o2.stop(t + 0.24);

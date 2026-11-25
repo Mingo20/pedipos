@@ -21,8 +21,6 @@
     d.settings.nube = d.settings.nube || { destino: "puter" };
     return d.settings.nube;
   }
-  function destino() { return "puter"; }
-  function setDestino() { ajustes().destino = "puter"; S.save(); }
 
   /* ---------- contador de llamadas por modelo ---------- */
   function ia() {
@@ -128,6 +126,13 @@
     try { var P = global.puter; if (!P || !P.fs) return false; await P.fs.stat(RUTA_CERT); return true; } catch (e) { return false; }
   }
 
+  /* donde se guardan las facturas: lo elige el comerciante en Sincronizacion */
+  function destino() {
+    var d = ajustes().destino;
+    return (d === "google") ? "google" : "puter";
+  }
+  function setDestino(n) { ajustes().destino = (n === "google") ? "google" : "puter"; S.save(); }
+
   global.PPNube = { guardarCertificado: guardarCertificado, recuperarCertificado: recuperarCertificado, hayCertificado: hayCertificado, destino: destino, setDestino: setDestino, guardarFactura: guardarFactura, contar: contar, MODELOS: MODELOS, engancharContador: engancharContador };
 })(window);
 
@@ -202,43 +207,80 @@
       (boton || "") + "</div>";
   }
 
-  async function render(view) {
-    var P = global.puter;
-    var dest = global.PPNube.destino();
+  /* Llamadas de cada servicio segun la cuenta de Puter; si no hay dato, las locales. */
+  function usoDeApi(u, tipo) {
+    var usage = (u && u.usage) || {};
+    var keys = Object.keys(usage);
+    var pat = tipo === "chat" ? /chat/i : /speech|transcri|whisper|txt2speech/i;
+    for (var i = 0; i < keys.length; i++) {
+      if (!pat.test(keys[i])) continue;
+      var it = usage[keys[i]] || {};
+      return { count: Number(it.count || 0), cost: Number(it.cost || 0) };
+    }
+    return null;
+  }
+
+  function filaServicio(nombre, detalle, usado, quedan) {
+    var txt = usado === 1 ? "1 llamada" : usado + " llamadas";
+    var dis = (quedan === null || quedan === undefined) ? "sin dato de disponibilidad"
+      : (quedan === 1 ? "queda 1 llamada" : "quedan " + quedan + " llamadas");
+    return '<div class="pp-srv"><div class="pp-srv-t"><b>' + nombre + '</b><span>' + txt + "</span></div>" +
+      '<small>' + detalle + " &middot; " + dis + "</small></div>";
+  }
+
+  /* La pantalla se pinta al instante; lo de Puter llega despues, sin retrasar nada. */
+  function render(view, opts) {
+    opts = opts || {};
+    var volver = (typeof opts.volver === "function") ? opts.volver : function () {
+      if (global.PPUI && global.PPUI.volverConfig) global.PPUI.volverConfig();
+    };
     var cab = '<div class="pp-head"><button class="pp-back" id="ppBack" aria-label="Volver">' + ((global.PPUI || {}).I || {}).chev + "</button>" +
       "<div><h2>Mi consumo en Puter</h2><p>Todo lo que PediPOS usa de la infraestructura, en un solo lugar.</p></div></div>";
-
-    var cuerpo = "";
-    if (!P || !P.auth) {
-      cuerpo = htmlVacio("Puter no esta disponible en este navegador. La infraestructura de PediPOS necesita conexion para la voz y los avisos con IA.");
-    } else {
-      var dentro = false;
-      try { dentro = !!P.auth.isSignedIn(); } catch (e) { dentro = false; }
-      if (dentro && typeof dentro.then === "function") dentro = await dentro;
-      if (!dentro) {
-        cuerpo = htmlVacio("Para ver el consumo real hay que entrar con la cuenta de Puter. Es la misma cuenta que sostiene la infraestructura que ya usa la app.",
-          '<button class="btn" id="ppIn">Conectar con Puter</button>');
-      } else {
-        cuerpo = await panelReal(P, dest);
-      }
-    }
-    view.innerHTML = '<div class="pp-wrap">' + cab + cuerpo + "</div>";
+    view.innerHTML = '<div class="pp-wrap">' + cab +
+      '<div id="ppBody"><div class="pp-card"><p class="cnt">Leyendo tu consumo...</p></div></div></div>';
     var b = $("#ppBack", view);
-    if (b) b.onclick = function () { if (global.PPUI && global.PPUI.volverConfig) global.PPUI.volverConfig(); };
+    if (b) b.onclick = volver;
+    cargar(view, volver);
+  }
+
+  async function cargar(view, volver) {
+    var cuerpo = "";
+    try { cuerpo = await cuerpoDePanel(); }
+    catch (e) { cuerpo = htmlVacio("No se pudo leer el consumo ahora mismo. Revisa tu conexion e intenta de nuevo."); }
+    var caja = $("#ppBody", view);
+    if (!caja) return;
+    caja.innerHTML = cuerpo;
+
     var inn = $("#ppIn", view);
     if (inn) inn.onclick = async function () {
       inn.disabled = true; inn.textContent = "Conectando...";
-      try { await P.auth.signIn(); render(view); } catch (e) { inn.disabled = false; inn.textContent = "Conectar con Puter"; }
+      try { await global.puter.auth.signIn(); render(view, { volver: volver }); }
+      catch (e) { inn.disabled = false; inn.textContent = "Conectar con Puter"; }
     };
     var plan = $("#ppPlan", view);
     if (plan) plan.onclick = function () { window.open("https://puter.com/dashboard#billing", "_blank", "noopener"); };
     var ver = $("#ppVerFac", view);
     if (ver) ver.onclick = function () { window.open("https://puter.com/dashboard#files", "_blank", "noopener"); };
     var upd = $("#ppUpd", view);
-    if (upd) upd.onclick = function () { render(view); };
+    if (upd) upd.onclick = function () { render(view, { volver: volver }); };
   }
 
-  async function panelReal(P, dest) {
+  async function cuerpoDePanel() {
+    var P = global.puter;
+    if (!P || !P.auth) {
+      return htmlVacio("Puter no esta disponible en este navegador. La infraestructura de PediPOS necesita conexion para la voz y los avisos con IA.");
+    }
+    var dentro = false;
+    try { dentro = !!P.auth.isSignedIn(); } catch (e) { dentro = false; }
+    if (dentro && typeof dentro.then === "function") dentro = await dentro;
+    if (!dentro) {
+      return htmlVacio("Para ver el consumo real hay que entrar con la cuenta de Puter. Es la misma cuenta que sostiene la infraestructura que ya usa la app.",
+        '<button class="btn" id="ppIn">Conectar con Puter</button>');
+    }
+    return await panelReal(P);
+  }
+
+  async function panelReal(P) {
     var u = {}, al = {}, user = {};
     try { u = (await P.auth.getMonthlyUsage()) || {}; } catch (e) { u = {}; }
     al = u.allowanceInfo || {};
@@ -248,9 +290,7 @@
     var total = Number(al.monthUsageAllowance || 0);
     var queda = Number(al.remaining || 0);
     var usado = Math.max(0, total - queda);
-    var pctIA = total > 0 ? Math.min(100, Math.round((usado / total) * 100)) : 0;
     var creditoTotal = Math.max(CREDITOS_GLOBAL(), 1);
-    /* Puter cuenta 1,000 creditos por mes: el permiso se traduce a esa escala */
     var creditosUsados = total > 0 ? Math.min(creditoTotal, Math.round((usado / total) * creditoTotal)) : 0;
     var pctCred = Math.min(100, Math.round((creditosUsados / creditoTotal) * 100));
 
@@ -265,11 +305,12 @@
     var esGratis = !nombrePlan || /free|gratis|basic/.test(nombrePlan) || user.is_free === true;
     var planTxt = esGratis ? "Plan de infraestructura gratis" : "Plan " + (user.plan || user.plan_name);
 
-    var modelos = (global.PPNube.MODELOS || []).map(function (m) {
-      var n = Number((((global.PPStore.db.ia || {}).llamadas || {})[m.id]) || 0);
-      return '<div class="pp-mod"><div><b>' + m.etiqueta + '</b><small>' + m.uso + "</small></div>" +
-        '<span class="pp-n">' + n + (n === 1 ? " llamada" : " llamadas") + "</span></div>";
-    }).join("");
+    /* llamadas y disponibilidad de los dos servicios que usa la app */
+    var chat = usoDeApi(u, "chat"), voz = usoDeApi(u, "voz");
+    var nChat = chat ? chat.count : llamadasDe("deepseek-chat");
+    var nVoz = voz ? voz.count : llamadasDe("whisper");
+    var qChat = (chat && chat.count > 0 && chat.cost > 0) ? Math.floor(queda / (chat.cost / chat.count)) : null;
+    var qVoz = (voz && voz.count > 0 && voz.cost > 0) ? Math.floor(queda / (voz.cost / voz.count)) : null;
 
     return '<div class="pp-grid">' +
       '<div class="pp-card pp-plan"><small>Estas usando ahora</small><b>' + planTxt + "</b>" +
@@ -279,6 +320,7 @@
         '<button class="btn" id="ppPlan">Actualizar mi plan</button></div>' +
 
       '<div class="pp-card"><h3>Puter Drive</h3>' +
+        '<p class="cnt" style="font-size:12px;margin:0 0 10px">Aqui se archivan tus facturas electronicas y el certificado del negocio, cifrado, en tu propia cuenta. Desde el Drive puedes abrirlos o descargarlos cuando quieras.</p>' +
         '<button class="btn sec" id="ppVerFac">Ver mi Drive</button></div>' +
 
       '<div class="pp-card pp-uso"><h3>Almacenamiento</h3>' +
@@ -292,14 +334,10 @@
       '<div class="pp-card pp-uso"><h3>Creditos mensuales</h3>' +
         '<p class="pp-sub"><b>' + pctCred + '%</b> &middot; ' + creditosUsados + ' usado de ' + creditoTotal + ' creditos</p>' +
         barra(pctCred, pctCred >= 90 ? "#D64545" : "#C4A81F") +
-        '<details class="pp-det"><summary>Detalles de uso</summary>' +
-          '<div class="pp-num"><span>Gastado este mes</span><b>' + usd(usado) + '</b></div>' +
-          '<div class="pp-num"><span>Disponible</span><b class="ok">' + usd(queda) + '</b></div>' +
-          '<div class="pp-num"><span>Permiso del mes</span><b>' + usd(total) + '</b></div></details></div>' +
-
-      '<div class="pp-card pp-wide"><h3>Modelos que usa PediPOS</h3>' +
-        (modelos || '<p class="cnt">Todavia no hay llamadas registradas.</p>') +
-        '<p class="cnt" style="font-size:11.5px;margin-top:8px">Solo se muestran los modelos que la app usa de verdad, con el numero de llamadas hechas desde este equipo.</p></div>' +
+        filaServicio("DeepSeek Chat", "Interpreta los pedidos dictados", nChat, qChat) +
+        filaServicio("Whisper", "Transcribe la voz a texto", nVoz, qVoz) +
+        '<p class="cnt" style="font-size:11.5px;margin:8px 0 0">Las llamadas son las del mes en curso; la disponibilidad se estima con los creditos que te quedan.</p>' +
+      "</div>" +
       "</div>" +
       '<div class="pp-foot"><button class="btn sec" id="ppUpd">Actualizar datos</button></div>';
   }
